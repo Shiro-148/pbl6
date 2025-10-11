@@ -1,0 +1,246 @@
+@import url('./ShareDialog.css');
+@import url('./DeleteDialog.css');
+
+.set-list-title {
+  margin-bottom: 18px;
+}
+
+/* --- Privacy Button & Menu --- */
+.set-card-privacy-btn {
+  border: none;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  position: relative;
+  background: #e0e7ef;
+  transition: background 0.15s;
+  margin-right: 6px;
+}
+.set-card-privacy-btn.public {
+  background: #e0f7e9;
+}
+.set-card-privacy-btn.private:hover {
+  background: #c7d2e6;
+}
+.set-card-privacy-btn.public:hover {
+  background: #b6f3d2;
+}
+.set-card-privacy-icon {
+  font-size: 20px;
+  color: #2563eb;
+}
+.set-card-privacy-btn.public .set-card-privacy-icon {
+  color: #22c55e;
+}
+
+.set-card-privacy-menu {
+  position: absolute;
+  top: 40px;
+  left: 0;
+  background: #fff;
+  border: 1px solid #eee;
+  border-radius: 8px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+  z-index: 10;
+  min-width: 160px;
+  display: flex;
+  flex-direction: column;
+  padding: 4px 0;
+}
+.set-card-privacy-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  background: none;
+  border: none;
+  padding: 12px;
+  cursor: pointer;
+  color: #222;
+  font-size: 1rem;
+  font-weight: 400;
+  transition: background 0.12s, color 0.12s;
+}
+.set-card-privacy-menu-item.selected {
+  color: #2563eb;
+  font-weight: 600;
+  background: #e3e8f7;
+}
+.set-card-privacy-menu-item.selected.public {
+  color: #22c55e;
+  background: #e0f7e9;
+}
+.set-card-privacy-menu-item:hover {
+  background: #f2f6fa;
+  color: inherit;
+}
+.set-card-privacy-menu-item i {
+  font-size: 1.1rem;
+}
+.set-card-share {
+  background: #e3e8f0;
+  color: #2979ff;
+  border: none;
+  border-radius: 8px;
+  padding: 6px 18px 6px 12px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: background 0.15s, color 0.15s;
+  box-shadow: 0 1px 4px rgba(41, 121, 255, 0.08);
+  margin-left: 8px;
+}
+.set-card-share:hover {
+  background: #d0e2ff;
+  color: #1565c0;
+}
+.set-card-share i {
+  font-size: 1.1rem;
+}
+.set-list-back {
+  background: none;
+  border: none;
+  color: #2196f3;
+  font-size: 1.1rem;
+  font-weight: 500;
+  cursor: pointer;
+  margin-bottom: 12px;
+  transition: color 0.15s;
+}
+.set-list-back:hover {
+  color: #1565c0;
+}
+.set-list-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 24px;
+}
+.set-card {
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 2px 12px rgba(33, 150, 243, 0.1);
+  padding: 22px 28px 18px 24px;
+  min-height: 90px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  font-family: 'Roboto', sans-serif;
+  border: 1.5px solid #ececff;
+  position: relative;
+  margin-bottom: 8px;
+}
+.set-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 8px;
+}
+.set-card-option {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  position: relative;
+}
+.set-card-icon {
+  font-size: 2.1rem;
+  color: #b3baff;
+  margin-right: 6px;
+}
+.set-card-delete {
+  background: #726bdf;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 6px 18px 6px 12px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: background 0.15s;
+  box-shadow: 0 1px 4px rgba(114, 107, 223, 0.08);
+}
+.set-card-delete:hover {
+  background: #5a53c2;
+}
+.set-card-delete i {
+  font-size: 1.1rem;
+}
+.set-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #1a237e;
+  margin-bottom: 6px;
+  margin-top: 0;
+}
+.set-desc {
+  font-size: 1rem;
+  color: #888;
+  margin-bottom: 10px;
+}
+.set-meta {
+  display: flex;
+  gap: 16px;
+  font-size: 0.98rem;
+  color: #444;
+  align-items: center;
+  margin-bottom: 12px;
+}
+.set-used {
+  color: #888;
+  font-size: 0.97rem;
+}
+.set-count {
+  color: #2196f3;
+  font-weight: 600;
+}
+
+.set-card-actions {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 2px;
+}
+.set-btn {
+  border: none;
+  border-radius: 6px;
+  font-size: 1rem;
+  font-weight: 500;
+  padding: 7px 18px 7px 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.set-btn-study {
+  background: #2979ff;
+  color: #fff;
+}
+.set-btn-study:hover {
+  background: #1565c0;
+}
+.set-btn-games {
+  background: #1ecb6b;
+  color: #fff;
+}
+.set-btn-games:hover {
+  background: #169c50;
+}
+.set-btn-details {
+  background: #e0e3e8;
+  color: #444;
+}
+.set-btn-details:hover {
+  background: #bfc3c9;
+}
+.set-btn i {
+  font-size: 1.1rem;
+}
