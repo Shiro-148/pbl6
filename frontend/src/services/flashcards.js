@@ -40,4 +40,18 @@ export async function createCard(setId, front, back) {
   return res.json();
 }
 
-export default { listSets, createSet, listCards, createCard };
+export async function enrichWords(textOrWords) {
+  const body = typeof textOrWords === 'string' ? { text: textOrWords } : { words: textOrWords };
+  const res = await authFetch(`${API}/api/flashcards/enrich`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) {
+    const txt = await res.text().catch(() => res.statusText);
+    throw new Error(`${res.status} ${txt}`);
+  }
+  return res.json();
+}
+
+export default { listSets, createSet, listCards, createCard, enrichWords };

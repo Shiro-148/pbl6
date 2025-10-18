@@ -1,0 +1,10 @@
+flask>=2.0
+numpy
+pandas
+wordfreq
+tensorflow
+protobuf
+keras
+asgiref
+uvicorn
+scikit-learn
