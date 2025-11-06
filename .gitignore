@@ -1,0 +1,42 @@
+# --- System & IDE ---
+.vscode/
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# --- Python ---
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.pkl
+*.log
+.env
+.venv/
+**/.venv/
+model_service/.venv/
+venv/
+
+# --- Build & Gradle ---
+build/
+.gradle/
+!gradle/wrapper/gradle-wrapper.jar
+
+# --- Data / Models (optional, nếu bạn không muốn push file lớn) ---
+**/cc.en.300.bin
+*.h5
+*.pt
+*.model
+*.bin
+*.pkl
+
+# --- Node / Frontend (nếu có) ---
+node_modules/
+dist/
+out/
+
+# --- Local configs ---
+*.local
+*.cache
+.DS_Store
