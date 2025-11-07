@@ -2,7 +2,7 @@ import './App.css';
 import { Routes, Route, useLocation } from 'react-router-dom';
 import Header from './components/Header';
 import BottomNav from './components/BottomNav';
-import Home from './pages/home';
+import Home from './pages/Home';
 import About from './pages/About';
 import Login from './pages/Login';
 import Register from './pages/Register';
@@ -18,7 +18,8 @@ import Library from './pages/Library';
 import GameSelect from './pages/GameSelect';
 import MatchGame from './pages/MatchGame';
 import MultipleChoice from './pages/MultipleChoice';
-import TypeAnswer from './pages/TypeAnswer';
+import SentenceChoice from './pages/SentenceChoice';
+import SentenceChoiceGame from './pages/SentenceChoiceGame';
 
 function App() {
   const location = useLocation();
@@ -44,7 +45,8 @@ function App() {
           <Route path="/games" element={<GameSelect />} />
           <Route path="/games/match" element={<MatchGame />} />
           <Route path="/games/multiple" element={<MultipleChoice />} />
-          <Route path="/games/type" element={<TypeAnswer />} />
+          <Route path="/games/type" element={<SentenceChoice />} />
+          <Route path="/games/Sentence" element={<SentenceChoiceGame />} />
         </Routes>
       </main>
       {!hideNavAndHeader && <BottomNav />}

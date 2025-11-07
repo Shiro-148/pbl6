@@ -2,7 +2,7 @@ import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import '../styles/pages/GameSelect.css';
 
-const gameTypes = [
+const gameSentences = [
   {
     key: 'match',
     title: 'Match Game',
@@ -18,10 +18,10 @@ const gameTypes = [
     icon: <span className="game-icon">⚡</span>,
   },
   {
-    key: 'type',
-    title: 'Type Answer',
-    desc: 'Type the definition for each term',
-    color: 'game-card-type',
+    key: 'Sentence',
+    title: 'Sentence Answer',
+    desc: 'Sentence the definition for each term',
+    color: 'game-card-Sentence',
     icon: <span className="game-icon">T</span>,
   },
 ];
@@ -40,10 +40,10 @@ const instructions = [
     desc: 'Read the term and choose the correct definition from four options. Get as many right as possible!',
   },
   {
-    key: 'type',
-    title: 'Type Answer',
-    color: 'type',
-    desc: 'Type the exact definition for each term. This tests your precise knowledge of the material.',
+    key: 'Sentence',
+    title: 'Sentence Choice',
+    color: 'Sentence',
+    desc: 'Sentence the exact definition for each term. This tests your precise knowledge of the material.',
   },
 ];
 
@@ -68,7 +68,7 @@ const GameSelect = () => {
         <span className="game-card-count">{cardCount} cards available</span>
       </div>
       <div className="game-card-list">
-        {gameTypes.map((g) => (
+        {gameSentences.map((g) => (
           <div
             key={g.key}
             className={['game-card', g.color].join(' ')}
@@ -77,11 +77,11 @@ const GameSelect = () => {
                 navigate(`/games/match?set=${encodeURIComponent(setName)}`);
               } else if (g.key === 'multiple') {
                 navigate(`/games/multiple?set=${encodeURIComponent(setName)}`);
-              } else if (g.key === 'type') {
-                navigate(`/games/type?set=${encodeURIComponent(setName)}`);
+              } else if (g.key === 'Sentence') {
+                navigate(`/games/Sentence?set=${encodeURIComponent(setName)}`);
               }
             }}
-            style={{ cursor: g.key === 'match' || g.key === 'multiple' || g.key === 'type' ? 'pointer' : undefined }}
+            style={{ cursor: g.key === 'match' || g.key === 'multiple' || g.key === 'Sentence' ? 'pointer' : undefined }}
           >
             {g.icon}
             <div className="game-card-content">
