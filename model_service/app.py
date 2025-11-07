@@ -572,12 +572,52 @@ Do not add explanations, Markdown, or extra text outside JSON.
     return jsonify({"questions": questions})
 
 
+@app.route('/chat', methods=['POST'])
+def chat():
+    """
+    Lightweight chat endpoint that accepts JSON { "message": "..." }
+    or { "messages": [{"role": "user"|"ai", "content": "..."}, ...] }
+    Returns: { "reply": "..." }
+    """
+    data = get_request_json_flexible() or {}
+    message = (data.get('message') or '').strip()
+    messages = data.get('messages') if isinstance(data.get('messages'), list) else None
 
+    if not message and not messages:
+        return jsonify({"error": "Missing message"}), 400
 
+    # system instruction for vocabulary tutor
+    system = (
+        "You are a friendly Vietnamese-English vocabulary tutor. "
+        "Help the user learn words: give concise definitions, example sentences, short quizzes, and follow-up suggestions. "
+        "If the user asks for translations, provide them in Vietnamese. Keep replies focused and short when possible."
+    )
 
-# ==========================================================
-# 🚀 KHỞI ĐỘNG SERVER
-# ==========================================================
+    convo = system + "\n\n"
+    if messages:
+        for m in messages:
+            role = (m.get('role') or 'user').upper()
+            content = (m.get('content') or '')
+            convo += f"{role}: {content}\n"
+
+    if message:
+        convo += f"USER: {message}\nAI:"
+
+    try:
+        if not GEMINI_KEY:
+            # fallback simple reply when Gemini not configured
+            reply = f"(No Gemini key) Tôi nhận: {message or '[conversation]'}"
+        else:
+            model = genai.GenerativeModel(DEFAULT_GEMINI_MODEL)
+            resp = model.generate_content(convo)
+            raw = getattr(resp, 'text', None) or str(resp)
+            reply = raw.strip()
+    except Exception as e:
+        app.logger.exception('Gemini chat failed')
+        reply = "Xin lỗi, tôi không thể trả lời ngay bây giờ."
+
+    return jsonify({"reply": reply})
+
 if __name__ == "__main__":
     missing = []
     if MODEL is None:

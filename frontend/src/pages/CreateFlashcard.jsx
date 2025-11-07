@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import '../styles/pages/CreateFlashcard.css';
 import UploadPDFButton from '../components/UploadPDFButton';
 import flashcardsService from '../services/flashcards';
@@ -21,6 +22,9 @@ const CreateFlashcard = () => {
   const [classifyResults, setClassifyResults] = useState(null);
   const [folders, setFolders] = useState([]);
   const [selectedFolder, setSelectedFolder] = useState('');
+  const [enriching, setEnriching] = useState(false);
+  const [showSuccessDialog, setShowSuccessDialog] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
 
   const handleCardChange = (idx, field, value) => {
     const updated = cards.map((c, i) => (i === idx ? { ...c, [field]: value } : c));
@@ -180,12 +184,41 @@ const CreateFlashcard = () => {
     }
   };
 
+  const handleEnrichWords = async () => {
+    try {
+      const sel = cards.filter((c) => c.selected).map((c) => c.term);
+      if (!sel.length) return alert('Vui lòng chọn ít nhất 1 từ để bổ sung');
+      setEnriching(true);
+      setMessage('');
+      const res = await flashcardsService.enrichWords(sel);
+      const list = res.flashcards || res.entries || res;
+      // map definitions back to cards
+      const updated = cards.map((c) => {
+        const found = list && list.find((x) => (x.word || x.term || '').toLowerCase() === (c.term || '').toLowerCase());
+        if (found) return { ...c, definition: c.definition || found.definition || (found.examples && found.examples[0]) || '' };
+        return c;
+      });
+      setCards(updated);
+      const count = (list && sel.reduce((acc, t) => {
+        const f = list.find((x) => (x.word || x.term || '').toLowerCase() === (t || '').toLowerCase());
+        return acc + (f ? 1 : 0);
+      }, 0)) || 0;
+      setSuccessMessage(`Đã bổ sung định nghĩa cho ${count} từ.`);
+      setShowSuccessDialog(true);
+    } catch (err) {
+      console.error(err);
+      alert('Lỗi khi bổ sung định nghĩa: ' + (err.message || err));
+    } finally {
+      setEnriching(false);
+    }
+  };
+
   return (
     <div className="create-flashcard-root-fix">
       <div className="create-flashcard-container">
-        {showLevelDialog && (
-          <div style={{ position: 'fixed', left: 0, right: 0, top: 0, bottom: 0, background: 'rgba(0,0,0,0.35)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
-            <div style={{ background: '#fff', padding: 20, borderRadius: 8, width: 480, boxShadow: '0 4px 20px rgba(0,0,0,0.2)' }}>
+        {showLevelDialog && typeof document !== 'undefined' && createPortal(
+          <div className="modal-overlay">
+            <div className="modal-box">
               <h3>Chọn cấp độ để hiển thị từ</h3>
               {/* Small summary: total tokens and breakdown by easy/medium/hard */}
               {classifyResults && Array.isArray(classifyResults.classify) && (() => {
@@ -197,27 +230,40 @@ const CreateFlashcard = () => {
                   if (lv) counts[lv] = (counts[lv] || 0) + 1;
                 });
                 return (
-                  <div style={{ fontSize: 13, color: '#444', marginBottom: 8 }}>
+                  <div className="modal-summary">
                     <div>Tổng từ: {total} — Phân bố: Easy: {counts.easy}, Medium: {counts.medium}, Hard: {counts.hard}</div>
                   </div>
                 );
               })()}
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 12 }}>
-                <label style={{ marginRight: 8 }}>
+              <div className="modal-levels-row">
+                <label className="modal-label">
                   <input type="checkbox" checked={selectedLevels.includes('All')} onChange={() => toggleLevel('All')} /> All
                 </label>
                 {allLevels.map((lvl) => (
-                  <label key={lvl} style={{ marginRight: 8 }}>
+                  <label key={lvl} className="modal-label">
                     <input type="checkbox" checked={selectedLevels.includes(lvl)} onChange={() => toggleLevel(lvl)} /> {lvl.charAt(0).toUpperCase() + lvl.slice(1)}
                   </label>
                 ))}
               </div>
-              <div style={{ marginTop: 16, display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+              <div className="modal-actions-row">
                 <button className="btn-outline" onClick={cancelLevels}>Hủy</button>
                 <button className="btn-main" onClick={confirmLevels}>Xác nhận</button>
               </div>
             </div>
-          </div>
+          </div>,
+          document.body
+        )}
+        {showSuccessDialog && typeof document !== 'undefined' && createPortal(
+          <div className="modal-overlay">
+            <div className="modal-box">
+              <h3>Thành công</h3>
+              <div className="modal-summary">{successMessage}</div>
+              <div className="modal-actions-row">
+                <button className="btn-outline" onClick={() => setShowSuccessDialog(false)}>Đóng</button>
+              </div>
+            </div>
+          </div>,
+          document.body
         )}
         <div className="create-flashcard-header">
           <h2>Tạo một học phần mới</h2>
@@ -315,7 +361,7 @@ const CreateFlashcard = () => {
         </div>
         <div className="flashcard-list">
           {cards.map((card, idx) => (
-            <div className="flashcard-row" key={idx} style={{ display: 'flex', alignItems: 'center' }}>
+            <div className="flashcard-row" key={idx}>
               <div className="flashcard-index">{idx + 1}</div>
               <div className="flashcard-inputs">
                 <input
@@ -355,37 +401,26 @@ const CreateFlashcard = () => {
             </button>
           </div>
 
-          <div style={{ marginTop: 16, alignItems: 'center', display: 'flex', justifyContent: 'center',width: '100%' }}>
+          <div className="create-actions-row">
             <button className="btn-main" type="button" onClick={handleCreateFromCards} disabled={creating}>
               {creating ? `Đang tạo... (${createProgress.done}/${createProgress.total})` : 'Tạo từ danh sách'}
             </button>
             <button
               className="btn-outline"
               type="button"
-              onClick={async () => {
-                try {
-                  const sel = cards.filter((c) => c.selected).map((c) => c.term);
-                  if (!sel.length) return alert('Vui lòng chọn ít nhất 1 từ để bổ sung');
-                  setMessage('Đang gọi dịch vụ bổ sung định nghĩa...');
-                  const res = await flashcardsService.enrichWords(sel);
-                  const list = res.flashcards || res.entries || res;
-                  // map definitions back to cards
-                  const updated = cards.map((c) => {
-                    const found = list && list.find((x) => (x.word || x.term || '').toLowerCase() === (c.term || '').toLowerCase());
-                    if (found) return { ...c, definition: c.definition || found.definition || (found.examples && found.examples[0]) || '' };
-                    return c;
-                  });
-                  setCards(updated);
-                  setMessage('Đã bổ sung định nghĩa');
-                } catch (err) {
-                  console.error(err);
-                  alert('Lỗi khi bổ sung định nghĩa: ' + (err.message || err));
-                }
-              }}
+              onClick={async () => await handleEnrichWords()}
+              disabled={enriching}
             >
-              Bổ sung định nghĩa tự động
+              {enriching ? (
+                <>
+                  <span className="spinner" aria-hidden="true"></span>
+                  Đang bổ sung...
+                </>
+              ) : (
+                'Bổ sung định nghĩa tự động'
+              )}
             </button>
-            {message && <div style={{ marginTop: 8 }}>{message}</div>}
+            {message && <div className="message-inline">{message}</div>}
           </div>
         </div>
       </div>

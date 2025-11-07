@@ -67,6 +67,7 @@
 .create-flashcard-root-fix {
   width: 98vw;
   margin-left: 50%;
+  padding-top: 32px;
   transform: translateX(-50%);
   display: flex;
   justify-content: center;
@@ -322,4 +323,58 @@
     gap: 12px;
     margin-left: 0;
   }
+}
+
+/* Modal / level chooser styles moved from inline styles */
+.modal-overlay {
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  background: rgba(0,0,0,0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+.main-content{
+  padding: 0;
+}
+.modal-box {
+  background: #fff;
+  padding: 20px;
+  border-radius: 8px;
+  width: 480px;
+  max-width: calc(100% - 32px);
+  max-height: 80vh;
+  overflow: auto;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+}
+.modal-summary { font-size: 13px; color: #444; margin-bottom: 8px; }
+.modal-levels-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.modal-label { margin-right: 8px; }
+.modal-actions-row { margin-top: 16px; display: flex; justify-content: flex-end; gap: 8px; }
+
+/* Create actions row at bottom */
+.create-actions-row { margin-top: 16px; align-items: center; display: flex; justify-content: center; width: 100%; }
+.message-inline { margin-top: 8px; }
+
+/* Small inline spinner used on enrich button */
+.spinner {
+  border: 3px solid #f3f6fb;
+  border-top: 3px solid #2953f3;
+  border-radius: 50%;
+  width: 16px;
+  height: 16px;
+  display: inline-block;
+  vertical-align: middle;
+  margin-right: 8px;
+  animation: spin 1s linear infinite;
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }

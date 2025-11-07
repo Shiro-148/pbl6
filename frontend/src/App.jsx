@@ -12,7 +12,7 @@ import CommunitySet from './pages/CommunitySet';
 import UploadPDF from './pages/UploadPDF';
 import Study from './pages/Study';
 import Share from './pages/Share';
-import Statistic from './pages/Statistic';
+import AiTutor from './pages/AiTutor';
 import Group from './pages/Group';
 import Library from './pages/Library';
 import GameSelect from './pages/GameSelect';
@@ -39,9 +39,10 @@ function App() {
           <Route path="/community" element={<Community />} />
           <Route path="/community-set" element={<CommunitySet />} />
           {/* <Route path="/upload-pdf" element={<UploadPDF />} />
-          <Route path="/share" element={<Share />} />
-          <Route path="/statistic" element={<Statistic />} />
-          <Route path="/group" element={<Group />} /> */}
+          <Route path="/share" element={<Share />} /> */}
+          <Route path="/statistic" element={<AiTutor />} />
+          <Route path="/ai-tutor" element={<AiTutor />} />
+          {/* <Route path="/group" element={<Group />} /> */}
           <Route path="/games" element={<GameSelect />} />
           <Route path="/games/match" element={<MatchGame />} />
           <Route path="/games/multiple" element={<MultipleChoice />} />

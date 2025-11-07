@@ -5,7 +5,7 @@ const navs = [
   { to: '/', icon: 'bx-home', label: 'Home', exact: true },
   { to: '/library', icon: 'bx-book-open', label: 'Library' },
   { to: '/community', icon: 'bx-group', label: 'Community' },
-  { to: '/statistic', icon: 'bx-bar-chart-alt-2', label: 'Statistic' },
+  { to: '/ai-tutor', icon: 'bx-brain', label: 'AI Tutor' },
   { to: '/about', icon: 'bx-info-circle', label: 'About' },
 ];
 

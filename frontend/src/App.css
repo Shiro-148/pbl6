@@ -8,7 +8,7 @@ body,
 }
 
 .page-container {
-  max-width: 400px;
+  max-width: 1200px;
   margin: 48px auto 0 auto;
   background: #fff;
   border-radius: 16px;
@@ -140,7 +140,6 @@ body {
   box-shadow: 0 2px 12px rgba(33, 150, 243, 0.07);
   padding: 20px 40px;
   gap: 18px;
-  margin-bottom: 32px;
 }
 .logo-title {
   display: flex;
@@ -262,6 +261,7 @@ body {
 
 .main-content {
   flex: 1;
+  padding-top: 32px;
 }
 
 .folders-section h2,
