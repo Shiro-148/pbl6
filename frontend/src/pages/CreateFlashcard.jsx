@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import '../styles/pages/CreateFlashcard.css';
 import UploadPDFButton from '../components/UploadPDFButton';
 import flashcardsService from '../services/flashcards';
+import foldersService from '../services/folders';
 
 const initialCards = [
   { term: '', definition: '', image: '', selected: true },
@@ -18,6 +19,8 @@ const CreateFlashcard = () => {
   const [showLevelDialog, setShowLevelDialog] = useState(false);
   const [selectedLevels, setSelectedLevels] = useState([]);
   const [classifyResults, setClassifyResults] = useState(null);
+  const [folders, setFolders] = useState([]);
+  const [selectedFolder, setSelectedFolder] = useState('');
 
   const handleCardChange = (idx, field, value) => {
     const updated = cards.map((c, i) => (i === idx ? { ...c, [field]: value } : c));
@@ -126,6 +129,22 @@ const CreateFlashcard = () => {
     setClassifyResults(null);
   };
 
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        const data = await foldersService.listFolders();
+        if (!mounted) return;
+        // accept either array or { folders: [...] }
+        const list = Array.isArray(data) ? data : (data.folders || data.data || []);
+        setFolders(list);
+      } catch (err) {
+        console.debug('Could not load folders:', err.message || err);
+      }
+    })();
+    return () => { mounted = false; };
+  }, []);
+
   const handleCreateFromCards = async () => {
     if (!title) {
       alert('Vui lòng nhập tiêu đề cho bộ flashcard');
@@ -139,8 +158,8 @@ const CreateFlashcard = () => {
 
     try {
       setCreating(true);
-      setMessage('Đang tạo bộ...');
-      const setRes = await flashcardsService.createSet(title, desc);
+  setMessage('Đang tạo bộ...');
+  const setRes = await flashcardsService.createSet(title, desc, selectedFolder || null);
       const setId = setRes.id || setRes['id'];
       setCreateProgress({ total: toCreate.length, done: 0 });
 
@@ -276,11 +295,21 @@ const CreateFlashcard = () => {
             }}
           />
           <div className="select-folder-wrapper">
-            <select className="select-folder">
+            <select
+              className="select-folder"
+              value={selectedFolder}
+              onChange={(e) => setSelectedFolder(e.target.value)}
+            >
               <option value="">Chọn folder</option>
-              <option value="Toán">Toán</option>
-              <option value="Vật lý">Vật lý</option>
-              <option value="Tiếng Anh">Tiếng Anh</option>
+              {folders && folders.length ? (
+                folders.map((f) => (
+                  <option key={f.id || f._id || f.name} value={f.id || f._id || f.name}>
+                    {f.name || f.title || f.folder || String(f.id || f._id)}
+                  </option>
+                ))
+              ) : (
+                <option value="">(Không có folder)</option>
+              )}
             </select>
           </div>
         </div>

@@ -1,4 +1,7 @@
-# app.py
+# ==========================================================
+# 📘 app.py — English Learning Backend (TensorFlow + FastText + Gemini)
+# ==========================================================
+
 import os
 import re
 import json
@@ -14,112 +17,89 @@ from functools import lru_cache
 from wordfreq import word_frequency
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-import google.generativeai as genai
 from tensorflow.keras.preprocessing.sequence import pad_sequences
 
 # Gemini SDK
 import google.generativeai as genai
-# dotenv (tùy chọn)
 from dotenv import load_dotenv
 load_dotenv()
 
 # ==========================================================
-# 🔧 CẤU HÌNH HỆ THỐNG
+# ⚙️ CONFIG
 # ==========================================================
 APP_DIR = os.path.dirname(__file__)
 MODEL_FILE = os.path.join(APP_DIR, "word_difficulty_hybrid_fasttext.h5")
 VOCAB_FILE = os.path.join(APP_DIR, "char_vocab.pkl")
 FASTTEXT_FILE = os.path.join(APP_DIR, "cc.en.300.bin")
-
 CLASS_MAP = {0: "easy", 1: "medium", 2: "hard"}
 MAXLEN = 21
 
-# Gemini API key (tên biến môi trường: GEMINI_API_KEY)
+# Gemini configuration
 GEMINI_KEY = os.getenv("GEMINI_API_KEY")
-if not GEMINI_KEY:
-    print("⚠️ Warning: GEMINI_API_KEY not set. /generate-distractors will fail if called.")
-else:
+DEFAULT_GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
+if GEMINI_KEY:
     genai.configure(api_key=GEMINI_KEY)
 
-# Gemini model to use (adjust if you have pro access)
-DEFAULT_GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
-
 app = Flask(__name__)
-CORS(app, origins=["http://localhost:5173", "http://localhost:3000", "*"])
-
-# Configure basic logging
-app.logger.setLevel("INFO")
+CORS(app, origins=["*", "http://localhost:3000", "http://localhost:5173"])
 
 # ==========================================================
-# ⚙️ HÀM NẠP MÔ HÌNH
+# 🔧 MODEL LOADING
 # ==========================================================
 def safe_load_model():
     try:
         if not os.path.exists(MODEL_FILE):
-            app.logger.warning("Không tìm thấy mô hình: %s", MODEL_FILE)
+            print(f"⚠️ Missing model: {MODEL_FILE}")
             return None
-        app.logger.info("🔄 Nạp mô hình TensorFlow...")
+        print("🔄 Loading TensorFlow model...")
         return tf.keras.models.load_model(MODEL_FILE)
     except Exception as e:
-        app.logger.exception("Lỗi khi load mô hình")
+        print("❌ Error loading model:", e)
         return None
-
 
 def safe_load_vocab():
     try:
         with open(VOCAB_FILE, "rb") as f:
             return pickle.load(f)
     except Exception as e:
-        app.logger.warning("❌ Lỗi load vocab: %s", e)
+        print("⚠️ Missing vocab:", e)
         return None
-
 
 def safe_load_fasttext():
     if not os.path.exists(FASTTEXT_FILE):
-        app.logger.warning("⚠️ Thiếu file FastText: %s", FASTTEXT_FILE)
+        print(f"⚠️ Missing FastText file: {FASTTEXT_FILE}")
         return None
     try:
-        app.logger.info("🔄 Nạp mô hình FastText...")
+        print("🔄 Loading FastText model...")
         return fasttext.load_model(FASTTEXT_FILE)
     except Exception as e:
-        app.logger.exception("❌ Lỗi load FastText")
+        print("❌ Error loading FastText:", e)
         return None
-
 
 MODEL = safe_load_model()
 CHAR_VOCAB = safe_load_vocab()
 FT_MODEL = safe_load_fasttext()
 
 # ==========================================================
-# 🧩 XỬ LÝ NGÔN NGỮ & DỰ ĐOÁN
+# 🧩 TEXT PROCESSING
 # ==========================================================
 def clean_token(w):
     w = (w or "").lower().replace("'", "")
     return re.sub(r"[^a-z]", "", w)
 
-
 def words_to_char_seq(words, vocab, maxlen=MAXLEN):
     seqs = [[vocab.get(c, 0) for c in w] for w in words]
     return pad_sequences(seqs, maxlen=maxlen, padding="post")
 
-
 def words_to_vectors(words, ft_model):
     return np.array([ft_model.get_word_vector(w) for w in words])
 
-
 def predict_words(words):
-    """Dự đoán độ khó của từ."""
     if MODEL is None or CHAR_VOCAB is None or FT_MODEL is None:
-        # fallback rule-based
         results = []
         for w in words:
             freq = word_frequency(w, "en", minimum=1e-9)
-            if freq >= 1e-3:
-                lvl = "easy"
-            elif freq >= 1e-5:
-                lvl = "medium"
-            else:
-                lvl = "hard"
+            lvl = "easy" if freq >= 1e-3 else "medium" if freq >= 1e-5 else "hard"
             results.append({"word": w, "level": lvl, "probs": [float(freq)]})
         return results
 
@@ -142,9 +122,6 @@ def predict_words(words):
         })
     return results
 
-# ==========================================================
-# 🧩 CÔNG CỤ PHỤ TRỢ
-# ==========================================================
 def extract_tokens(text, limit=200):
     txt = (text or "").lower()
     toks = re.sub(r"[^a-zÀ-ỹ0-9\s]", " ", txt).split()
@@ -159,14 +136,19 @@ def extract_tokens(text, limit=200):
     return uniq
 
 # ==========================================================
-# 📘 API: PHÂN LOẠI TỪ
+# 📘 API: CLASSIFY
 # ==========================================================
 @app.route("/classify", methods=["POST"])
 def classify():
-    data = request.get_json(force=True, silent=True) or {}
-    text = data.get("text", "")
+    data = request.get_json(force=True, silent=True)
+    text = ""
+    if isinstance(data, dict):
+        text = data.get("text", "")
+    if not text:
+        text = request.form.get("text") or request.args.get("text") or (request.get_data(as_text=True) or "")
     if not text:
         return jsonify({"error": "Missing text"}), 400
+
     tokens = extract_tokens(text)
     result = predict_words(tokens)
     return jsonify({"words": result})
@@ -176,35 +158,115 @@ def classify():
 # ==========================================================
 DEF_API = "https://api.dictionaryapi.dev/api/v2/entries/{lang}/{word}"
 
-def _pick_definition(payload):
-    try:
-        for entry in payload or []:
-            for meaning in entry.get("meanings", []):
-                for d in meaning.get("definitions", []):
-                    if d.get("definition"):
-                        return d["definition"]
-    except Exception:
-        pass
-    return ""
-
-@lru_cache(maxsize=1024)
+@lru_cache(maxsize=512)
 def fetch_definition(word, lang="en"):
     try:
         url = DEF_API.format(lang=lang, word=requests.utils.quote(word))
-        resp = requests.get(url, timeout=3)
-        if resp.status_code != 200:
+        r = requests.get(url, timeout=3)
+        if r.status_code != 200:
             return ""
-        data = resp.json()
-        return _pick_definition(data)
+        data = r.json()
+        for entry in data:
+            for meaning in entry.get("meanings", []):
+                defs = meaning.get("definitions", [])
+                if defs:
+                    return defs[0].get("definition", "")
+        return ""
     except Exception:
         return ""
+
+try:
+    from googletrans import Translator
+    translator = Translator()
+except Exception:
+    translator = None
+
+LOCAL_VI_DICT = {
+    "apple": "quả táo",
+    "computer": "máy tính",
+    "timeout": "thời gian chờ / thời gian tạm dừng",
+    "destination": "điểm đến",
+    "precedence": "sự ưu tiên, thứ tự ưu tiên",
+}
+
+def translate_texts(texts, dest='vi'):
+    if not texts:
+        return texts
+    if translator:
+        try:
+            res = translator.translate(texts, dest=dest)
+            return [r.text for r in res] if isinstance(res, list) else [res.text]
+        except Exception:
+            pass
+    out = []
+    for t in texts:
+        try:
+            resp = requests.get(
+                "https://translate.googleapis.com/translate_a/single",
+                params={"client": "gtx", "sl": "auto", "tl": dest, "dt": "t", "q": t},
+                timeout=3,
+            )
+            data = resp.json()
+            out.append("".join(seg[0] for seg in data[0]))
+        except Exception:
+            out.append("")
+    return out
+
+def short_gloss(text: str, max_words: int = 8) -> str:
+    if not text:
+        return ""
+    s = re.sub(r"\s+", " ", str(text).strip())
+    for delim in [';', '\\.', '—', '\\(', ',']:
+        parts = re.split(delim, s)
+        if parts and parts[0].strip():
+            s = parts[0].strip()
+            break
+    words = s.split()
+    if len(words) <= max_words:
+        return s
+    return " ".join(words[:max_words]).rstrip(' ,') + '...'
+
+def get_concise_definition(word: str, def_lang: str = 'vi') -> str:
+    if not word:
+        return ''
+    w = word.strip()
+    target = (def_lang or 'en').lower()
+
+    if target != 'en':
+        local = LOCAL_VI_DICT.get(w.lower())
+        if local:
+            return local
+        try:
+            tr = translate_texts([w], dest=target)
+            if tr and isinstance(tr, list) and tr[0]:
+                return tr[0]
+        except Exception:
+            pass
+        try:
+            en_def = fetch_definition(w, 'en')
+            if en_def:
+                gloss = short_gloss(en_def, max_words=10)
+                tr = translate_texts([gloss], dest=target)
+                if tr and tr[0]:
+                    return tr[0]
+                return gloss
+        except Exception:
+            pass
+        return LOCAL_VI_DICT.get(w.lower(), w)
+
+    try:
+        en_def = fetch_definition(w, 'en')
+        if en_def:
+            return short_gloss(en_def, max_words=10)
+    except Exception:
+        pass
+    return w
 
 @app.route("/flashcards", methods=["POST"])
 def flashcards():
     data = request.get_json(force=True, silent=True) or {}
     text = data.get("text", "")
-    lang = data.get("def_lang", "vi")
-
+    def_lang = data.get("def_lang", "vi")
     if not text:
         return jsonify({"error": "Missing text"}), 400
 
@@ -212,14 +274,30 @@ def flashcards():
     word_info = predict_words(tokens)
     entries = []
 
-    for w in word_info:
-        definition = fetch_definition(w["word"], "en") if lang == "en" else ""
-        entries.append({
-            "word": w["word"],
-            "definition": definition,
-            "level": w["level"]
-        })
-    return jsonify({"entries": entries, "def_lang": lang})
+    if def_lang and def_lang.lower() != 'en':
+        target = def_lang.lower()
+        for w in word_info[:60]:
+            lvl = w.get('level', 'medium')
+            try:
+                brief = get_concise_definition(w['word'], def_lang=target)
+            except Exception:
+                brief = LOCAL_VI_DICT.get(w['word'].lower(), '') or ''
+            entries.append({'word': w['word'], 'definition': brief, 'level': lvl})
+        return jsonify({'entries': entries, 'def_lang': def_lang, 'translated': True})
+
+    for w in word_info[:60]:
+        lvl = w.get('level', 'medium')
+        d = ''
+        try:
+            d_full = fetch_definition(w['word'], 'en')
+            d = short_gloss(d_full, max_words=10) if d_full else ''
+        except Exception:
+            d = ''
+        if not d:
+            d = w['word']
+        entries.append({'word': w['word'], 'definition': d, 'level': lvl})
+
+    return jsonify({'entries': entries, 'def_lang': def_lang, 'translated': False})
 
 # ==========================================================
 # 🔮 API: SINH ĐÁP ÁN SAI BẰNG GEMINI
