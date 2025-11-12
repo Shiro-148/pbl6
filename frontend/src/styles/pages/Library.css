@@ -7,10 +7,9 @@
   width: 100%;
   margin: 0 auto;
   margin-bottom: 120px;
+  margin-top: 32px;
 }
-.main-content{
-  padding-top: 32px;
-}
+
 .library-page h1 {
   font-size: 2.5rem;
   font-weight: 700;

@@ -59,7 +59,7 @@ const AiTutor = () => {
   };
 
   return (
-    <div className="page-container ai-tutor-wrapper">
+    <div className="ai-tutor-wrapper">
       <h2>AI Tutor</h2>
       <p>Trò chuyện với AI để hiểu nghĩa, ví dụ câu, hoặc luyện tập dùng từ.</p>
 

@@ -6,7 +6,6 @@ import { useNavigate } from 'react-router-dom';
 const Register = () => {
   const navigate = useNavigate();
   const [username, setUsername] = useState('');
-  const [email, setEmail] = useState('');
   const [displayName, setDisplayName] = useState('');
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
@@ -26,7 +25,7 @@ const Register = () => {
       return;
     }
     try {
-      await apiRegister(username, password, email, displayName);
+      await apiRegister(username, password, displayName);
       setSuccess('Đăng ký thành công. Chuyển tới trang đăng nhập...');
       setTimeout(() => navigate('/login'), 1200);
     } catch (err) {
@@ -46,10 +45,6 @@ const Register = () => {
             <label>
               Tên đăng nhập
               <input value={username} onChange={(e) => setUsername(e.target.value)} type="text" placeholder="Nhập tên đăng nhập" />
-            </label>
-            <label>
-              Email (tuỳ chọn)
-              <input value={email} onChange={(e) => setEmail(e.target.value)} type="email" placeholder="Nhập email" />
             </label>
             <label>
               Tên hiển thị (tuỳ chọn)

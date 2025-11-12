@@ -5,6 +5,14 @@
   flex-direction: column;
 }
 
+:root {
+  --primary: #137fec;
+  --primary-600: #0f61c9;
+  --primary-100: #bfe3ff;
+}
+
+.font-display { font-family: 'Lexend', sans-serif; }
+
 .folders-section h2,
 .sets-section h2 {
   text-align: left;
@@ -14,16 +22,18 @@
   color: #222;
   font-family: 'Roboto', sans-serif;
 }
-
+.main-content {
+  padding-top: 0;
+}
 .create-box {
   display: flex;
   align-items: center;
   gap: 12px;
-  border: 2px dashed #b3d3f7;
+  border: 2px dashed var(--primary-100);
   background: #fafdff;
   border-radius: 14px;
   padding: 18px 22px;
-  color: #2196f3;
+  color: var(--primary);
   font-size: 1.1rem;
   cursor: pointer;
   transition: border 0.2s, background 0.2s;
@@ -32,7 +42,7 @@
 }
 
 .create-box:hover {
-  border-color: #2196f3;
+  border-color: var(--primary);
   background: #f0f7ff;
 }
 
@@ -48,7 +58,7 @@
   margin-left: auto;
   font-size: 1.5rem;
   font-weight: bold;
-  color: #2196f3;
+  color: var(--primary);
 }
 
 .floating-plus {
@@ -58,14 +68,14 @@
   width: 54px;
   height: 54px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #2196f3 60%, #43e97b 100%);
+  background: linear-gradient(135deg, var(--primary) 60%, #43e97b 100%);
   color: #fff;
   border: none;
   font-size: 2.2rem;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 16px rgba(33, 150, 243, 0.12);
+  box-shadow: 0 4px 16px rgba(19, 127, 236, 0.12);
   cursor: pointer;
   z-index: 10;
   transition: background 0.2s;
@@ -73,7 +83,7 @@
 }
 
 .floating-plus:hover {
-  background: linear-gradient(135deg, #43e97b 60%, #2196f3 100%);
+  background: linear-gradient(135deg, #43e97b 60%, var(--primary) 100%);
 }
 
 /* Responsive */
@@ -156,7 +166,7 @@
 .dialog-box {
   background: #fff;
   border-radius: 16px;
-  box-shadow: 0 4px 24px rgba(33, 150, 243, 0.12);
+  box-shadow: 0 4px 24px rgba(19, 127, 236, 0.12);
   padding: 32px 28px 24px 28px;
   min-width: 320px;
   max-width: 90vw;
@@ -169,11 +179,11 @@
   margin: 0 0 8px 0;
   font-size: 1.2rem;
   font-weight: 600;
-  color: #2196f3;
+  color: var(--primary);
 }
 .dialog-input {
   padding: 10px 14px;
-  border: 1.5px solid #b3d3f7;
+  border: 1.5px solid var(--primary-100);
   border-radius: 8px;
   font-size: 1rem;
   font-family: 'Roboto', sans-serif;
@@ -181,7 +191,7 @@
   transition: border 0.2s;
 }
 .dialog-input:focus {
-  border-color: #2196f3;
+  border-color: var(--primary);
 }
 .dialog-actions {
   display: flex;
@@ -192,7 +202,7 @@
   padding: 8px 18px;
   border-radius: 8px;
   border: none;
-  background: #2196f3;
+  background: var(--primary);
   color: #fff;
   font-size: 1rem;
   font-family: 'Roboto', sans-serif;
@@ -200,11 +210,11 @@
   transition: background 0.2s;
 }
 .dialog-btn.cancel {
-  background: #b3d3f7;
+  background: var(--primary-100);
   color: #222;
 }
 .dialog-btn:hover {
-  background: #1769aa;
+  background: var(--primary-600);
 }
 
 .dialog-box {
@@ -241,7 +251,7 @@
 }
 
 .dialog-input:focus {
-  border: 1.5px solid #2196f3;
+  border: 1.5px solid var(--primary);
   background: #fff;
 }
 

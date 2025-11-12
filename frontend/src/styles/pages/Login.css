@@ -1,6 +1,6 @@
 .login-bg {
   min-height: 100vh;
-  width: 100vw;
+  min-width: 99vw;
   background: radial-gradient(ellipse at 30% 30%, #2b3a42 60%, #1a2327 100%);
   display: flex;
   align-items: center;
@@ -64,7 +64,6 @@
 .login-welcome {
   color: #e0e0e0;
   font-size: 1.1rem;
-  margin-bottom: 24px;
 }
 .form-auth {
   display: flex;
