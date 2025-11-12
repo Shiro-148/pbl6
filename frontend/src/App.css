@@ -262,6 +262,7 @@ body {
 .main-content {
   flex: 1;
   padding-top: 32px;
+  background-color: #f8fafc;
 }
 
 .folders-section h2,
