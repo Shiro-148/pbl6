@@ -38,6 +38,7 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/create-flashcard" element={<CreateFlashcard />} />
+          <Route path="/upload-pdf" element={<UploadPDF />} />
           <Route path="/community" element={<Community />} />
           <Route path="/community-set" element={<CommunitySet />} />
           {/* <Route path="/upload-pdf" element={<UploadPDF />} />
