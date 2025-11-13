@@ -11,11 +11,23 @@ public class Flashcard {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, columnDefinition = "TEXT")
-    private String front;
+    @Column(nullable = false)
+    private String word;
 
-    @Column(nullable = false, columnDefinition = "TEXT")
-    private String back;
+    @Column(columnDefinition = "TEXT")
+    private String definition;
+
+    @Column(length = 100)
+    private String phonetic;
+
+    @Column(columnDefinition = "TEXT")
+    private String example;
+
+    @Column(length = 50)
+    private String type;
+
+    @Column(length = 500)
+    private String audio;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "set_id")
@@ -33,20 +45,52 @@ public class Flashcard {
         this.id = id;
     }
 
-    public String getFront() {
-        return front;
+    public String getWord() {
+        return word;
     }
 
-    public void setFront(String front) {
-        this.front = front;
+    public void setWord(String word) {
+        this.word = word;
     }
 
-    public String getBack() {
-        return back;
+    public String getDefinition() {
+        return definition;
     }
 
-    public void setBack(String back) {
-        this.back = back;
+    public void setDefinition(String definition) {
+        this.definition = definition;
+    }
+
+    public String getPhonetic() {
+        return phonetic;
+    }
+
+    public void setPhonetic(String phonetic) {
+        this.phonetic = phonetic;
+    }
+
+    public String getExample() {
+        return example;
+    }
+
+    public void setExample(String example) {
+        this.example = example;
+    }
+
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
+    }
+
+    public String getAudio() {
+        return audio;
+    }
+
+    public void setAudio(String audio) {
+        this.audio = audio;
     }
 
     public FlashcardSet getSet() {

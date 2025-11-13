@@ -19,6 +19,10 @@ public class FlashcardSetService {
         return repo.findAll();
     }
 
+    public List<FlashcardSet> findByFolderId(Long folderId) {
+        return repo.findByFolderId(folderId);
+    }
+
     public FlashcardSet findById(Long id) {
         return repo.findById(id).orElse(null);
     }

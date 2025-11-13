@@ -35,8 +35,10 @@ public class FlashcardController {
 
     @GetMapping("/api/cards/{id}")
     public ResponseEntity<FlashcardDto> get(@PathVariable Long id) {
-        List<Flashcard> list = service.findAllBySet(null);
-        return ResponseEntity.notFound().build();
+        Flashcard card = service.findById(id);
+        if (card == null)
+            return ResponseEntity.notFound().build();
+        return ResponseEntity.ok(toDto(card));
     }
 
     @PutMapping("/api/cards/{id}")
@@ -57,8 +59,12 @@ public class FlashcardController {
     private FlashcardDto toDto(Flashcard f) {
         FlashcardDto d = new FlashcardDto();
         d.setId(f.getId());
-        d.setFront(f.getFront());
-        d.setBack(f.getBack());
+        d.setWord(f.getWord());
+        d.setDefinition(f.getDefinition());
+        d.setPhonetic(f.getPhonetic());
+        d.setExample(f.getExample());
+        d.setType(f.getType());
+        d.setAudio(f.getAudio());
         if (f.getSet() != null)
             d.setSetId(f.getSet().getId());
         return d;
@@ -66,8 +72,12 @@ public class FlashcardController {
 
     private Flashcard fromDto(FlashcardDto d) {
         Flashcard f = new Flashcard();
-        f.setFront(d.getFront());
-        f.setBack(d.getBack());
+        f.setWord(d.getWord());
+        f.setDefinition(d.getDefinition());
+        f.setPhonetic(d.getPhonetic());
+        f.setExample(d.getExample());
+        f.setType(d.getType());
+        f.setAudio(d.getAudio());
         return f;
     }
 }

@@ -43,8 +43,18 @@ public class FlashcardService {
 
     public Flashcard update(Long id, Flashcard updated) {
         return cardRepo.findById(id).map(existing -> {
-            existing.setFront(updated.getFront());
-            existing.setBack(updated.getBack());
+            if (updated.getWord() != null)
+                existing.setWord(updated.getWord());
+            if (updated.getDefinition() != null)
+                existing.setDefinition(updated.getDefinition());
+            if (updated.getPhonetic() != null)
+                existing.setPhonetic(updated.getPhonetic());
+            if (updated.getExample() != null)
+                existing.setExample(updated.getExample());
+            if (updated.getType() != null)
+                existing.setType(updated.getType());
+            if (updated.getAudio() != null)
+                existing.setAudio(updated.getAudio());
             return cardRepo.save(existing);
         }).orElse(null);
     }

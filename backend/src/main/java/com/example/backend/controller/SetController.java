@@ -7,6 +7,7 @@ import com.example.backend.exception.ResourceNotFoundException;
 import com.example.backend.model.Flashcard;
 import com.example.backend.model.FlashcardSet;
 import com.example.backend.model.Folder;
+import com.example.backend.repository.FlashcardRepository;
 import com.example.backend.service.FlashcardSetService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -19,14 +20,22 @@ import java.util.List;
 public class SetController {
 
     private final FlashcardSetService service;
+    private final FlashcardRepository flashcardRepository;
 
-    public SetController(FlashcardSetService service) {
+    public SetController(FlashcardSetService service, FlashcardRepository flashcardRepository) {
         this.service = service;
+        this.flashcardRepository = flashcardRepository;
     }
 
     @GetMapping
-    public List<SetDto> list() {
-        return service.findAll().stream().map(this::toDto).toList();
+    public List<SetDto> list(@RequestParam(required = false) Long folderId) {
+        List<FlashcardSet> sets;
+        if (folderId != null) {
+            sets = service.findByFolderId(folderId);
+        } else {
+            sets = service.findAll();
+        }
+        return sets.stream().map(this::toDto).toList();
     }
 
     @PostMapping
@@ -81,16 +90,28 @@ public class SetController {
         d.setDescription(s.getDescription());
         if (s.getFolder() != null)
             d.setFolderId(s.getFolder().getId());
-        if (s.getCards() != null)
+        
+        // Count cards using repository to avoid lazy loading issues
+        long cardCount = flashcardRepository.countBySetId(s.getId());
+        d.setCardCount((int) cardCount);
+        
+        // Only load full cards if needed
+        if (s.getCards() != null && !s.getCards().isEmpty()) {
             d.setCards(s.getCards().stream().map(this::cardToDto).toList());
+        }
+        
         return d;
     }
 
     private FlashcardDto cardToDto(Flashcard f) {
         FlashcardDto d = new FlashcardDto();
         d.setId(f.getId());
-        d.setFront(f.getFront());
-        d.setBack(f.getBack());
+        d.setWord(f.getWord());
+        d.setDefinition(f.getDefinition());
+        d.setPhonetic(f.getPhonetic());
+        d.setExample(f.getExample());
+        d.setType(f.getType());
+        d.setAudio(f.getAudio());
         if (f.getSet() != null)
             d.setSetId(f.getSet().getId());
         return d;
