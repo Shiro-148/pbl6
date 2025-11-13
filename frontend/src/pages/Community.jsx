@@ -11,8 +11,7 @@ const communitySets = [
     rating: 4.8,
     ratingCount: 33,
     author: 'abdef...',
-    teacher: true,
-    preview: true,
+    description: 'Tiếng Anh ôn thi',
     avatar: '',
   },
   {
@@ -23,8 +22,7 @@ const communitySets = [
     rating: null,
     ratingCount: 0,
     author: 'abdef',
-    teacher: false,
-    preview: true,
+    description: 'Tiếng Anh ôn thi',
     avatar: '',
   },
   {
@@ -35,8 +33,7 @@ const communitySets = [
     rating: 4.3,
     ratingCount: 3,
     author: 'abdef...',
-    teacher: true,
-    preview: true,
+    description: 'Tiếng Anh ôn thi',
     avatar: '',
   },
   {
@@ -47,8 +44,7 @@ const communitySets = [
     rating: 5,
     ratingCount: 1,
     author: 'abdef...',
-    teacher: true,
-    preview: true,
+    description: 'Tiếng Anh ôn thi',
     avatar: '',
   },
   {
@@ -59,8 +55,7 @@ const communitySets = [
     rating: 4.5,
     ratingCount: 2,
     author: 'abdef',
-    teacher: false,
-    preview: true,
+    description: 'Tiếng Anh ôn thi',
     avatar: '',
   },
   {
@@ -71,8 +66,7 @@ const communitySets = [
     rating: 5,
     ratingCount: 1,
     author: 'abdefssssssssssssssssss',
-    teacher: true,
-    preview: true,
+    description: 'Tiếng Anh ôn thi',
     avatar: '',
   },
 ];
@@ -82,37 +76,56 @@ const Community = () => {
   return (
     <div className="community-page">
       <div className="community-header-row">
-        <h2>Học phần</h2>
-        <a href="#" className="community-view-all">
-          Xem tất cả
-        </a>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div
+            className=""
+            style={{
+              width: 56,
+              height: 56,
+              borderRadius: 12,
+              background: '#7C66EC',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <span className="material-symbols-outlined" style={{ color: '#fff', fontSize: 28 }}>
+              style
+            </span>
+          </div>
+          <div>
+            <h2>Flashcard</h2>
+            <div style={{ color: '#607d8b' }}>Tổng hợp những flashcard được chia sẻ từ cộng đồng</div>
+          </div>
+        </div>
+        <button className="community-view-all" onClick={() => navigate('/community')}>
+          Xem chi tiết
+        </button>
       </div>
+
       <div className="community-grid">
         {communitySets.map((set) => (
-          <div
-            className="community-card"
-            key={set.id}
-            onClick={() => navigate('/community-set')}
-            style={{ cursor: 'pointer' }}
-          >
-            {/* bỏ số người học hôm nay */}
+          <div key={set.id} className="community-card" onClick={() => navigate('/community-set')}>
             <div className="community-title-row">
-              <span className="community-title">
-                {set.title} <i className="bx bx-image-alt"></i>
-              </span>
+              <div className="community-title">
+                <div className="community-title-row">{set.title}</div>
+                <div className="community-trend">{set.description ? set.description : 'Không có mô tả'}</div>
+              </div>
+              <div style={{ marginLeft: 'auto' }}>
+                <span style={{ fontSize: 12, background: '#f1f5f9', padding: '6px 8px', borderRadius: 8 }}>US</span>
+              </div>
             </div>
-            <div className="community-terms-row">
-              <span className="community-terms">{set.terms} thuật ngữ</span>
-            </div>
-            {/* bỏ đánh giá */}
+
+            <div className="community-terms-row">{set.terms} từ</div>
+
             <div className="community-author-row">
               {set.avatar ? (
                 <img className="community-avatar" src={set.avatar} alt={set.author} />
               ) : (
-                <span className="community-avatar community-avatar-fallback">{set.author[0]}</span>
+                <div className="community-avatar community-avatar-fallback">{set.author[0]}</div>
               )}
-              <span className="community-author">{set.author}</span>
-              {/* bỏ tag giáo viên */}
+              <div className="community-author">{set.author}</div>
+
               <button
                 className="community-preview"
                 onClick={(e) => {
@@ -120,11 +133,38 @@ const Community = () => {
                   navigate('/community-set');
                 }}
               >
-                Xem trước
+                Xem
               </button>
             </div>
           </div>
         ))}
+      </div>
+
+      <div style={{ padding: '12px', textAlign: 'center' }}>
+        <div style={{ display: 'inline-flex', gap: 8, alignItems: 'center' }}>
+          <button className="" style={{ padding: 8, borderRadius: 8, background: '#fff' }}>
+            <span className="material-symbols-outlined">chevron_left</span>
+          </button>
+          <span>Quay về</span>
+          <button className="" style={{ padding: 8, borderRadius: 8, background: '#e6eefc' }}>
+            1
+          </button>
+          <button className="" style={{ padding: 8, borderRadius: 8, background: '#fff' }}>
+            2
+          </button>
+          <button className="" style={{ padding: 8, borderRadius: 8, background: '#fff' }}>
+            3
+          </button>
+          <span>...</span>
+          <button className="" style={{ padding: 8, borderRadius: 8, background: '#fff' }}>
+            46
+          </button>
+          <span>Tiến tới</span>
+          <button className="" style={{ padding: 8, borderRadius: 8, background: '#fff' }}>
+            <span className="material-symbols-outlined">chevron_right</span>
+          </button>
+        </div>
+        <div style={{ marginTop: 8, color: '#90a4ae' }}>Trang 1 / 46</div>
       </div>
     </div>
   );
