@@ -40,3 +40,5 @@ out/
 *.local
 *.cache
 .DS_Store
+
+backend/src/main/resources/application.properties
