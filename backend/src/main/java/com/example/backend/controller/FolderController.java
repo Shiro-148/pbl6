@@ -32,7 +32,8 @@ public class FolderController {
     public ResponseEntity<Folder> create(@RequestBody Folder f) {
         // Always assign folder to authenticated user
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth == null || !auth.isAuthenticated() || auth.getName() == null || "anonymousUser".equals(auth.getName())) {
+        if (auth == null || !auth.isAuthenticated() || auth.getName() == null
+                || "anonymousUser".equals(auth.getName())) {
             return ResponseEntity.status(401).build();
         }
         userRepo.findByUsername(auth.getName()).ifPresent(f::setUser);

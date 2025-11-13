@@ -4,239 +4,162 @@
 <head>
     <meta charset="utf-8" />
     <meta content="width=device-width, initial-scale=1.0" name="viewport" />
-    <title>FlashcardApp - Trang chủ</title>
-    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-    <link href="https://fonts.googleapis.com" rel="preconnect" />
-    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect" />
-    <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;700;900&amp;display=swap"
-        rel="stylesheet" />
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
+    <title>Tạo bộ flashcard mới</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&amp;display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet" />
+    <script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>
     <script>
         tailwind.config = {
             darkMode: "class",
             theme: {
                 extend: {
                     colors: {
-                        "primary": "#137fec",
-                        "background-light": "#f6f7f8",
-                        "background-dark": "#101922",
+                        primary: "#818cf8", // A nice, modern Indigo color
+                        "background-light": "#f8fafc", // Slate 50
+                        "background-dark": "#1e293b", // Slate 800
                     },
                     fontFamily: {
-                        "display": ["Lexend", "sans-serif"]
+                        display: ["Roboto", "sans-serif"],
                     },
                     borderRadius: {
-                        "DEFAULT": "0.25rem",
-                        "lg": "0.5rem",
-                        "xl": "0.75rem",
-                        "full": "9999px"
+                        DEFAULT: "0.75rem", // 12px
                     },
                 },
             },
-        }
+        };
     </script>
     <style>
-        .material-symbols-outlined {
-            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background-color: #d1d5db;
+            border-radius: 20px;
+        }
+
+        .dark .custom-scrollbar::-webkit-scrollbar-thumb {
+            background-color: #4b5563;
         }
     </style>
 </head>
 
-<body class="font-display bg-background-light dark:bg-background-dark">
-    <div class="relative flex h-auto min-h-screen w-full flex-col group/design-root overflow-x-hidden">
-        <div class="layout-container flex h-full grow flex-col">
-            <div
-                class="w-full bg-white dark:bg-background-dark/50 flex justify-center sticky top-0 z-50 border-b border-gray-200/50 dark:border-gray-800/50 backdrop-blur-sm">
-                <div class="layout-content-container flex flex-col w-full max-w-[1280px]">
-                    <header class="flex items-center justify-between whitespace-nowrap px-4 md:px-10 py-3">
-                        <div class="flex items-center gap-4 text-slate-900 dark:text-white">
-                            <div class="size-6 text-primary">
-                                <svg fill="currentColor" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
-                                    <path
-                                        d="M42.4379 44C42.4379 44 36.0744 33.9038 41.1692 24C46.8624 12.9336 42.2078 4 42.2078 4L7.01134 4C7.01134 4 11.6577 12.932 5.96912 23.9969C0.876273 33.9029 7.27094 44 7.27094 44L42.4379 44Z">
-                                    </path>
-                                </svg>
+<body class="font-display bg-gray-100 dark:bg-gray-900 flex items-center justify-center min-h-screen p-4">
+    <div class="bg-background-light dark:bg-background-dark rounded-xl shadow-2xl w-full max-w-lg overflow-hidden">
+        <div class="flex items-center justify-between p-6 border-b border-slate-200 dark:border-slate-700">
+            <div class="flex items-center gap-4">
+                <div class="bg-indigo-100 dark:bg-indigo-900/50 p-2 rounded-lg">
+                    <span class="material-icons-outlined text-indigo-500 dark:text-indigo-400"
+                        style="font-size: 24px;">add</span>
+                </div>
+                <h1 class="text-xl font-bold text-slate-800 dark:text-slate-100">Tạo bộ flashcard mới</h1>
+            </div>
+            <button
+                class="text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-full p-1.5">
+                <span class="material-icons-outlined" style="font-size: 24px;">close</span>
+            </button>
+        </div>
+        <div class="p-6 space-y-6 max-h-[65vh] overflow-y-auto custom-scrollbar">
+            <div>
+                <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5" for="flashcard-name">
+                    Tên bộ flashcard <span class="text-red-500">*</span>
+                </label>
+                <input
+                    class="w-full bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-600 rounded-lg placeholder-slate-400 dark:placeholder-slate-500 focus:ring-primary focus:border-primary dark:focus:ring-indigo-500 dark:focus:border-indigo-500 text-slate-900 dark:text-slate-50"
+                    id="flashcard-name" name="flashcard-name" placeholder="Ví dụ: Từ vựng TOEIC cơ bản" type="text" />
+                <p class="mt-1.5 text-xs text-slate-500 dark:text-slate-400">Đặt tên mô tả rõ ràng để dễ tìm kiếm sau
+                    này</p>
+            </div>
+            <div>
+                <div class="flex justify-between items-center mb-1.5">
+                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300" for="description">
+                        Mô tả
+                    </label>
+                    <span class="text-xs text-slate-400 dark:text-slate-500">0/200</span>
+                </div>
+                <textarea
+                    class="w-full bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-600 rounded-lg placeholder-slate-400 dark:placeholder-slate-500 focus:ring-primary focus:border-primary dark:focus:ring-indigo-500 dark:focus:border-indigo-500 resize-none text-slate-900 dark:text-slate-50"
+                    id="description" name="description" placeholder="Mô tả ngắn gọn về nội dung bộ flashcard này..."
+                    rows="3"></textarea>
+                <p class="mt-1.5 text-xs text-slate-500 dark:text-slate-400">Mô tả giúp người khác hiểu rõ hơn về nội
+                    dung</p>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5"
+                    for="folder-select">Thêm vào thư mục (tùy chọn)</label>
+                <div class="relative">
+                    <select
+                        class="w-full bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-600 rounded-lg focus:ring-primary focus:border-primary dark:focus:ring-indigo-500 dark:focus:border-indigo-500 text-slate-900 dark:text-slate-50 appearance-none pl-4 pr-10 py-2.5"
+                        id="folder-select" name="folder">
+                        <option value="">Chọn một thư mục</option>
+                        <option value="folder1">Từ vựng IELTS</option>
+                        <option value="folder2">Học tiếng Nhật N5</option>
+                        <option value="new">Tạo thư mục mới...</option>
+                    </select>
+                    <div
+                        class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-slate-500 dark:text-slate-400">
+                        <span class="material-icons-outlined" style="font-size: 20px;">unfold_more</span>
+                    </div>
+                </div>
+                <p class="mt-1.5 text-xs text-slate-500 dark:text-slate-400">Sắp xếp các bộ flashcard vào các thư mục để
+                    dễ quản lý.</p>
+            </div>
+            <div class="space-y-4">
+                <label class="block text-sm font-medium text-slate-700 dark:text-slate-300">Quyền truy cập</label>
+                <div class="relative">
+                    <input checked="" class="peer sr-only" id="public" name="access" type="radio" value="public" />
+                    <label
+                        class="flex items-start gap-4 p-4 rounded-lg border-2 border-primary bg-indigo-50 dark:bg-indigo-900/30 ring-2 ring-primary cursor-pointer"
+                        for="public">
+                        <span
+                            class="mt-1 w-5 h-5 flex items-center justify-center border-2 border-primary rounded-full">
+                            <span class="w-2.5 h-2.5 bg-primary rounded-full"></span>
+                        </span>
+                        <div>
+                            <div class="flex items-center gap-2 text-slate-800 dark:text-slate-100 font-medium">
+                                <span class="material-icons-outlined text-green-600 dark:text-green-400"
+                                    style="font-size: 20px;">public</span>
+                                <span>Công khai</span>
                             </div>
-                            <h2 class="text-lg font-bold tracking-[-0.015em] text-slate-900 dark:text-white">
-                                FlashcardApp</h2>
+                            <p class="text-sm text-slate-600 dark:text-slate-400 mt-1">Mọi người có thể tìm thấy và sử
+                                dụng bộ flashcard này</p>
                         </div>
-                        <div class="hidden md:flex flex-1 justify-end gap-2">
-                            <button
-                                class="flex min-w-[40px] max-w-[40px] cursor-pointer items-center justify-center overflow-hidden rounded-full h-10 w-10 bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white text-sm font-bold tracking-[0.015em]">
-                                <span class="material-symbols-outlined">dark_mode</span>
-                            </button>
-                            <button
-                                class="flex min-w-[40px] max-w-[40px] cursor-pointer items-center justify-center overflow-hidden rounded-full h-10 w-10 bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white text-sm font-bold tracking-[0.015em]">
-                                <img alt="User avatar" class="h-10 w-10 object-cover"
-                                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuARPvX3B4rNNF1m4Ocv6H-Kto32t1B-ol0kSHMlPsRBtGvdUU-A0MAk_1uZjsr-5fG6hNDk1Km0QZSTXVucfREz_TX1jKRVLeT8QYzBIg_aPMHNLDTxIS_iLamjiVvYQ1fvZihgys2Km73OSLousdaRK18Td7czlO5nQDlyXzRK-wZKFozQUPjrIYUy_oXkanzJJlUuY474GqlApO6tdeLTCDfQ3dMAHBKQk2h1uwgZaA3sF2sJPjLpHxgxkDXWPgaQDdp5pr3Jod25" />
-                            </button>
+                    </label>
+                </div>
+                <div class="relative">
+                    <input class="peer sr-only" id="private" name="access" type="radio" value="private" />
+                    <label
+                        class="flex items-start gap-4 p-4 rounded-lg border-2 border-slate-300 dark:border-slate-600 peer-checked:border-primary peer-checked:ring-2 peer-checked:ring-primary peer-checked:bg-indigo-50 dark:peer-checked:bg-indigo-900/30 cursor-pointer"
+                        for="private">
+                        <span
+                            class="mt-1 w-5 h-5 flex items-center justify-center border-2 border-slate-400 dark:border-slate-500 rounded-full peer-checked:border-primary">
+                            <span class="w-2.5 h-2.5 bg-transparent peer-checked:bg-primary rounded-full"></span>
+                        </span>
+                        <div>
+                            <div class="flex items-center gap-2 text-slate-800 dark:text-slate-100 font-medium">
+                                <span class="material-icons-outlined text-orange-600 dark:text-orange-400"
+                                    style="font-size: 20px;">lock</span>
+                                <span>Riêng tư</span>
+                            </div>
                         </div>
-                    </header>
+                    </label>
                 </div>
             </div>
-            <main class="flex flex-1 justify-center py-5 pb-24 md:pb-5">
-                <div class="layout-content-container flex flex-col w-full max-w-[1280px] px-4 md:px-10 gap-8">
-                    <div class="relative w-full">
-                        <span
-                            class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400">search</span>
-                        <input
-                            class="w-full h-12 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/50 pl-10 pr-4 text-slate-900 dark:text-white placeholder:text-slate-500 dark:placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/50"
-                            placeholder="Tìm kiếm thư mục, bộ thẻ..." type="text" />
-                    </div>
-                    <section>
-                        <div class="flex flex-col gap-6">
-                            <div class="flex items-center justify-between gap-4">
-                                <h2 class="text-xl font-bold text-slate-900 dark:text-white">My Folders</h2>
-                                <button
-                                    class="flex cursor-pointer items-center justify-center gap-2 overflow-hidden rounded-lg h-10 px-4 bg-primary/10 text-primary text-sm font-bold tracking-[0.015em] hover:bg-primary/20">
-                                    <span class="material-symbols-outlined">create_new_folder</span>
-                                    <span class="truncate">Create new folder</span>
-                                </button>
-                            </div>
-                            <div
-                                class="grid grid-cols-1 gap-4 @[480px]:grid-cols-2 @[864px]:grid-cols-3 @[1200px]:grid-cols-4">
-                                <div
-                                    class="flex flex-col gap-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4">
-                                    <div class="flex items-center gap-3">
-                                        <div
-                                            class="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100 text-blue-600 dark:bg-blue-900/50 dark:text-blue-400">
-                                            <span class="material-symbols-outlined">folder</span>
-                                        </div>
-                                        <div class="flex flex-col">
-                                            <h3 class="font-semibold text-slate-800 dark:text-slate-200">Lịch sử Việt
-                                                Nam</h3>
-                                            <p class="text-sm text-slate-500 dark:text-slate-400">5 sets</p>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div
-                                    class="flex flex-col gap-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4">
-                                    <div class="flex items-center gap-3">
-                                        <div
-                                            class="flex h-10 w-10 items-center justify-center rounded-lg bg-green-100 text-green-600 dark:bg-green-900/50 dark:text-green-400">
-                                            <span class="material-symbols-outlined">folder</span>
-                                        </div>
-                                        <div class="flex flex-col">
-                                            <h3 class="font-semibold text-slate-800 dark:text-slate-200">Từ vựng IELTS
-                                            </h3>
-                                            <p class="text-sm text-slate-500 dark:text-slate-400">12 sets</p>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div
-                                    class="flex flex-col gap-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4">
-                                    <div class="flex items-center gap-3">
-                                        <div
-                                            class="flex h-10 w-10 items-center justify-center rounded-lg bg-purple-100 text-purple-600 dark:bg-purple-900/50 dark:text-purple-400">
-                                            <span class="material-symbols-outlined">folder</span>
-                                        </div>
-                                        <div class="flex flex-col">
-                                            <h3 class="font-semibold text-slate-800 dark:text-slate-200">Công thức Hóa
-                                                học</h3>
-                                            <p class="text-sm text-slate-500 dark:text-slate-400">3 sets</p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </section>
-                    <section>
-                        <div class="flex flex-col gap-6">
-                            <div class="flex items-center justify-between gap-4">
-                                <h2 class="text-xl font-bold text-slate-900 dark:text-white">My Flashcard Sets</h2>
-                                <button
-                                    class="flex cursor-pointer items-center justify-center gap-2 overflow-hidden rounded-lg h-10 px-4 bg-primary text-white text-sm font-bold tracking-[0.015em] hover:bg-primary/90">
-                                    <span class="material-symbols-outlined">add</span>
-                                    <span class="truncate">Create new set</span>
-                                </button>
-                            </div>
-                            <div
-                                class="grid grid-cols-1 gap-4 @[480px]:grid-cols-2 @[864px]:grid-cols-3 @[1200px]:grid-cols-4">
-                                <div
-                                    class="flex flex-col gap-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4">
-                                    <div class="flex flex-col">
-                                        <h3 class="font-semibold text-slate-800 dark:text-slate-200">Các triều đại phong
-                                            kiến</h3>
-                                        <p class="text-sm text-slate-500 dark:text-slate-400">35 cards</p>
-                                    </div>
-                                    <div class="flex items-center gap-2">
-                                        <img alt="Creator avatar" class="h-6 w-6 rounded-full object-cover"
-                                            src="https://lh3.googleusercontent.com/aida-public/AB6AXuC0NZV2ABfdvnSAUlTmh5nJcP2rsuyhw1cEjPFiwZHsSxCdjaDUSiJdw379xrlm4JOCv0aw614y7abv2ci9Kj50Wz1VC_XK_GMlvlAgii5Yd02icINU_KjuP3rK1kL2eWa0A2bMlDHdmD_IF3EPUMgTBfYR2l-HeOmEX9bemYxKhz_WzygHhBGRW75KLNpyKhZSRywhaCWP4r4u1TR6So4AM7yRU_sExH8de2brHz3aKRSOrtz2AZ9tI_ODHHAmcwwfdx9MxeOWnnEA" />
-                                        <span class="text-sm text-slate-600 dark:text-slate-300">Bạn</span>
-                                    </div>
-                                </div>
-                                <div
-                                    class="flex flex-col gap-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4">
-                                    <div class="flex flex-col">
-                                        <h3 class="font-semibold text-slate-800 dark:text-slate-200">IELTS Speaking Part
-                                            1 - Topics</h3>
-                                        <p class="text-sm text-slate-500 dark:text-slate-400">50 cards</p>
-                                    </div>
-                                    <div class="flex items-center gap-2">
-                                        <img alt="Creator avatar" class="h-6 w-6 rounded-full object-cover"
-                                            src="https://lh3.googleusercontent.com/aida-public/AB6AXuBFJoih3ZFaJ_N-JG9osEoqmPOI-SXN3ibg7lXSN2S8mfDKEA4wc94fMKqOkQZE1f16h5q96p-BiL_SQwsu-wjPjrjDwdsa3XoW9JNPv_f1kOBrw7Qp5tF-6kGoIc5Mhg9WIA39CeQhi89Dv_GxeoL2vEioJxm7W-PmkPlaTA6oTy88ZEj26_Jd4cCmFlZ5VRlvfNe5bo05XcBJdjG5MzQfQM46tYPMwoEt9TanA68-uBqxbv4S5elZqwvG9uJkhfTu3dAh4dxrZjky" />
-                                        <span class="text-sm text-slate-600 dark:text-slate-300">Bạn</span>
-                                    </div>
-                                </div>
-                                <div
-                                    class="flex flex-col gap-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4">
-                                    <div class="flex flex-col">
-                                        <h3 class="font-semibold text-slate-800 dark:text-slate-200">Nguyên tố hóa học
-                                            (Bảng tuần hoàn)</h3>
-                                        <p class="text-sm text-slate-500 dark:text-slate-400">118 cards</p>
-                                    </div>
-                                    <div class="flex items-center gap-2">
-                                        <img alt="Creator avatar" class="h-6 w-6 rounded-full object-cover"
-                                            src="https://lh3.googleusercontent.com/aida-public/AB6AXuBbXgMbyN53MWcIxxJrdWF9m_MLLbKDDa8wEWI-A1KM3rzYPg7053Z56A6zsyeFWQF1I0-K-dGLiBr0YW4YdFOpgaSM4yOzKBJzCDxW1yAQLAJtQ1_bv5GYaHNLeG-_0G7ukOjxwyvV2CYz2tcQNdboJ1dVHo3PpiKUaLZ3KqG0BpoQUPT78v5F9khVmJst2uDbD_2SlINbpQI3CfZuPVBtc2IWPum2YkFVE-vOvjAk86LnkvepBwn4pRCTm_m45zTAs1RuPz0-M0LP" />
-                                        <span class="text-sm text-slate-600 dark:text-slate-300">Bạn</span>
-                                    </div>
-                                </div>
-                                <div
-                                    class="flex flex-col gap-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4">
-                                    <div class="flex flex-col">
-                                        <h3 class="font-semibold text-slate-800 dark:text-slate-200">Sự kiện lịch sử thế
-                                            giới</h3>
-                                        <p class="text-sm text-slate-500 dark:text-slate-400">78 cards</p>
-                                    </div>
-                                    <div class="flex items-center gap-2">
-                                        <img alt="Creator avatar" class="h-6 w-6 rounded-full object-cover"
-                                            src="https://lh3.googleusercontent.com/aida-public/AB6AXuC6dD6Ledlt24bTja509aMMhr2NlCm5jTy68b87kgzHcrUeFT1PmlLotHiEaFU9BIZP_eLxy02O9wm0unFHL7iVbrUgZfZU-yXFvKtRkt6-TVFj632_B_ED2biMcohzIZZNzJgcZkDlpA60DIDZXaDqx1s5PFQyaybgiAQcaJIj3I7BoMkFQ4W5kIQy1TFk-8bleVB_V73BP2Qtf7R762V7ED7evUVvIedk8toeOzevnE89gdW_osRe5GWptSjjtln8RXyZzcXpYdz6" />
-                                        <span class="text-sm text-slate-600 dark:text-slate-300">Bạn</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </section>
-                </div>
-            </main>
-            <nav
-                class="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-white dark:bg-background-dark border-t border-slate-200 dark:border-slate-800">
-                <div class="grid grid-cols-5 h-16">
-                    <a class="flex flex-col items-center justify-center gap-1 text-primary" href="#">
-                        <span class="material-symbols-outlined">home</span>
-                        <span class="text-xs font-medium">Home</span>
-                    </a>
-                    <a class="flex flex-col items-center justify-center gap-1 text-slate-600 dark:text-slate-400 hover:text-primary dark:hover:text-primary"
-                        href="#">
-                        <span class="material-symbols-outlined">folder</span>
-                        <span class="text-xs font-medium">Library</span>
-                    </a>
-                    <a class="flex flex-col items-center justify-center gap-1 text-slate-600 dark:text-slate-400 hover:text-primary dark:hover:text-primary"
-                        href="#">
-                        <span class="material-symbols-outlined">group</span>
-                        <span class="text-xs font-medium">Community</span>
-                    </a>
-                    <a class="flex flex-col items-center justify-center gap-1 text-slate-600 dark:text-slate-400 hover:text-primary dark:hover:text-primary"
-                        href="#">
-                        <span class="material-symbols-outlined">smart_toy</span>
-                        <span class="text-xs font-medium">AI Tutor</span>
-                    </a>
-                    <a class="flex flex-col items-center justify-center gap-1 text-slate-600 dark:text-slate-400 hover:text-primary dark:hover:text-primary"
-                        href="#">
-                        <span class="material-symbols-outlined">info</span>
-                        <span class="text-xs font-medium">About</span>
-                    </a>
-                </div>
-            </nav>
+        </div>
+        <div
+            class="flex justify-end items-center gap-3 p-6 bg-slate-50 dark:bg-slate-800/50 border-t border-slate-200 dark:border-slate-700">
+            <button
+                class="px-6 py-2.5 text-sm font-semibold text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-600 transition-colors">
+                Hủy
+            </button>
+            <button
+                class="px-6 py-2.5 text-sm font-semibold text-white bg-primary rounded-lg hover:bg-indigo-500 transition-colors">
+                Tạo flashcard
+            </button>
         </div>
     </div>
 </body>

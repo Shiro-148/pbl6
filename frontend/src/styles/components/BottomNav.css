@@ -10,7 +10,7 @@
   justify-content: space-between;
   align-items: center;
   padding: 8px;
-  z-index: 100;
+  z-index: 10;
   width: 100%;
   max-width: 450px;
   margin: 0 auto;

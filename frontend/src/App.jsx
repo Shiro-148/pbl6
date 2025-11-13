@@ -15,6 +15,7 @@ import Share from './pages/Share';
 import AiTutor from './pages/AiTutor';
 import Group from './pages/Group';
 import Library from './pages/Library';
+import FlashcardSetDetail from './pages/FlashcardSetDetail';
 import GameSelect from './pages/GameSelect';
 import MatchGame from './pages/MatchGame';
 import MultipleChoice from './pages/MultipleChoice';
@@ -32,6 +33,7 @@ function App() {
           <Route path="/" element={<Home />} />
           <Route path="/about" element={<About />} />
           <Route path="/library" element={<Library />} />
+          <Route path="/sets/:id" element={<FlashcardSetDetail />} />
           <Route path="/study" element={<Study />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
