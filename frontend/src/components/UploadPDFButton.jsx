@@ -1,75 +1,91 @@
-import React, { useRef, useState, forwardRef, useImperativeHandle } from 'react';
-import { getToken } from '../services/auth';
+import React, { useImperativeHandle, useRef } from 'react';
 
-const UploadPDFButton = forwardRef(({ onResult, className, style, buttonLabel }, ref) => {
+// Simple UploadPDFButton replacement: exposes `open()` via ref and
+// reads plain text files, calling `onResult({ rawText })`.
+// For non-text files (e.g. PDF) it returns `{ fileName, fileType }` so
+// callers can handle server-side processing if needed.
+const UploadPDFButton = React.forwardRef(function UploadPDFButton({ onResult }, ref) {
   const inputRef = useRef(null);
-  const [loading, setLoading] = useState(false);
-
-  const handleClick = () => inputRef.current && inputRef.current.click();
 
   useImperativeHandle(ref, () => ({
-    open: () => handleClick(),
+    open: () => {
+      if (inputRef.current) inputRef.current.click();
+    },
   }));
 
-  const handleFile = async (e) => {
-    const file = e.target.files && e.target.files[0];
-    if (!file) return;
-    setLoading(true);
-    try {
-      const form = new FormData();
-      form.append('file', file);
+  const handleFiles = async (files) => {
+    if (!files || files.length === 0) return onResult && onResult(null);
+    const file = files[0];
+    const type = file.type || '';
+    const name = file.name || 'file';
 
-      // Use explicit API base (VITE_API_BASE) to avoid relying on dev-server proxy
-      const API = import.meta.env.VITE_API_BASE || 'http://localhost:8080';
-      const token = getToken();
-      if (!token) {
-        // immediate user-friendly message instead of letting the request fail with 403
-        throw new Error('Bạn cần đăng nhập trước khi upload PDF. Vui lòng đăng nhập rồi thử lại.');
-      }
-
-      const headers = { Authorization: `Bearer ${token}` };
-
-      const res = await fetch(`${API}/api/pdf/upload`, {
-        method: 'POST',
-        body: form,
-        headers,
-      });
-
-      if (!res.ok) {
-        const txt = await res.text().catch(() => res.statusText || '');
-        const message = txt || `Upload failed (${res.status})`;
-        // surface 403 specifically to help debugging authentication issues
-        if (res.status === 403 || res.status === 401) {
-          throw new Error('Upload bị từ chối: ' + message + '. Hãy kiểm tra quyền hoặc token.');
-        }
-        throw new Error(message || 'Upload failed');
-      }
-
-      const data = await res.json();
-      // data expected { rawText, wordCountEstimate }
-      onResult && onResult(data);
-    } catch (err) {
-      console.error('Upload error', err);
-      alert('Không thể upload file PDF: ' + err.message);
-    } finally {
-      setLoading(false);
-      e.target.value = null; // reset input
+    if (type.startsWith('text') || /\.(txt|md|csv)$/i.test(name)) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const rawText = String(reader.result || '');
+        onResult && onResult({ rawText, fileName: name, fileType: type });
+      };
+      reader.onerror = () => onResult && onResult(null);
+      reader.readAsText(file);
+      return;
     }
+
+    // Try extracting text from PDF client-side using pdfjs-dist
+    if (type === 'application/pdf' || /\.pdf$/i.test(name)) {
+      try {
+        const arrayBuf = await file.arrayBuffer();
+        const pdfjs = await import('pdfjs-dist/legacy/build/pdf');
+        // Set workerSrc for pdfjs (vite will handle bundling)
+        try {
+          pdfjs.GlobalWorkerOptions.workerSrc = await import('pdfjs-dist/build/pdf.worker.entry');
+        } catch (e) {
+          // ignore if worker import fails; pdfjs may still work
+        }
+        const loadingTask = pdfjs.getDocument({ data: arrayBuf });
+        const pdf = await loadingTask.promise;
+        let rawText = '';
+        for (let i = 1; i <= pdf.numPages; i++) {
+          const page = await pdf.getPage(i);
+          const content = await page.getTextContent();
+          const pageText = content.items.map((it) => it.str).join(' ');
+          rawText += '\n' + pageText;
+        }
+        onResult && onResult({ rawText: rawText.trim(), fileName: name, fileType: type });
+        return;
+      } catch (err) {
+        console.error('PDF text extraction failed:', err);
+        // fallback to returning basic info
+        onResult && onResult({ fileName: name, fileType: type });
+        return;
+      }
+    }
+
+    // For other unknown types, return basic info
+    onResult && onResult({ fileName: name, fileType: type });
   };
 
   return (
     <>
-      <button className={className || 'btn-import'} type="button" onClick={handleClick} disabled={loading} style={style}>
-        <i className="bx bxs-file-pdf" style={{ fontSize: '1.2em', marginRight: '8px' }}></i>
-        {loading ? (buttonLabel || 'Đang tải...') : (buttonLabel || 'Nhập từ PDF')}
-      </button>
       <input
         ref={inputRef}
         type="file"
-        accept="application/pdf"
+        accept=".pdf,text/plain,.txt,.md,.csv"
         style={{ display: 'none' }}
-        onChange={handleFile}
+        onChange={(e) => {
+          handleFiles(e.target.files);
+          // reset so same file can be selected again
+          e.target.value = '';
+        }}
       />
+      <button
+        type="button"
+        className="btn-outline"
+        onClick={() => {
+          if (inputRef.current) inputRef.current.click();
+        }}
+      >
+        Upload PDF / Text
+      </button>
     </>
   );
 });
