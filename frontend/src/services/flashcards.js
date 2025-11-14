@@ -51,16 +51,49 @@ export async function createCard(setId, front, back) {
 
 export async function enrichWords(textOrWords) {
   const body = typeof textOrWords === 'string' ? { text: textOrWords } : { words: textOrWords };
-  const res = await authFetch(`${API}/api/flashcards/enrich`, {
+  const backendUrl = `${API}/api/flashcards/enrich`;
+
+  // Try backend first (with auth) so deployments that enforce security keep working
+  try {
+    const res = await authFetch(backendUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    if (res.ok) return res.json();
+
+    const txt = await res.text().catch(() => res.statusText);
+    const status = res.status;
+    // For auth errors fall back to model_service, else throw immediately
+    if (status !== 401 && status !== 403) {
+      throw new Error(`${status} ${txt}`);
+    }
+    console.warn(`enrichWords: backend responded ${status}, trying model_service fallback`);
+  } catch (err) {
+    // Only log here; we'll attempt fallback below
+    console.warn('enrichWords: backend call failed, trying model_service fallback', err);
+  }
+
+  // Fallback: call model_service directly (dev helper)
+  const MODEL_BASE = import.meta.env.VITE_MODEL_SERVICE_BASE || 'http://localhost:5000';
+  const modelUrl = `${MODEL_BASE}/flashcards`;
+  // model_service expects raw text, so collapse words list into a string if needed
+  const fallbackPayload = (() => {
+    if (body.text) return { text: body.text };
+    if (Array.isArray(body.words)) return { text: body.words.filter(Boolean).join(' ') };
+    return { text: '' };
+  })();
+
+  const resp = await fetch(modelUrl, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
+    body: JSON.stringify(fallbackPayload),
   });
-  if (!res.ok) {
-    const txt = await res.text().catch(() => res.statusText);
-    throw new Error(`${res.status} ${txt}`);
+  if (!resp.ok) {
+    const txt = await resp.text().catch(() => resp.statusText);
+    throw new Error(`Model service failed (${resp.status} ${txt}) after backend fallback`);
   }
-  return res.json();
+  return resp.json();
 }
 
 export async function deleteSet(setId) {
