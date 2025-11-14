@@ -1,6 +1,7 @@
 package com.example.backend.service;
 
 import com.example.backend.model.Folder;
+import com.example.backend.model.User;
 import com.example.backend.repository.FolderRepository;
 import org.springframework.stereotype.Service;
 
@@ -16,6 +17,14 @@ public class FolderService {
 
     public List<Folder> findAll() {
         return repo.findAll();
+    }
+
+    public List<Folder> findByUser(User user) {
+        return repo.findByUser(user);
+    }
+
+    public List<Folder> findByUserId(Long userId) {
+        return repo.findByUserId(userId);
     }
 
     public Folder findById(Long id) {

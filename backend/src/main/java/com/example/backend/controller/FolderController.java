@@ -25,7 +25,16 @@ public class FolderController {
 
     @GetMapping
     public List<Folder> list() {
-        return service.findAll();
+        // Get current authenticated user and return only their folders
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated() || auth.getName() == null
+                || "anonymousUser".equals(auth.getName())) {
+            return List.of();
+        }
+        
+        return userRepo.findByUsername(auth.getName())
+                .map(user -> service.findByUser(user))
+                .orElse(List.of());
     }
 
     @PostMapping
