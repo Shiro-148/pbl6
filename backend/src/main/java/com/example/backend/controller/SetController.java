@@ -7,13 +7,19 @@ import com.example.backend.exception.ResourceNotFoundException;
 import com.example.backend.model.Flashcard;
 import com.example.backend.model.FlashcardSet;
 import com.example.backend.model.Folder;
+import com.example.backend.model.User;
 import com.example.backend.repository.FlashcardRepository;
+import com.example.backend.repository.UserRepository;
 import com.example.backend.service.FlashcardSetService;
+import com.example.backend.service.FolderService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/sets")
@@ -21,19 +27,42 @@ public class SetController {
 
     private final FlashcardSetService service;
     private final FlashcardRepository flashcardRepository;
+    private final UserRepository userRepository;
+    private final FolderService folderService;
 
-    public SetController(FlashcardSetService service, FlashcardRepository flashcardRepository) {
+    public SetController(FlashcardSetService service, FlashcardRepository flashcardRepository,
+                        UserRepository userRepository, FolderService folderService) {
         this.service = service;
         this.flashcardRepository = flashcardRepository;
+        this.userRepository = userRepository;
+        this.folderService = folderService;
     }
 
     @GetMapping
     public List<SetDto> list(@RequestParam(required = false) Long folderId) {
+        // Lấy user hiện tại từ JWT
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String username = auth.getName();
+        User currentUser = userRepository.findByUsername(username)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found: " + username));
+        
         List<FlashcardSet> sets;
         if (folderId != null) {
+            // Kiểm tra folder có thuộc về user hiện tại không
+            Folder folder = folderService.findById(folderId);
+            if (folder == null || !folder.getUser().getId().equals(currentUser.getId())) {
+                throw new ResourceNotFoundException("Folder not found or access denied: " + folderId);
+            }
             sets = service.findByFolderId(folderId);
         } else {
-            sets = service.findAll();
+            // Lấy tất cả folders của user
+            List<Folder> userFolders = folderService.findByUser(currentUser);
+            List<Long> folderIds = userFolders.stream().map(Folder::getId).collect(Collectors.toList());
+            
+            // Lấy tất cả sets thuộc các folders của user
+            sets = service.findAll().stream()
+                    .filter(set -> set.getFolder() != null && folderIds.contains(set.getFolder().getId()))
+                    .collect(Collectors.toList());
         }
         return sets.stream().map(this::toDto).toList();
     }

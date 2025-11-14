@@ -5,11 +5,12 @@ import SetList from './SetList';
 import CreateSetDialog from '../components/CreateSetDialog';
 import { listFolders, deleteFolder, createFolder } from '../services/folders';
 import { getToken } from '../services/auth';
-import { createSet } from '../services/flashcards';
+import { createSet, listSets } from '../services/flashcards';
 
 export default function Library() {
   const [selectedFolder, setSelectedFolder] = useState(null);
   const [folders, setFolders] = useState([]);
+  const [sets, setSets] = useState([]);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [folderToDelete, setFolderToDelete] = useState(null);
   const [showCreateSet, setShowCreateSet] = useState(false);
@@ -31,8 +32,19 @@ export default function Library() {
     }
   };
 
+  const loadSets = async () => {
+    try {
+      const allSets = await listSets();
+      setSets(allSets || []);
+    } catch (error) {
+      console.error('Error loading sets:', error);
+      setSets([]);
+    }
+  };
+
   useEffect(() => {
     loadFolders();
+    loadSets();
   }, []);
 
   const navigate = useNavigate();
@@ -137,38 +149,40 @@ export default function Library() {
             </div>
 
             <div className="grid grid-cols-1 gap-4 @[480px]:grid-cols-2 @[864px]:grid-cols-3 @[1200px]:grid-cols-4">
-              <div
-                role="button"
-                tabIndex={0}
-                onClick={() => navigate('/sets/1')}
-                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') navigate('/sets/1'); }}
-                className="flex flex-col gap-4 rounded-xl border border-slate-200 bg-white p-4 cursor-pointer"
-              >
-                <div className="flex flex-col">
-                  <h3 className="font-semibold text-slate-800">Các triều đại phong kiến</h3>
-                  <p className="text-sm text-slate-500">35 cards</p>
+              {sets
+                .filter(set => {
+                  // Lọc các sets có folderId thuộc về folders của user hiện tại
+                  if (!set.folderId) return false;
+                  return folders.some(folder => folder.id === set.folderId);
+                })
+                .map((set) => (
+                  <div
+                    key={set.id}
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => navigate(`/sets/${set.id}`)}
+                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') navigate(`/sets/${set.id}`); }}
+                    className="flex flex-col gap-4 rounded-xl border border-slate-200 bg-white p-4 cursor-pointer hover:shadow-md transition-shadow"
+                  >
+                    <div className="flex flex-col">
+                      <h3 className="font-semibold text-slate-800">{set.title}</h3>
+                      <p className="text-sm text-slate-500">{set.flashcards?.length || 0} cards</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <img 
+                        alt="Creator avatar" 
+                        className="h-6 w-6 rounded-full object-cover bg-slate-200" 
+                        src="https://ui-avatars.com/api/?name=User&background=3b82f6&color=fff&size=24"
+                      />
+                      <span className="text-sm text-slate-600">Bạn</span>
+                    </div>
+                  </div>
+                ))}
+              {sets.filter(set => set.folderId && folders.some(f => f.id === set.folderId)).length === 0 && (
+                <div className="col-span-full text-center py-8 text-slate-500">
+                  Chưa có bộ thẻ nào trong các thư mục của bạn.
                 </div>
-                <div className="flex items-center gap-2">
-                  <img alt="Creator avatar" className="h-6 w-6 rounded-full object-cover" src={null} />
-                  <span className="text-sm text-slate-600">Bạn</span>
-                </div>
-              </div>
-              <div
-                role="button"
-                tabIndex={0}
-                onClick={() => navigate('/sets/2')}
-                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') navigate('/sets/2'); }}
-                className="flex flex-col gap-4 rounded-xl border border-slate-200 bg-white p-4 cursor-pointer"
-              >
-                <div className="flex flex-col">
-                  <h3 className="font-semibold text-slate-800">IELTS Speaking Part 1 - Topics</h3>
-                  <p className="text-sm text-slate-500">50 cards</p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <img alt="Creator avatar" className="h-6 w-6 rounded-full object-cover" src={null} />
-                  <span className="text-sm text-slate-600">Bạn</span>
-                </div>
-              </div>
+              )}
             </div>
           </div>
         </section>

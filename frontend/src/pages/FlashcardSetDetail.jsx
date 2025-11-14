@@ -168,6 +168,22 @@ export default function FlashcardSetDetail() {
     };
   }, [id]);
 
+  // Function to reload cards
+  const reloadCards = async () => {
+    try {
+      const cs = await listCards(id);
+      const mappedCards = (Array.isArray(cs) ? cs : cs.cards || []).map(card => ({
+        ...card,
+        front: card.word || card.front || '',
+        back: card.definition || card.back || '',
+        example: card.example || ''
+      }));
+      setCards(mappedCards);
+    } catch (err) {
+      console.error('Failed to reload cards:', err);
+    }
+  };
+
   // Moved UploadModal and AddWordModal into standalone components
 
   // Level chooser logic (copied/adapted from CreateFlashcard)
@@ -437,7 +453,13 @@ export default function FlashcardSetDetail() {
         />
       )}
       {showAddWordModal && (
-        <AddWordModal newCards={newCards} setNewCards={setNewCards} setShowAddWordModal={setShowAddWordModal} id={id} />
+        <AddWordModal 
+          newCards={newCards} 
+          setNewCards={setNewCards} 
+          setShowAddWordModal={setShowAddWordModal} 
+          id={id}
+          onCardsCreated={reloadCards}
+        />
       )}
       {showUploadResult && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
