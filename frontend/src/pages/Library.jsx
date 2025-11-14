@@ -149,7 +149,7 @@ export default function Library() {
                   <p className="text-sm text-slate-500">35 cards</p>
                 </div>
                 <div className="flex items-center gap-2">
-                  <img alt="Creator avatar" className="h-6 w-6 rounded-full object-cover" src="" />
+                  <img alt="Creator avatar" className="h-6 w-6 rounded-full object-cover" src={null} />
                   <span className="text-sm text-slate-600">Bạn</span>
                 </div>
               </div>
@@ -165,7 +165,7 @@ export default function Library() {
                   <p className="text-sm text-slate-500">50 cards</p>
                 </div>
                 <div className="flex items-center gap-2">
-                  <img alt="Creator avatar" className="h-6 w-6 rounded-full object-cover" src="" />
+                  <img alt="Creator avatar" className="h-6 w-6 rounded-full object-cover" src={null} />
                   <span className="text-sm text-slate-600">Bạn</span>
                 </div>
               </div>

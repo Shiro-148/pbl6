@@ -1,9 +1,11 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { useParams, useNavigate } from 'react-router-dom';
 import { authFetch } from '../services/auth';
 import { listCards } from '../services/flashcards';
+import flashcardsService from '../services/flashcards';
+import UploadPDFButton from '../components/UploadPDFButton';
 import '../styles/pages/FlashcardSetDetail.css';
-
 
 export default function FlashcardSetDetail() {
   const { id } = useParams();
@@ -12,11 +14,69 @@ export default function FlashcardSetDetail() {
   const [cards, setCards] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showUploadModal, setShowUploadModal] = useState(false);
-  const [uploadFile, setUploadFile] = useState(null);
-  const [uploadTitle, setUploadTitle] = useState('');
-  const [uploadDescription, setUploadDescription] = useState('');
+
   const [showAddWordModal, setShowAddWordModal] = useState(false);
   const [newCards, setNewCards] = useState([]);
+  const [uploadEntries, setUploadEntries] = useState([]);
+  const [enrichingUpload, setEnrichingUpload] = useState(false);
+  const [showUploadResult, setShowUploadResult] = useState(false);
+  const [uploadResultTitle, setUploadResultTitle] = useState('');
+  const [uploadResultMessage, setUploadResultMessage] = useState('');
+  const [uploadResultIsError, setUploadResultIsError] = useState(false);
+  const [showLevelDialog, setShowLevelDialog] = useState(false);
+  const [selectedLevels, setSelectedLevels] = useState([]);
+  const [classifyResults, setClassifyResults] = useState(null);
+  const uploadRef = useRef(null);
+
+  const handleUploadResult = (data) => {
+    if (!data) return;
+
+    // Normalize classify array
+    let classify = null;
+    if (data.classify) {
+      if (Array.isArray(data.classify)) classify = data.classify;
+      else if (Array.isArray(data.classify.words)) classify = data.classify.words;
+      else if (Array.isArray(data.classify.words?.words)) classify = data.classify.words.words;
+    }
+
+    const flash = data.flashcards && data.flashcards.entries ? data.flashcards.entries : data.flashcards || null;
+
+    if (classify && classify.length) {
+      // Nếu có kết quả phân loại, mở dialog chọn cấp độ
+      setClassifyResults({ classify, flash });
+      setSelectedLevels([]);
+      setShowLevelDialog(true);
+      return;
+    }
+
+    if (flash && flash.length) {
+      const imported = flash.map((f) => ({ front: f.word || f.term || '', back: f.definition || '', example: '' }));
+      if (imported.length) {
+        setUploadEntries(imported);
+        setShowUploadModal(true);
+      }
+      return;
+    }
+
+    if (data.rawText) {
+      const text = String(data.rawText || '');
+      const tokens = text
+        .replace(/[^A-Za-zÀ-ỹ0-9\s]/g, ' ')
+        .split(/\s+/)
+        .map((t) => t.trim())
+        .filter(Boolean);
+      const uniq = Array.from(new Set(tokens.map((t) => t)));
+      const words = uniq.slice(0, 200).map((w) => ({ front: w, back: '', example: '' }));
+      if (words.length) {
+        setUploadEntries(words);
+        setShowUploadModal(true);
+      }
+      return;
+    }
+
+    // no useful data
+    setShowUploadModal(false);
+  };
 
   useEffect(() => {
     let mounted = true;
@@ -48,12 +108,20 @@ export default function FlashcardSetDetail() {
     };
 
     load();
-    return () => { mounted = false; };
+    return () => {
+      mounted = false;
+    };
   }, [id]);
 
   const UploadModal = () => (
     <div>
-      <div className="fixed inset-0 z-40 bg-gray-900/50" onClick={() => setShowUploadModal(false)} />
+      <div
+        className="fixed inset-0 z-40 bg-gray-900/50"
+        onClick={() => {
+          setShowUploadModal(false);
+          setUploadEntries([]);
+        }}
+      />
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
         <div
           aria-labelledby="modal-title"
@@ -68,7 +136,10 @@ export default function FlashcardSetDetail() {
             </h1>
             <button
               className="p-2 rounded-full hover:bg-gray-100 transition-colors"
-              onClick={() => setShowUploadModal(false)}
+              onClick={() => {
+                setShowUploadModal(false);
+                setUploadEntries([]);
+              }}
               aria-label="Close upload dialog"
             >
               <span className="material-symbols-outlined text-gray-600">close</span>
@@ -76,40 +147,75 @@ export default function FlashcardSetDetail() {
           </div>
 
           <div className="flex-1 px-4 md:px-6 py-6">
-            <div className="flex flex-col gap-6">
-              <label className="flex w-full flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-gray-300 bg-gray-50 py-10 text-center cursor-pointer hover:border-primary hover:bg-primary/5">
-                <input
-                  type="file"
-                  accept="application/pdf"
-                  className="hidden"
-                  onChange={(e) => setUploadFile(e.target.files?.[0] || null)}
-                />
-                <span className="material-symbols-outlined text-4xl text-primary">upload_file</span>
-                <span className="text-lg font-bold text-gray-800">Nhập từ PDF</span>
-                <span className="text-sm text-gray-500">Kéo và thả hoặc nhấp để tải lên</span>
-                {uploadFile && <span className="text-sm text-slate-600 mt-2">Chọn: {uploadFile.name}</span>}
-              </label>
+            <div className="flex flex-col gap-4">
+              {uploadEntries && uploadEntries.length > 0 && (
+                <div className="mt-4 border rounded p-3 bg-white">
+                  <h4 className="font-medium mb-2">Từ được nhận dạng (chỉnh sửa trước khi lưu)</h4>
+                  <div className="space-y-3 max-h-60 overflow-auto">
+                    {uploadEntries.map((entry, idx) => (
+                      <div key={idx} className="grid grid-cols-1 sm:grid-cols-2 gap-3 items-start">
+                        <div>
+                          <label className="text-sm text-gray-600 pb-1">Mặt trước</label>
+                          <input
+                            value={entry.front}
+                            onChange={(e) => {
+                              const v = e.target.value;
+                              setUploadEntries((prev) => prev.map((it, i) => (i === idx ? { ...it, front: v } : it)));
+                            }}
+                            className="form-input rounded-lg p-2 border w-full"
+                            placeholder="Mặt trước"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-sm text-gray-600 pb-1">Mặt sau</label>
+                          <input
+                            value={entry.back}
+                            onChange={(e) => {
+                              const v = e.target.value;
+                              setUploadEntries((prev) => prev.map((it, i) => (i === idx ? { ...it, back: v } : it)));
+                            }}
+                            className="form-input rounded-lg p-2 border w-full"
+                            placeholder="Mặt sau"
+                          />
+                        </div>
 
-              <div className="flex flex-col gap-4">
-                <label className="flex flex-col w-full">
-                  <span className="sr-only">Từ vựng</span>
-                  <input
-                    className="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-gray-800 focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-gray-300 bg-white h-12 placeholder:text-gray-500 px-4 text-base font-normal leading-normal"
-                    placeholder="Từ vựng"
-                    value={uploadTitle}
-                    onChange={(e) => setUploadTitle(e.target.value)}
-                  />
-                </label>
-                <label className="flex flex-col w-full">
-                  <span className="sr-only">Định nghĩa</span>
-                  <textarea
-                    className="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-gray-800 focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-gray-300 bg-white min-h-24 placeholder:text-gray-500 p-4 text-base font-normal leading-normal"
-                    placeholder="Định nghĩa"
-                    value={uploadDescription}
-                    onChange={(e) => setUploadDescription(e.target.value)}
-                  />
-                </label>
-              </div>
+                        <div className="col-span-1 sm:col-span-2">
+                          <label className="text-sm text-gray-600 pb-1">Ví dụ (tùy chọn)</label>
+                          <div className="flex items-start gap-2">
+                            <textarea
+                              value={entry.example || ''}
+                              onChange={(e) => {
+                                const v = e.target.value;
+                                setUploadEntries((prev) =>
+                                  prev.map((it, i) => (i === idx ? { ...it, example: v } : it)),
+                                );
+                              }}
+                              className="form-input rounded-lg p-2 border w-full min-h-[80px]"
+                              placeholder="Thêm câu ví dụ..."
+                            />
+                          </div>
+                          <div className="flex flex-col justify-start">
+                            <button
+                              className="text-sm text-red-600 mt-1 text-right"
+                              onClick={() => setUploadEntries((prev) => prev.filter((_, i) => i !== idx))}
+                            >
+                              Xóa
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="mt-3">
+                    <button
+                      className="px-3 py-1 bg-gray-100 rounded"
+                      onClick={() => setUploadEntries((prev) => [...prev, { front: '', back: '', example: '' }])}
+                    >
+                      Thêm thẻ
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
@@ -122,16 +228,73 @@ export default function FlashcardSetDetail() {
             </button>
             <button
               className="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 px-4 bg-white text-primary border border-primary text-sm font-bold leading-normal tracking-[0.015em] hover:bg-primary/10 transition-colors whitespace-nowrap"
-              onClick={() => {
-                alert('Bổ sung định nghĩa tự động - chưa triển khai');
+              onClick={async () => {
+                // Enrich definitions for the extracted upload entries
+                if (!uploadEntries || uploadEntries.length === 0) {
+                  setUploadResultTitle('Không có từ');
+                  setUploadResultMessage('Không có từ nào được trích xuất để bổ sung định nghĩa.');
+                  setUploadResultIsError(true);
+                  setShowUploadResult(true);
+                  return;
+                }
+                try {
+                  setEnrichingUpload(true);
+                  const sel = uploadEntries.map((e) => e.front);
+                  const res = await flashcardsService.enrichWords(sel);
+                  const list = res.flashcards || res.entries || res;
+                  // map definitions back to uploadEntries
+                  setUploadEntries((prev) => prev.map((e) => {
+                    const found = list && list.find((x) => ((x.word || x.term || '') || '').toLowerCase() === (e.front || '').toLowerCase());
+                    if (found) return { ...e, back: e.back || found.definition || (found.examples && found.examples[0]) || '' };
+                    return e;
+                  }));
+                  const count = list
+                    ? uploadEntries.reduce((acc, ue) => acc + (list.find((x) => ((x.word || x.term || '') || '').toLowerCase() === (ue.front || '').toLowerCase()) ? 1 : 0), 0)
+                    : 0;
+                  if (count) {
+                    setUploadResultTitle('Hoàn tất');
+                    setUploadResultMessage(`Đã bổ sung định nghĩa cho ${count} từ.`);
+                    setUploadResultIsError(false);
+                  } else {
+                    setUploadResultTitle('Không có định nghĩa');
+                    setUploadResultMessage('Không tìm thấy định nghĩa cho các từ đã trích xuất.');
+                    setUploadResultIsError(true);
+                  }
+                  setShowUploadResult(true);
+                } catch (err) {
+                  console.error('Enrich upload entries failed', err);
+                  setUploadResultTitle('Lỗi');
+                  setUploadResultMessage('Lỗi khi bổ sung định nghĩa: ' + (err.message || err));
+                  setUploadResultIsError(true);
+                  setShowUploadResult(true);
+                } finally {
+                  setEnrichingUpload(false);
+                }
               }}
+              disabled={enrichingUpload}
             >
-              <span className="truncate">Bổ sung định nghĩa tự động</span>
+              <span className="truncate">{enrichingUpload ? 'Đang bổ sung...' : 'Bổ sung định nghĩa tự động'}</span>
             </button>
             <button
               className="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center gap-2 overflow-hidden rounded-lg h-10 px-4 bg-primary text-white text-sm font-bold leading-normal tracking-[0.015em] hover:bg-primary/90 transition-colors"
               onClick={() => {
-                console.log('Upload PDF for set', id, { uploadFile, uploadTitle, uploadDescription });
+                // Nếu có uploadEntries thì thêm vào newCards và đóng modal
+                if (uploadEntries && uploadEntries.length) {
+                  const cleaned = uploadEntries
+                    .map((e) => ({
+                      front: (e.front || '').trim(),
+                      back: (e.back || '').trim(),
+                      example: (e.example || '').trim(),
+                      level: e.level,
+                    }))
+                    .filter((e) => e.front);
+                  if (cleaned.length) setNewCards((prev) => [...prev, ...cleaned]);
+                  setUploadEntries([]);
+                  setShowUploadModal(false);
+                  return;
+                }
+
+                console.log('Upload PDF for set', id);
                 setShowUploadModal(false);
               }}
             >
@@ -189,13 +352,17 @@ export default function FlashcardSetDetail() {
                 />
               </div>
               <div className="col-span-2 flex justify-end">
-                <button className="text-sm text-red-600" onClick={() => removeAt(idx)}>Xóa</button>
+                <button className="text-sm text-red-600" onClick={() => removeAt(idx)}>
+                  Xóa
+                </button>
               </div>
             </div>
           ))}
 
           <div className="flex gap-2">
-            <button className="px-4 py-2 bg-gray-100 rounded" onClick={addBlank}>Thêm thẻ</button>
+            <button className="px-4 py-2 bg-gray-100 rounded" onClick={addBlank}>
+              Thêm thẻ
+            </button>
           </div>
         </div>
       );
@@ -213,7 +380,9 @@ export default function FlashcardSetDetail() {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between p-4 md:p-6 border-b border-gray-200 sticky top-0 bg-white z-10">
-              <h1 className="text-2xl font-bold text-gray-900" id="add-modal-title">Thêm từ vựng mới</h1>
+              <h1 className="text-2xl font-bold text-gray-900" id="add-modal-title">
+                Thêm từ vựng mới
+              </h1>
               <button className="p-2 rounded-full hover:bg-gray-100" onClick={() => setShowAddWordModal(false)}>
                 <span className="material-symbols-outlined text-gray-600">close</span>
               </button>
@@ -240,8 +409,11 @@ export default function FlashcardSetDetail() {
                       className="flex w-full sm:w-auto items-center justify-center gap-2 py-2 px-5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-bold"
                       onClick={() => {
                         if (!aiInput) return alert('Vui lòng nhập dữ liệu để tạo bằng AI');
-                        const parts = aiInput.split(/\n|\.|,|;/).map(s => s.trim()).filter(Boolean);
-                        const created = parts.map(p => ({ front: p, back: '' }));
+                        const parts = aiInput
+                          .split(/\n|\.|,|;/)
+                          .map((s) => s.trim())
+                          .filter(Boolean);
+                        const created = parts.map((p) => ({ front: p, back: '' }));
                         setNewCards((prev) => [...prev, ...created]);
                         setAiInput('');
                       }}
@@ -260,9 +432,7 @@ export default function FlashcardSetDetail() {
                     </button>
                   </div>
 
-                  {manualOpen && (
-                    <ManualCardsEditor entries={manualEntries} setEntries={setManualEntries} />
-                  )}
+                  {manualOpen && <ManualCardsEditor entries={manualEntries} setEntries={setManualEntries} />}
                 </div>
 
                 {newCards.length > 0 && (
@@ -276,7 +446,12 @@ export default function FlashcardSetDetail() {
                             <div className="text-sm text-slate-500">{c.back}</div>
                             {c.example && <div className="text-sm text-slate-400 italic mt-1">Ví dụ: {c.example}</div>}
                           </div>
-                          <button className="text-sm text-red-600" onClick={() => setNewCards((prev) => prev.filter((_, i) => i !== idx))}>Xóa</button>
+                          <button
+                            className="text-sm text-red-600"
+                            onClick={() => setNewCards((prev) => prev.filter((_, i) => i !== idx))}
+                          >
+                            Xóa
+                          </button>
                         </li>
                       ))}
                     </ul>
@@ -286,13 +461,19 @@ export default function FlashcardSetDetail() {
             </div>
 
             <div className="flex justify-end gap-2 p-4 md:p-6 border-t border-gray-200 sticky bottom-0 bg-white z-10">
-              <button className="px-4 py-2 bg-gray-100 rounded" onClick={() => setShowAddWordModal(false)}>Hủy</button>
+              <button className="px-4 py-2 bg-gray-100 rounded" onClick={() => setShowAddWordModal(false)}>
+                Hủy
+              </button>
               <button
                 className="px-4 py-2 bg-primary text-white rounded"
                 onClick={() => {
                   const filledManual = (manualEntries || [])
-                    .map(e => ({ front: (e.front || '').trim(), back: (e.back || '').trim(), example: (e.example || '').trim() }))
-                    .filter(e => e.front);
+                    .map((e) => ({
+                      front: (e.front || '').trim(),
+                      back: (e.back || '').trim(),
+                      example: (e.example || '').trim(),
+                    }))
+                    .filter((e) => e.front);
                   if (filledManual.length) setNewCards((prev) => [...prev, ...filledManual]);
                   const combined = [...newCards, ...filledManual];
                   console.log('Create cards for set', id, combined);
@@ -306,6 +487,83 @@ export default function FlashcardSetDetail() {
         </div>
       </div>
     );
+  };
+
+  // Level chooser logic (copied/adapted from CreateFlashcard)
+  const allLevels = ['easy', 'medium', 'hard'];
+
+  const normalizeLevel = (lvl) => {
+    if (!lvl && lvl !== 0) return '';
+    const s = String(lvl).trim();
+    if (!s) return '';
+    const up = s.toUpperCase();
+    if (up === 'A1' || up === 'A2') return 'easy';
+    if (up === 'B1' || up === 'B2') return 'medium';
+    if (up === 'C1' || up === 'C2') return 'hard';
+    if (s === '0' || s === '1' || s === '2') return s === '0' ? 'easy' : s === '1' ? 'medium' : 'hard';
+    if (['easy', 'medium', 'hard'].includes(s.toLowerCase())) return s.toLowerCase();
+    return '';
+  };
+
+  const toggleLevel = (lvl) => {
+    if (lvl === 'All') {
+      setSelectedLevels(['All']);
+      return;
+    }
+    setSelectedLevels((prev) => {
+      const set = new Set(prev.filter((p) => p !== 'All'));
+      if (set.has(lvl)) set.delete(lvl);
+      else set.add(lvl);
+      return Array.from(set);
+    });
+  };
+
+  const confirmLevels = () => {
+    if (!classifyResults) return setShowLevelDialog(false);
+    const chosen = selectedLevels.includes('All') || selectedLevels.length === 0 ? allLevels : selectedLevels;
+    const c = classifyResults.classify;
+    const f = classifyResults.flash || [];
+
+    let filtered = [];
+    if (Array.isArray(c)) {
+      if (selectedLevels.includes('All') || selectedLevels.length === 0) {
+        filtered = c.slice();
+      } else {
+        filtered = c.filter((w) =>
+          chosen.includes(normalizeLevel(w.level || w.difficulty || w.token || w.text || w.word || '')),
+        );
+      }
+    }
+
+    const imported = filtered
+      .map((wObj) => {
+        const word = wObj.word || wObj.text || wObj.token || '';
+        const level = wObj.level || wObj.difficulty || '';
+        let definition = '';
+        if (f && f.length) {
+          const found = f.find((x) => (x.word || x.term || '').toLowerCase() === (word || '').toLowerCase());
+          if (found) definition = found.definition || (found.defs && found.defs[0]) || '';
+        }
+        return { front: word, back: definition || '', example: '', level };
+      })
+      .filter((c) => c.front);
+
+    if (imported.length) {
+      // đặt các thẻ vào uploadEntries để hiển thị trong modal và cho phép chỉnh sửa
+      setUploadEntries(imported);
+      setShowLevelDialog(false);
+      setClassifyResults(null);
+      // mở UploadModal để hiển thị các ô từ
+      setShowUploadModal(true);
+    } else {
+      setShowLevelDialog(false);
+      setClassifyResults(null);
+    }
+  };
+
+  const cancelLevels = () => {
+    setShowLevelDialog(false);
+    setClassifyResults(null);
   };
 
   if (loading) return <div className="p-6">Loading...</div>;
@@ -328,22 +586,15 @@ export default function FlashcardSetDetail() {
             </button>
 
             <div className="mt-4">
-              <h1 className="text-3xl sm:text-4xl font-bold text-slate-900">
-                {setMeta?.title || 'Flashcard'}
-              </h1>
-              <p className="text-slate-500 mt-1">
-                {setMeta?.description || 'Không có mô tả...'}
-              </p>
+              <h1 className="text-3xl sm:text-4xl font-bold text-slate-900">{setMeta?.title || 'Flashcard'}</h1>
+              <p className="text-slate-500 mt-1">{setMeta?.description || 'Không có mô tả...'}</p>
             </div>
 
             <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-slate-500 mt-3">
               <div className="flex items-center gap-1.5">
                 <span className="material-symbols-outlined text-base">person</span>
                 <span>
-                  Người chia sẻ:{' '}
-                  <span className="font-medium text-slate-900">
-                    {setMeta?.owner || 'Bạn'}
-                  </span>
+                  Người chia sẻ: <span className="font-medium text-slate-900">{setMeta?.owner || 'Bạn'}</span>
                 </span>
               </div>
             </div>
@@ -411,7 +662,15 @@ export default function FlashcardSetDetail() {
           </button>
 
           <button
-            onClick={() => setShowUploadModal(true)}
+            onClick={() => {
+              // Mở file chooser trực tiếp
+              if (uploadRef && uploadRef.current && typeof uploadRef.current.open === 'function') {
+                uploadRef.current.open();
+                return;
+              }
+              setUploadEntries([]);
+              setShowUploadModal(true);
+            }}
             className="w-full sm:w-auto flex-grow bg-white hover:bg-slate-50 text-slate-900 font-medium py-3 px-6 rounded-lg flex items-center justify-center gap-2 transition-colors text-sm border border-gray-200"
             title="Nhập từ PDF vào bộ này"
           >
@@ -435,14 +694,21 @@ export default function FlashcardSetDetail() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {combinedCards.map((c, idx) => (
-              <div key={idx} className="list-flashcard bg-white rounded-lg shadow-sm p-5 border border-slate-200 flex flex-col">
+              <div
+                key={idx}
+                className="list-flashcard bg-white rounded-lg shadow-sm p-5 border border-slate-200 flex flex-col"
+              >
                 <div className="flex justify-between items-start mb-3">
                   <div className="flex-1">
                     <div className="flex items-center gap-3">
                       <h3 className="text-2xl font-bold text-slate-900">{c.front}</h3>
                     </div>
                     <div className="flex items-center flex-wrap gap-x-3 gap-y-1 mt-1 text-sm text-slate-500">
-                      {c.level && <span className="px-2 py-0.5 bg-slate-100 text-slate-600 rounded text-xs font-medium">{c.level}</span>}
+                      {c.level && (
+                        <span className="px-2 py-0.5 bg-slate-100 text-slate-600 rounded text-xs font-medium">
+                          {c.level}
+                        </span>
+                      )}
                     </div>
                   </div>
                   <button className="text-slate-500 hover:bg-slate-100 p-1.5 rounded-full">
@@ -476,6 +742,76 @@ export default function FlashcardSetDetail() {
 
       {showUploadModal && <UploadModal />}
       {showAddWordModal && <AddWordModal />}
+      {showUploadResult && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white p-5 rounded-lg max-w-md w-[90%]">
+            <h3 className={`text-lg font-semibold ${uploadResultIsError ? 'text-red-600' : 'text-slate-900'}`}>{uploadResultTitle}</h3>
+            <p className="mt-2">{uploadResultMessage}</p>
+            <div className="mt-4 flex justify-end">
+              <button
+                onClick={() => setShowUploadResult(false)}
+                className="px-4 py-2 rounded bg-primary text-white"
+              >
+                Đóng
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Hidden Upload button instance used to trigger file dialog programmatically */}
+      <div style={{ display: 'none' }}>
+        <UploadPDFButton ref={uploadRef} onResult={handleUploadResult} />
+      </div>
+      {showLevelDialog &&
+        typeof document !== 'undefined' &&
+        createPortal(
+          <div className="modal-overlay">
+            <div className="modal-box">
+              <h3>Chọn cấp độ để hiển thị từ</h3>
+              {classifyResults &&
+                Array.isArray(classifyResults.classify) &&
+                (() => {
+                  const arr = classifyResults.classify;
+                  const total = arr.length;
+                  const counts = { easy: 0, medium: 0, hard: 0 };
+                  arr.forEach((it) => {
+                    const lv = normalizeLevel(it.level || it.difficulty || it.token || it.text || it.word || '');
+                    if (lv) counts[lv] = (counts[lv] || 0) + 1;
+                  });
+                  return (
+                    <div className="modal-summary">
+                      <div>
+                        Tổng từ: {total} — Phân bố: Easy: {counts.easy}, Medium: {counts.medium}, Hard: {counts.hard}
+                      </div>
+                    </div>
+                  );
+                })()}
+
+              <div className="modal-levels-row">
+                <label className="modal-label">
+                  <input type="checkbox" checked={selectedLevels.includes('All')} onChange={() => toggleLevel('All')} />{' '}
+                  All
+                </label>
+                {allLevels.map((lvl) => (
+                  <label key={lvl} className="modal-label">
+                    <input type="checkbox" checked={selectedLevels.includes(lvl)} onChange={() => toggleLevel(lvl)} />{' '}
+                    {lvl.charAt(0).toUpperCase() + lvl.slice(1)}
+                  </label>
+                ))}
+              </div>
+
+              <div className="modal-actions-row">
+                <button className="btn-outline" onClick={cancelLevels}>
+                  Hủy
+                </button>
+                <button className="btn-main" onClick={confirmLevels}>
+                  Xác nhận
+                </button>
+              </div>
+            </div>
+          </div>,
+          document.body,
+        )}
     </div>
   );
 }
