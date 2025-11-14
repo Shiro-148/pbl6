@@ -36,11 +36,20 @@ export async function listCards(setId) {
   return res.json();
 }
 
-export async function createCard(setId, front, back) {
+export async function createCard(setId, cardData) {
+  const body = {
+    word: cardData.word || cardData.front || '',
+    definition: cardData.definition || cardData.back || '',
+    example: cardData.example || '',
+    phonetic: cardData.phonetic || '',
+    type: cardData.type || '',
+    audio: cardData.audio || ''
+  };
+  
   const res = await authFetch(`${API}/api/sets/${setId}/cards`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ front, back }),
+    body: JSON.stringify(body),
   });
   if (!res.ok) {
     const txt = await res.text().catch(() => res.statusText);

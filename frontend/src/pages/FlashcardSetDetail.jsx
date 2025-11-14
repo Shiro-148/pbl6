@@ -95,7 +95,16 @@ export default function FlashcardSetDetail() {
 
         if (!mounted) return;
         setSetMeta(meta || { id, title: meta?.title || 'Flashcard' });
-        setCards(Array.isArray(cs) ? cs : cs.cards || []);
+        
+        // Map dữ liệu từ database sang format hiển thị
+        const mappedCards = (Array.isArray(cs) ? cs : cs.cards || []).map(card => ({
+          ...card,
+          front: card.word || card.front || '',
+          back: card.definition || card.back || '',
+          example: card.example || ''
+        }));
+        
+        setCards(mappedCards);
       } catch (err) {
         console.error('Failed to load set detail:', err);
         if (mounted) {
@@ -465,19 +474,55 @@ export default function FlashcardSetDetail() {
                 Hủy
               </button>
               <button
-                className="px-4 py-2 bg-primary text-white rounded"
-                onClick={() => {
-                  const filledManual = (manualEntries || [])
-                    .map((e) => ({
-                      front: (e.front || '').trim(),
-                      back: (e.back || '').trim(),
-                      example: (e.example || '').trim(),
-                    }))
-                    .filter((e) => e.front);
-                  if (filledManual.length) setNewCards((prev) => [...prev, ...filledManual]);
-                  const combined = [...newCards, ...filledManual];
-                  console.log('Create cards for set', id, combined);
-                  setShowAddWordModal(false);
+                className="px-4 py-2 bg-primary text-white rounded hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
+                onClick={async () => {
+                  try {
+                    const filledManual = (manualEntries || [])
+                      .map((e) => ({
+                        front: (e.front || '').trim(),
+                        back: (e.back || '').trim(),
+                        example: (e.example || '').trim(),
+                      }))
+                      .filter((e) => e.front);
+                    
+                    const combined = [...newCards, ...filledManual];
+                    
+                    if (combined.length === 0) {
+                      alert('Vui lòng thêm ít nhất một thẻ');
+                      return;
+                    }
+
+                    // Lưu từng card vào database
+                    console.log('Creating cards for set', id, combined);
+                    
+                    for (const card of combined) {
+                      await flashcardsService.createCard(id, {
+                        word: card.front,
+                        definition: card.back,
+                        example: card.example || ''
+                      });
+                    }
+
+                    // Reload cards sau khi tạo xong
+                    const updatedCards = await listCards(id);
+                    const mappedCards = (Array.isArray(updatedCards) ? updatedCards : updatedCards.cards || []).map(card => ({
+                      ...card,
+                      front: card.word || card.front || '',
+                      back: card.definition || card.back || '',
+                      example: card.example || ''
+                    }));
+                    setCards(mappedCards);
+                    
+                    // Reset state
+                    setNewCards([]);
+                    setManualEntries([{ front: '', back: '', example: '' }]);
+                    setShowAddWordModal(false);
+                    
+                    alert(`Đã thêm ${combined.length} thẻ vào bộ flashcard!`);
+                  } catch (error) {
+                    console.error('Error creating cards:', error);
+                    alert('Lỗi khi tạo thẻ: ' + error.message);
+                  }
                 }}
               >
                 Lưu bộ thẻ
