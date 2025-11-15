@@ -174,7 +174,7 @@ export default function Library() {
                   >
                     <div className="flex flex-col">
                       <h3 className="font-semibold text-slate-800">{set.title}</h3>
-                      <p className="text-sm text-slate-500">{set.flashcards?.length || 0} cards</p>
+                      <p className="text-sm text-slate-500">{typeof set.cardCount === 'number' ? set.cardCount : (set.flashcards?.length || 0)} cards</p>
                     </div>
                     <div className="flex items-center gap-2">
                       <img 
