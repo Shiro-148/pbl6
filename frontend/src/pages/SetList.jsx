@@ -158,12 +158,24 @@ const SetList = ({ folder, onBack }) => {
     setDeleteSetId(null);
   };
 
-  const handleStudy = (setName) => {
-    navigate(`/study?set=${encodeURIComponent(setName)}`);
+  const handleStudy = (setItem) => {
+    if (!setItem?.id) {
+      alert('Không tìm thấy ID của bộ thẻ.');
+      return;
+    }
+    const params = new URLSearchParams();
+    params.set('setId', setItem.id);
+    if (setItem.name) params.set('title', setItem.name);
+    navigate(`/study?${params.toString()}`);
   };
 
   const handleGames = (setName) => {
     navigate(`/games?set=${encodeURIComponent(setName)}`);
+  };
+
+  const handleDetails = (setId) => {
+    if (!setId) return;
+    navigate(`/sets/${setId}`);
   };
 
   const handleShare = (setName) => {
@@ -279,13 +291,13 @@ const SetList = ({ folder, onBack }) => {
               <span className="set-count">{set.count} cards</span>
             </div>
             <div className="set-card-actions">
-              <button className="set-btn set-btn-study" onClick={() => handleStudy(set.name)}>
+              <button className="set-btn set-btn-study" onClick={() => handleStudy(set)}>
                 <i className="bx bx-play"></i> Study
               </button>
               <button className="set-btn set-btn-games" onClick={() => handleGames(set.name)}>
                 <i className="bx bx-bar-chart"></i> Games
               </button>
-              <button className="set-btn set-btn-details">
+              <button className="set-btn set-btn-details" onClick={() => handleDetails(set.id)}>
                 <i className="bx bx-book-content"></i> Details
               </button>
               <button

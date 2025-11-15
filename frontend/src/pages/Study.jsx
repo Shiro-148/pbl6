@@ -1,38 +1,88 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import '../styles/pages/Study.css';
-
-const dummyCards = [
-  { term: 'run', def: 'chạy', audio: true },
-  { term: 'eat', def: 'ăn', audio: true },
-  { term: 'sleep', def: 'ngủ', audio: true },
-];
+import { listCards } from '../services/flashcards';
 
 const Study = () => {
   const location = useLocation();
   const query = new URLSearchParams(location.search);
-  const setName = query.get('set') || 'Flashcard Set';
+  const setTitleParam = query.get('title') || query.get('set');
+  const setIdParam = query.get('setId');
+  const setId = setIdParam ? Number(setIdParam) : null;
+  const [setName, setSetName] = useState(setTitleParam || 'Flashcard Set');
   const [cardIdx, setCardIdx] = useState(0);
   const [showDef, setShowDef] = useState(false);
+  const [isFlipped, setIsFlipped] = useState(false);
   const [autoSpeech, setAutoSpeech] = useState(false);
   const [autoPlay, setAutoPlay] = useState(false);
   const [randomOrder, setRandomOrder] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [baseCards, setBaseCards] = useState([]);
+  const [cards, setCards] = useState([]);
   const navigate = useNavigate();
-  const cards = dummyCards;
-  const card = cards[cardIdx];
-  const percent = Math.round(((cardIdx + 1) / cards.length) * 100);
+
+  useEffect(() => {
+    if (!setId) {
+      setError('Không tìm thấy bộ flashcard để học.');
+      setLoading(false);
+      return;
+    }
+    const fetchCards = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const data = await listCards(setId);
+        const formatted = (data || []).map((item, index) => ({
+          id: item.id ?? index,
+          term: item.word || item.term || '',
+          def: item.definition || item.def || '',
+          example: item.example || '',
+          audio: Boolean(item.audioUrl || item.audio),
+          pronunciation: item.phonetic || item.pronunciation || '',
+        }));
+        setBaseCards(formatted);
+        setCards(formatted);
+        if (!setTitleParam && data?.length) {
+          setSetName(data[0]?.setTitle || data[0]?.setName || setName);
+        }
+        setCardIdx(0);
+        setShowDef(false);
+        setIsFlipped(false);
+      } catch (err) {
+        console.error('Study: failed to load cards', err);
+        setError(err?.message || 'Không thể tải flashcard. Vui lòng thử lại.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCards();
+  }, [setId, setTitleParam]);
+
+  const card = cards[cardIdx] || null;
+  const percent = cards.length ? Math.round(((cardIdx + 1) / cards.length) * 100) : 0;
 
   const handleNext = () => {
+    setIsFlipped(false);
     setShowDef(false);
     setCardIdx((idx) => (idx + 1 < cards.length ? idx + 1 : idx));
   };
   const handlePrev = () => {
+    setIsFlipped(false);
     setShowDef(false);
     setCardIdx((idx) => (idx > 0 ? idx - 1 : 0));
   };
   const handleReset = () => {
     setCardIdx(0);
     setShowDef(false);
+    setIsFlipped(false);
+  };
+
+  const toggleFlip = () => {
+    if (!cards.length) return;
+    setIsFlipped((prev) => !prev);
+    setShowDef((prev) => !prev);
   };
 
   return (
@@ -42,11 +92,7 @@ const Study = () => {
           className="study-back"
           onClick={() => {
             // Quay lại SetList nếu có setName, mặc định về /library
-            if (setName) {
-              navigate(`/library?folder=${encodeURIComponent(setName)}`);
-            } else {
-              navigate('/library');
-            }
+            navigate(-1);
           }}
         >
           <i className="bx bx-arrow-back"></i> Quay lại
@@ -56,7 +102,21 @@ const Study = () => {
           <div className="study-toolbar">
             <button
               className={`study-toolbar-btn${randomOrder ? ' active' : ''}`}
-              onClick={() => setRandomOrder((v) => !v)}
+              onClick={() => {
+                setRandomOrder((prev) => {
+                  const next = !prev;
+                  setShowDef(false);
+                  setIsFlipped(false);
+                  setCardIdx(0);
+                  if (next) {
+                    const shuffled = [...baseCards].sort(() => Math.random() - 0.5);
+                    setCards(shuffled);
+                  } else {
+                    setCards(baseCards);
+                  }
+                  return next;
+                });
+              }}
             >
               <i className="bx bx-shuffle"></i> Random Order
             </button>
@@ -75,7 +135,7 @@ const Study = () => {
           </div>
           <div className="study-progress-row">
             <span>
-              Card {cardIdx + 1} of {cards.length}
+              Card {Math.min(cardIdx + 1, Math.max(cards.length, 1))} of {Math.max(cards.length, 1)}
             </span>
             <div className="study-progress-bar-bg">
               <div className="study-progress-bar" style={{ width: percent + '%' }}></div>
@@ -92,33 +152,52 @@ const Study = () => {
           {/* Có thể thêm cài đặt ở đây */}
         </div>
 
-        <div className="study-card">
-          <div className="study-term-label">TERM</div>
-          <div className="study-term">
-            {card.term}
-            {card.audio && (
-              <span className="study-term-audio">
-                <i className="bx bx-volume"></i>
-              </span>
+        {loading || error || !cards.length ? (
+          <div className="study-card status-card">
+            {loading && <div className="study-loading">Đang tải flashcard...</div>}
+            {!loading && error && <div className="study-error">{error}</div>}
+            {!loading && !error && !cards.length && (
+              <div className="study-empty">Chưa có flashcard nào trong bộ này.</div>
             )}
           </div>
-          {!showDef ? (
-            <div className="study-def-reveal" onClick={() => setShowDef(true)}>
-              Click to reveal definition
+        ) : (
+          <div className={['study-card', 'study-card-flip', isFlipped ? 'flipped' : ''].join(' ')} onClick={toggleFlip}>
+            <div className="study-card-inner">
+              <div className="study-card-face study-card-front">
+                <div className="study-term-label">TERM</div>
+                <div className="study-term">
+                  {card?.term || '—'}
+                  {card?.audio && (
+                    <span className="study-term-audio">
+                      <i className="bx bx-volume"></i>
+                    </span>
+                  )}
+                </div>
+                <div className="study-def-reveal">Click để lật thẻ</div>
+              </div>
+              <div className="study-card-face study-card-back">
+                <div className="study-term-label">DEFINITION</div>
+                <div className="study-def">
+                  {card?.def || '—'}
+                  {card?.example && <p className="study-example">Ví dụ: {card.example}</p>}
+                </div>
+              </div>
             </div>
-          ) : (
-            <div className="study-def">{card.def}</div>
-          )}
-        </div>
+          </div>
+        )}
 
         <div className="study-nav-row">
           <button className="study-nav-btn" onClick={handlePrev} disabled={cardIdx === 0}>
             <i className="bx bx-chevron-left"></i>
           </button>
-          <button className="study-nav-btn show-def" onClick={() => setShowDef((v) => !v)}>
-            {showDef ? 'Hide Definition' : 'Show Definition'}
+          <button className="study-nav-btn show-def" onClick={toggleFlip} disabled={!cards.length}>
+            {showDef ? 'Ẩn đáp án' : 'Hiện đáp án'}
           </button>
-          <button className="study-nav-btn" onClick={handleNext} disabled={cardIdx === cards.length - 1}>
+          <button
+            className="study-nav-btn"
+            onClick={handleNext}
+            disabled={!cards.length || cardIdx === cards.length - 1}
+          >
             <i className="bx bx-chevron-right"></i>
           </button>
         </div>

@@ -35,7 +35,15 @@ export default function Library() {
   const loadSets = async () => {
     try {
       const allSets = await listSets();
-      setSets(allSets || []);
+      const sorted = (allSets || []).slice().sort((a, b) => {
+        const timeA = a?.createdAt ? new Date(a.createdAt).getTime() : 0;
+        const timeB = b?.createdAt ? new Date(b.createdAt).getTime() : 0;
+        if (timeA !== timeB) return timeB - timeA; // newest createdAt first
+        const idA = typeof a?.id === 'number' ? a.id : 0;
+        const idB = typeof b?.id === 'number' ? b.id : 0;
+        return idB - idA; // fallback to biggest id first
+      });
+      setSets(sorted);
     } catch (error) {
       console.error('Error loading sets:', error);
       setSets([]);

@@ -57,7 +57,17 @@ const ManualCardsEditor = ({ entries, setEntries }) => {
   );
 };
 
-export default function AddWordModal({ newCards, setNewCards, setShowAddWordModal, id, onCardsCreated }) {
+export default function AddWordModal({
+  newCards,
+  setNewCards,
+  setShowAddWordModal,
+  id,
+  onCardsCreated,
+  setUploadResultTitle,
+  setUploadResultMessage,
+  setUploadResultIsError,
+  setShowUploadResult,
+}) {
   const [manualOpen, setManualOpen] = useState(false);
   const [aiInput, setAiInput] = useState('');
   const [manualEntries, setManualEntries] = useState([{ front: '', back: '', example: '' }]);
@@ -95,7 +105,7 @@ export default function AddWordModal({ newCards, setNewCards, setShowAddWordModa
                 <div className="flex flex-col sm:flex-row items-center gap-3">
                   <input
                     className="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-gray-800 focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-gray-300 bg-white h-12 placeholder:text-gray-500 px-4"
-                    placeholder="Nhập từ hoặc câu bằng tiếng việt..."
+                    placeholder="Nhập từ hoặc câu bằng tiếng Anh..."
                     value={aiInput}
                     onChange={(e) => setAiInput(e.target.value)}
                   />
@@ -169,39 +179,43 @@ export default function AddWordModal({ newCards, setNewCards, setShowAddWordModa
                       example: (e.example || '').trim(),
                     }))
                     .filter((e) => e.front);
-                  
+
                   const combined = [...newCards, ...filledManual];
-                  
+
                   if (combined.length === 0) {
-                    alert('Vui lòng thêm ít nhất một thẻ');
+                    setUploadResultTitle?.('Thiếu dữ liệu');
+                    setUploadResultMessage?.('Vui lòng thêm ít nhất một thẻ trước khi lưu.');
+                    setUploadResultIsError?.(true);
+                    setShowUploadResult?.(true);
                     return;
                   }
 
-                  // Lưu từng card vào database
-                  console.log('Creating cards for set', id, combined);
-                  
                   for (const card of combined) {
                     await flashcardsService.createCard(id, {
                       word: card.front,
                       definition: card.back,
-                      example: card.example || ''
+                      example: card.example || '',
                     });
                   }
 
-                  // Reset state
                   setNewCards([]);
                   setManualEntries([{ front: '', back: '', example: '' }]);
                   setShowAddWordModal(false);
-                  
-                  // Callback để reload cards
+
                   if (onCardsCreated) {
                     await onCardsCreated();
                   }
-                  
-                  alert(`Đã thêm ${combined.length} thẻ vào bộ flashcard!`);
+
+                  setUploadResultTitle?.('Đã lưu flashcard');
+                  setUploadResultMessage?.(`Đã thêm ${combined.length} thẻ vào bộ.`);
+                  setUploadResultIsError?.(false);
+                  setShowUploadResult?.(true);
                 } catch (error) {
                   console.error('Error creating cards:', error);
-                  alert('Lỗi khi tạo thẻ: ' + error.message);
+                  setUploadResultTitle?.('Lỗi tạo thẻ');
+                  setUploadResultMessage?.('Không thể tạo thẻ: ' + error.message);
+                  setUploadResultIsError?.(true);
+                  setShowUploadResult?.(true);
                 }
               }}
             >

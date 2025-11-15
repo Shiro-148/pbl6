@@ -43,7 +43,8 @@ export async function createCard(setId, cardData) {
     example: cardData.example || '',
     phonetic: cardData.phonetic || '',
     type: cardData.type || '',
-    audio: cardData.audio || ''
+    audio: cardData.audio || '',
+    level: cardData.level || cardData.difficulty || ''
   };
   
   const res = await authFetch(`${API}/api/sets/${setId}/cards`, {

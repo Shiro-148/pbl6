@@ -1,11 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import flashcardsService from '../services/flashcards';
 
 export default function UploadModal({
   uploadEntries,
   setUploadEntries,
   setShowUploadModal,
-  setNewCards,
   enrichingUpload,
   setEnrichingUpload,
   setUploadResultTitle,
@@ -13,7 +12,10 @@ export default function UploadModal({
   setUploadResultIsError,
   setShowUploadResult,
   id,
+  onCardsCreated,
 }) {
+  const [saving, setSaving] = useState(false);
+
   return (
     <div>
       <div
@@ -174,27 +176,64 @@ export default function UploadModal({
             </button>
             <button
               className="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center gap-2 overflow-hidden rounded-lg h-10 px-4 bg-primary text-white text-sm font-bold leading-normal tracking-[0.015em] hover:bg-primary/90 transition-colors"
-              onClick={() => {
-                if (uploadEntries && uploadEntries.length) {
-                  const cleaned = uploadEntries
-                    .map((e) => ({
-                      front: (e.front || '').trim(),
-                      back: (e.back || '').trim(),
-                      example: (e.example || '').trim(),
-                      level: e.level,
-                    }))
-                    .filter((e) => e.front);
-                  if (cleaned.length) setNewCards((prev) => [...prev, ...cleaned]);
-                  setUploadEntries([]);
-                  setShowUploadModal(false);
+              disabled={saving}
+              onClick={async () => {
+                if (!uploadEntries || uploadEntries.length === 0) {
+                  setUploadResultTitle('Không có dữ liệu');
+                  setUploadResultMessage('Chưa có từ nào để lưu. Hãy nhập hoặc trích xuất lại.');
+                  setUploadResultIsError(true);
+                  setShowUploadResult(true);
                   return;
                 }
 
-                console.log('Upload PDF for set', id);
-                setShowUploadModal(false);
+                const cleaned = uploadEntries
+                  .map((e) => ({
+                    front: (e.front || '').trim(),
+                    back: (e.back || '').trim(),
+                    example: (e.example || '').trim(),
+                    level: e.level,
+                  }))
+                  .filter((e) => e.front);
+
+                if (cleaned.length === 0) {
+                  setUploadResultTitle('Thiếu dữ liệu');
+                  setUploadResultMessage('Bạn cần ít nhất một thẻ có mặt trước hợp lệ.');
+                  setUploadResultIsError(true);
+                  setShowUploadResult(true);
+                  return;
+                }
+
+                try {
+                  setSaving(true);
+                  for (const card of cleaned) {
+                    await flashcardsService.createCard(id, {
+                      word: card.front,
+                      definition: card.back,
+                      example: card.example || '',
+                      level: card.level,
+                    });
+                  }
+
+                  setUploadResultTitle('Đã lưu flashcard');
+                  setUploadResultMessage(`Đã thêm ${cleaned.length} thẻ vào bộ.`);
+                  setUploadResultIsError(false);
+                  setUploadEntries([]);
+                  setShowUploadModal(false);
+                  if (typeof onCardsCreated === 'function') {
+                    await onCardsCreated();
+                  }
+                } catch (err) {
+                  console.error('UploadModal: failed to save cards', err);
+                  setUploadResultTitle('Lưu thất bại');
+                  setUploadResultMessage('Không thể lưu flashcard: ' + (err.message || err));
+                  setUploadResultIsError(true);
+                } finally {
+                  setSaving(false);
+                  setShowUploadResult(true);
+                }
               }}
             >
-              <span className="truncate">Tạo Flashcard</span>
+              <span className="truncate">{saving ? 'Đang lưu...' : 'Tạo Flashcard'}</span>
             </button>
           </div>
         </div>

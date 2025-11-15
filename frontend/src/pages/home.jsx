@@ -64,7 +64,7 @@ function Home() {
                   </div>
                   <div className="flex flex-wrap gap-3">
                     <button onClick={handleOpenDialog} className="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-12 px-5 bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white text-base font-bold">Tạo thư mục mới</button>
-                    <Link to="/create-flashcard" className="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-12 px-5 bg-primary text-white text-base font-bold">Tạo bộ flashcard mới</Link>
+                    <Link to="/library" className="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-12 px-5 bg-primary text-white text-base font-bold">Tạo bộ flashcard mới</Link>
                   </div>
                 </div>
                 <div className="w-full @[864px]:w-1/2">

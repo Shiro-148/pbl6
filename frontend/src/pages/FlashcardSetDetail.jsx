@@ -442,7 +442,6 @@ export default function FlashcardSetDetail() {
           uploadEntries={uploadEntries}
           setUploadEntries={setUploadEntries}
           setShowUploadModal={setShowUploadModal}
-          setNewCards={setNewCards}
           enrichingUpload={enrichingUpload}
           setEnrichingUpload={setEnrichingUpload}
           setUploadResultTitle={setUploadResultTitle}
@@ -450,6 +449,7 @@ export default function FlashcardSetDetail() {
           setUploadResultIsError={setUploadResultIsError}
           setShowUploadResult={setShowUploadResult}
           id={id}
+          onCardsCreated={reloadCards}
         />
       )}
       {showAddWordModal && (
@@ -459,6 +459,10 @@ export default function FlashcardSetDetail() {
           setShowAddWordModal={setShowAddWordModal} 
           id={id}
           onCardsCreated={reloadCards}
+          setUploadResultTitle={setUploadResultTitle}
+          setUploadResultMessage={setUploadResultMessage}
+          setUploadResultIsError={setUploadResultIsError}
+          setShowUploadResult={setShowUploadResult}
         />
       )}
       {showUploadResult && (
