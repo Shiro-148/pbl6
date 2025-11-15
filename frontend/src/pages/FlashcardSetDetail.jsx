@@ -27,6 +27,7 @@ export default function FlashcardSetDetail() {
   const [showLevelDialog, setShowLevelDialog] = useState(false);
   const [selectedLevels, setSelectedLevels] = useState([]);
   const [classifyResults, setClassifyResults] = useState(null);
+  const [exampleOpenIndex, setExampleOpenIndex] = useState(null);
   const uploadRef = useRef(null);
 
   const handleUploadResult = async (data) => {
@@ -263,6 +264,30 @@ export default function FlashcardSetDetail() {
     setClassifyResults(null);
   };
 
+  const normalizeExamples = (value) => {
+    if (!value && value !== 0) return [];
+    if (Array.isArray(value)) {
+      return value.map((v) => String(v).trim()).filter(Boolean);
+    }
+    if (typeof value === 'string') {
+      const trimmed = value.trim();
+      if (!trimmed) return [];
+      try {
+        const parsed = JSON.parse(trimmed);
+        if (Array.isArray(parsed)) {
+          return parsed.map((v) => String(v).trim()).filter(Boolean);
+        }
+      } catch {
+        // not JSON, continue fallback
+      }
+      return trimmed
+        .split(/\n+/)
+        .map((line) => line.trim())
+        .filter(Boolean);
+    }
+    return [];
+  };
+
   if (loading) return <div className="p-6">Loading...</div>;
 
   // combined cards: existing + newly created in-modal
@@ -419,10 +444,35 @@ export default function FlashcardSetDetail() {
                 </div>
 
                 <div className="border-t border-slate-200 pt-3 mt-3">
-                  <button className="w-full flex justify-between items-center text-sm font-medium text-slate-500 hover:text-primary transition-colors">
-                    <span>Ví dụ{c.example ? ' (1)' : ''}</span>
-                    <span className="material-symbols-outlined">expand_more</span>
-                  </button>
+                  {(() => {
+                    const examples = normalizeExamples(c.example || c.examples);
+                    const hasExamples = examples.length > 0;
+                    const isOpen = exampleOpenIndex === idx;
+                    return (
+                      <>
+                        <button
+                          className="w-full flex justify-between items-center text-sm font-medium text-slate-500 hover:text-primary transition-colors"
+                          onClick={() => setExampleOpenIndex((prev) => (prev === idx ? null : idx))}
+                          disabled={!hasExamples}
+                        >
+                          <span>
+                            Ví dụ{hasExamples ? ` (${examples.length})` : ''}
+                            {!hasExamples && ' — chưa có dữ liệu'}
+                          </span>
+                          <span className="material-symbols-outlined">{isOpen ? 'expand_less' : 'expand_more'}</span>
+                        </button>
+                        {hasExamples && isOpen && (
+                          <div className="mt-2 rounded-lg bg-slate-50 border border-slate-200 p-3 text-sm text-slate-700 space-y-2">
+                            {examples.map((ex, exIdx) => (
+                              <p key={exIdx} className="leading-relaxed">
+                                {ex}
+                              </p>
+                            ))}
+                          </div>
+                        )}
+                      </>
+                    );
+                  })()}
                 </div>
 
                 <div className="border-t border-slate-200 pt-3 mt-3">

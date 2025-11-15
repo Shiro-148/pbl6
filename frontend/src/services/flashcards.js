@@ -116,4 +116,46 @@ export async function deleteSet(setId) {
   }
 }
 
-export default { listSets, createSet, listCards, createCard, enrichWords, deleteSet };
+export async function generateWordInfo(word) {
+  const trimmed = (word || '').trim();
+  if (!trimmed) {
+    throw new Error('Thiếu từ để tra AI');
+  }
+
+  const backendUrl = `${API}/api/flashcards/ai-word`;
+  const payload = { word: trimmed };
+
+  try {
+    const res = await authFetch(backendUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    if (res.ok) {
+      return res.json();
+    }
+
+    const txt = await res.text().catch(() => res.statusText);
+    const { status } = res;
+    if (status !== 401 && status !== 403) {
+      throw new Error(txt || `Backend trả về ${status}`);
+    }
+    console.warn('generateWordInfo: backend auth error, thử gọi trực tiếp model_service');
+  } catch (err) {
+    console.warn('generateWordInfo: backend call failed, fallback model_service', err);
+  }
+
+  const MODEL_BASE = import.meta.env.VITE_MODEL_SERVICE_BASE || 'http://localhost:5000';
+  const resp = await fetch(`${MODEL_BASE}/word-info`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+  if (!resp.ok) {
+    const txt = await resp.text().catch(() => resp.statusText);
+    throw new Error(`Model service thất bại (${resp.status} ${txt})`);
+  }
+  return resp.json();
+}
+
+export default { listSets, createSet, listCards, createCard, enrichWords, deleteSet, generateWordInfo };

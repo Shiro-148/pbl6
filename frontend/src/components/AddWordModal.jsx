@@ -71,6 +71,65 @@ export default function AddWordModal({
   const [manualOpen, setManualOpen] = useState(false);
   const [aiInput, setAiInput] = useState('');
   const [manualEntries, setManualEntries] = useState([{ front: '', back: '', example: '' }]);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiError, setAiError] = useState('');
+
+  const handleGenerateByAi = async () => {
+    if (!aiInput.trim()) {
+      alert('Vui lòng nhập dữ liệu để tạo bằng AI');
+      return;
+    }
+    if (!id) {
+      setAiError('Thiếu ID bộ thẻ, không thể lưu dữ liệu.');
+      return;
+    }
+
+    try {
+      setAiError('');
+      setAiLoading(true);
+      const info = await flashcardsService.generateWordInfo(aiInput.trim());
+      const backPieces = [info.part_of_speech, info.definition_en, info.definition_vi]
+        .map((s) => (s || '').trim())
+        .filter(Boolean);
+      const exampleText = Array.isArray(info.examples) ? info.examples.join('\n') : info.examples || '';
+      const notes = info.notes ? `Ghi chú: ${info.notes}` : '';
+
+      const newEntry = {
+        front: info.word || aiInput.trim(),
+        back: backPieces.join(' • ') || info.word || aiInput.trim(),
+        example: [exampleText, notes].filter(Boolean).join('\n'),
+        phonetic: info.phonetic || '',
+        type: info.part_of_speech || '',
+      };
+
+      await flashcardsService.createCard(id, {
+        word: newEntry.front,
+        definition: newEntry.back,
+        example: newEntry.example,
+        phonetic: newEntry.phonetic,
+        type: newEntry.type,
+      });
+
+      if (onCardsCreated) {
+        await onCardsCreated();
+      }
+
+      setUploadResultTitle?.('Đã lưu thẻ AI');
+      setUploadResultMessage?.(`Từ "${newEntry.front}" đã được thêm vào bộ.`);
+      setUploadResultIsError?.(false);
+      setShowUploadResult?.(true);
+      setAiInput('');
+    } catch (err) {
+      console.error('Tạo AI thất bại:', err);
+      setAiError(err?.message || 'Không thể lấy dữ liệu từ AI');
+      setUploadResultTitle?.('Lỗi lưu thẻ AI');
+      setUploadResultMessage?.(err?.message || 'Không thể lưu dữ liệu được AI tạo.');
+      setUploadResultIsError?.(true);
+      setShowUploadResult?.(true);
+    } finally {
+      setAiLoading(false);
+    }
+  };
 
   return (
     <div>
@@ -110,22 +169,15 @@ export default function AddWordModal({
                     onChange={(e) => setAiInput(e.target.value)}
                   />
                   <button
-                    className="flex w-full sm:w-auto items-center justify-center gap-2 py-2 px-5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-bold"
-                    onClick={() => {
-                      if (!aiInput) return alert('Vui lòng nhập dữ liệu để tạo bằng AI');
-                      const parts = aiInput
-                        .split(/\n|\.|,|;/)
-                        .map((s) => s.trim())
-                        .filter(Boolean);
-                      const created = parts.map((p) => ({ front: p, back: '' }));
-                      setNewCards((prev) => [...prev, ...created]);
-                      setAiInput('');
-                    }}
+                    className="flex w-full sm:w-auto items-center justify-center gap-2 py-2 px-5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-bold disabled:opacity-50"
+                    onClick={handleGenerateByAi}
+                    disabled={aiLoading}
                   >
-                    <span className="material-symbols-outlined">auto_awesome</span>
-                    <span>Tạo bằng AI</span>
+                    <span className="material-symbols-outlined">{aiLoading ? 'progress_activity' : 'auto_awesome'}</span>
+                    <span>{aiLoading ? 'Đang tạo...' : 'Tạo bằng AI'}</span>
                   </button>
                 </div>
+                {aiError && <p className="text-sm text-red-600">{aiError}</p>}
               </div>
 
               <div>
