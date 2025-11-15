@@ -116,6 +116,40 @@ export async function deleteSet(setId) {
   }
 }
 
+export async function deleteCard(cardId) {
+  if (!cardId) throw new Error('Thiếu cardId khi xoá');
+  const res = await authFetch(`${API}/api/cards/${cardId}`, {
+    method: 'DELETE',
+  });
+  if (!res.ok) {
+    const txt = await res.text().catch(() => res.statusText);
+    throw new Error(`${res.status} ${txt}`);
+  }
+}
+
+export async function updateCard(cardId, payload) {
+  if (!cardId) throw new Error('Thiếu cardId khi cập nhật');
+  const body = {
+    word: payload.word || payload.front || '',
+    definition: payload.definition || payload.back || '',
+    example: payload.example || '',
+    phonetic: payload.phonetic || '',
+    type: payload.type || '',
+    audio: payload.audio || '',
+    level: payload.level || payload.difficulty || '',
+  };
+  const res = await authFetch(`${API}/api/cards/${cardId}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) {
+    const txt = await res.text().catch(() => res.statusText);
+    throw new Error(`${res.status} ${txt}`);
+  }
+  return res.json();
+}
+
 export async function generateWordInfo(word) {
   const trimmed = (word || '').trim();
   if (!trimmed) {
@@ -158,4 +192,4 @@ export async function generateWordInfo(word) {
   return resp.json();
 }
 
-export default { listSets, createSet, listCards, createCard, enrichWords, deleteSet, generateWordInfo };
+export default { listSets, createSet, listCards, createCard, enrichWords, deleteSet, deleteCard, updateCard, generateWordInfo };

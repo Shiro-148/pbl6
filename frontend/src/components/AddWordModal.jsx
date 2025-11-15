@@ -73,9 +73,36 @@ export default function AddWordModal({
   const [manualEntries, setManualEntries] = useState([{ front: '', back: '', example: '' }]);
   const [aiLoading, setAiLoading] = useState(false);
   const [aiError, setAiError] = useState('');
+  const [aiProgress, setAiProgress] = useState('');
+
+  const parseAiWords = (raw) =>
+    (raw || '')
+      .split(/[\n,]+/)
+      .map((w) => w.trim())
+      .filter(Boolean);
+
+  const buildCardFromInfo = (info, fallbackWord) => {
+    const word = info?.word?.trim() || fallbackWord;
+    const backPieces = [info?.part_of_speech, info?.definition_en, info?.definition_vi]
+      .map((s) => (s || '').trim())
+      .filter(Boolean);
+    const exampleText = Array.isArray(info?.examples) ? info.examples.join('\n') : info?.examples || '';
+    const notes = info?.notes ? `Ghi chú: ${info.notes}` : '';
+
+    const exampleCombined = [exampleText, notes].filter(Boolean).join('\n');
+
+    return {
+      front: word,
+      back: backPieces.join(' • ') || word,
+      example: exampleCombined,
+      phonetic: info?.phonetic || '',
+      type: info?.part_of_speech || '',
+    };
+  };
 
   const handleGenerateByAi = async () => {
-    if (!aiInput.trim()) {
+    const words = parseAiWords(aiInput);
+    if (!words.length) {
       alert('Vui lòng nhập dữ liệu để tạo bằng AI');
       return;
     }
@@ -84,49 +111,59 @@ export default function AddWordModal({
       return;
     }
 
+    setAiError('');
+    setAiProgress('');
+    setAiLoading(true);
+
+    const failedWords = [];
+    const savedWords = [];
+
     try {
-      setAiError('');
-      setAiLoading(true);
-      const info = await flashcardsService.generateWordInfo(aiInput.trim());
-      const backPieces = [info.part_of_speech, info.definition_en, info.definition_vi]
-        .map((s) => (s || '').trim())
-        .filter(Boolean);
-      const exampleText = Array.isArray(info.examples) ? info.examples.join('\n') : info.examples || '';
-      const notes = info.notes ? `Ghi chú: ${info.notes}` : '';
+      for (let idx = 0; idx < words.length; idx += 1) {
+        const word = words[idx];
+        setAiProgress(`Đang tạo ${idx + 1}/${words.length}: ${word}`);
+        try {
+          const info = await flashcardsService.generateWordInfo(word);
+          const cardData = buildCardFromInfo(info, word);
 
-      const newEntry = {
-        front: info.word || aiInput.trim(),
-        back: backPieces.join(' • ') || info.word || aiInput.trim(),
-        example: [exampleText, notes].filter(Boolean).join('\n'),
-        phonetic: info.phonetic || '',
-        type: info.part_of_speech || '',
-      };
+          await flashcardsService.createCard(id, {
+            word: cardData.front,
+            definition: cardData.back,
+            example: cardData.example,
+            phonetic: cardData.phonetic,
+            type: cardData.type,
+          });
 
-      await flashcardsService.createCard(id, {
-        word: newEntry.front,
-        definition: newEntry.back,
-        example: newEntry.example,
-        phonetic: newEntry.phonetic,
-        type: newEntry.type,
-      });
+          savedWords.push(cardData.front);
+        } catch (err) {
+          console.error(`Tạo AI thất bại cho "${word}":`, err);
+          failedWords.push(word);
+        }
+      }
 
-      if (onCardsCreated) {
+      if (savedWords.length && onCardsCreated) {
         await onCardsCreated();
       }
 
-      setUploadResultTitle?.('Đã lưu thẻ AI');
-      setUploadResultMessage?.(`Từ "${newEntry.front}" đã được thêm vào bộ.`);
-      setUploadResultIsError?.(false);
-      setShowUploadResult?.(true);
-      setAiInput('');
-    } catch (err) {
-      console.error('Tạo AI thất bại:', err);
-      setAiError(err?.message || 'Không thể lấy dữ liệu từ AI');
-      setUploadResultTitle?.('Lỗi lưu thẻ AI');
-      setUploadResultMessage?.(err?.message || 'Không thể lưu dữ liệu được AI tạo.');
-      setUploadResultIsError?.(true);
-      setShowUploadResult?.(true);
+      if (savedWords.length) {
+        setUploadResultTitle?.('Đã lưu thẻ AI');
+        setUploadResultMessage?.(`Đã thêm ${savedWords.length} thẻ: ${savedWords.join(', ')}`);
+        setUploadResultIsError?.(false);
+        setShowUploadResult?.(true);
+      }
+
+      if (failedWords.length) {
+        setAiError(`Không thể tạo cho: ${failedWords.join(', ')}`);
+        setUploadResultTitle?.('Một số thẻ không tạo được');
+        setUploadResultMessage?.(`Hãy thử lại với: ${failedWords.join(', ')}`);
+        setUploadResultIsError?.(true);
+        setShowUploadResult?.(true);
+        setAiInput(failedWords.join(', '));
+      } else {
+        setAiInput('');
+      }
     } finally {
+      setAiProgress('');
       setAiLoading(false);
     }
   };
@@ -177,6 +214,7 @@ export default function AddWordModal({
                     <span>{aiLoading ? 'Đang tạo...' : 'Tạo bằng AI'}</span>
                   </button>
                 </div>
+                {aiProgress && <p className="text-sm text-indigo-600">{aiProgress}</p>}
                 {aiError && <p className="text-sm text-red-600">{aiError}</p>}
               </div>
 

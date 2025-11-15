@@ -300,6 +300,7 @@ export default function Library() {
 
               // Refresh visible lists - reload folders to pick up server counts
               await loadFolders();
+              await loadSets();
               // Optionally, you could navigate to the created set or open it here.
             } catch (err) {
               console.error('Error creating set:', err);

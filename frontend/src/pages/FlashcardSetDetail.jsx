@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { useParams, useNavigate } from 'react-router-dom';
 import { authFetch } from '../services/auth';
-import { listCards } from '../services/flashcards';
+import { listCards, deleteCard as deleteCardApi, updateCard as updateCardApi } from '../services/flashcards';
 import UploadPDFButton from '../components/UploadPDFButton';
 import UploadModal from '../components/UploadModal';
 import AddWordModal from '../components/AddWordModal';
@@ -28,6 +28,15 @@ export default function FlashcardSetDetail() {
   const [selectedLevels, setSelectedLevels] = useState([]);
   const [classifyResults, setClassifyResults] = useState(null);
   const [exampleOpenIndex, setExampleOpenIndex] = useState(null);
+  const [actionCardIndex, setActionCardIndex] = useState(null);
+  const [pendingDelete, setPendingDelete] = useState(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [deleteError, setDeleteError] = useState('');
+  const [editModalInfo, setEditModalInfo] = useState(null);
+  const [editForm, setEditForm] = useState({ front: '', back: '', example: '' });
+  const [editLoading, setEditLoading] = useState(false);
+  const [editError, setEditError] = useState('');
+  const [showPracticeDialog, setShowPracticeDialog] = useState(false);
   const uploadRef = useRef(null);
 
   const handleUploadResult = async (data) => {
@@ -293,6 +302,149 @@ export default function FlashcardSetDetail() {
   // combined cards: existing + newly created in-modal
   const combinedCards = [...cards, ...newCards];
 
+  const openEditModal = (index) => {
+    const isPersisted = index < cards.length && !!cards[index]?.id;
+    const card = isPersisted ? cards[index] : newCards[index - cards.length];
+    if (!card) return;
+    const baseFront = card.word || card.front || '';
+    const baseBack = card.definition || card.back || '';
+    setEditModalInfo({
+      index,
+      isPersisted,
+      cardId: card.id || null,
+      extras: {
+        phonetic: card.phonetic || '',
+        type: card.type || '',
+        level: card.level || '',
+      },
+    });
+    setEditForm({
+      front: baseFront,
+      back: baseBack,
+      example: card.example || '',
+    });
+    setEditError('');
+    setEditLoading(false);
+    setActionCardIndex(null);
+  };
+
+  const handleEditChange = (field, value) => {
+    setEditForm((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const closeEditModal = () => {
+    if (editLoading) return;
+    setEditModalInfo(null);
+    setEditError('');
+  };
+
+  const submitEdit = async () => {
+    if (!editModalInfo) return;
+    setEditLoading(true);
+    setEditError('');
+    try {
+      const extras = editModalInfo.extras || { phonetic: '', type: '', level: '' };
+
+      if (editModalInfo.isPersisted && editModalInfo.cardId) {
+        await updateCardApi(editModalInfo.cardId, {
+          word: editForm.front,
+          definition: editForm.back,
+          example: editForm.example,
+          phonetic: extras.phonetic || '',
+          type: extras.type || '',
+          level: extras.level || '',
+        });
+        await reloadCards();
+      } else {
+        const localIndex = editModalInfo.index - cards.length;
+        if (localIndex >= 0) {
+          setNewCards((prev) =>
+            prev.map((card, idx) =>
+              idx === localIndex
+                ? {
+                    ...card,
+                    front: editForm.front,
+                    back: editForm.back,
+                    example: editForm.example,
+                  }
+                : card,
+            ),
+          );
+        }
+      }
+
+      setUploadResultTitle?.('Đã cập nhật thẻ');
+      setUploadResultMessage?.(`Đã cập nhật "${editForm.front || 'thẻ'}" thành công.`);
+      setUploadResultIsError?.(false);
+      setShowUploadResult?.(true);
+      closeEditModal();
+    } catch (err) {
+      console.error('Cập nhật thẻ thất bại:', err);
+      setEditError(err?.message || 'Không thể cập nhật thẻ');
+    } finally {
+      setEditLoading(false);
+    }
+  };
+
+  const handleDeleteClick = (index) => {
+    const isPersisted = index < cards.length && !!cards[index]?.id;
+    const card = index < cards.length ? cards[index] : newCards[index - cards.length];
+    setPendingDelete({ index, isPersisted, card });
+    setActionCardIndex(null);
+    setDeleteError('');
+  };
+
+  const cancelDelete = () => {
+    if (deleteLoading) return;
+    setPendingDelete(null);
+    setDeleteError('');
+  };
+
+  const confirmDelete = async () => {
+    if (!pendingDelete) return;
+    setDeleteLoading(true);
+    setDeleteError('');
+    const label = pendingDelete.card?.word || pendingDelete.card?.front || 'thẻ';
+    try {
+      if (pendingDelete.isPersisted && pendingDelete.card?.id) {
+        await deleteCardApi(pendingDelete.card.id);
+        await reloadCards();
+      } else {
+        const removeIdx = pendingDelete.index - cards.length;
+        if (removeIdx >= 0) {
+          setNewCards((prev) => prev.filter((_, idx) => idx !== removeIdx));
+        }
+      }
+
+      setPendingDelete(null);
+      setUploadResultTitle('Đã xoá thẻ');
+      setUploadResultMessage(`Đã xoá "${label}" khỏi bộ.`);
+      setUploadResultIsError(false);
+      setShowUploadResult(true);
+    } catch (err) {
+      console.error('Xoá thẻ thất bại:', err);
+      setDeleteError(err?.message || 'Không thể xoá thẻ hiện tại');
+    } finally {
+      setDeleteLoading(false);
+    }
+  };
+
+  const startStudyMode = () => {
+    if (!id) return;
+    const title = setMeta?.title || 'Flashcard';
+    const params = new URLSearchParams({ setId: id, title });
+    setShowPracticeDialog(false);
+    navigate(`/study?${params.toString()}`);
+  };
+
+  const startGameMode = () => {
+    if (!id) return;
+    const title = setMeta?.title || 'Flashcard';
+    const params = new URLSearchParams({ set: title, setId: id });
+    setShowPracticeDialog(false);
+    navigate(`/games?${params.toString()}`);
+  };
+
   return (
     <div className="min-h-screen p-4 sm:p-6 md:p-8">
       <div className="max-w-7xl mx-auto">
@@ -306,7 +458,6 @@ export default function FlashcardSetDetail() {
               <span className="material-symbols-outlined text-lg">arrow_back</span>
               Quay lại
             </button>
-
             <div className="mt-4">
               <h1 className="text-3xl sm:text-4xl font-bold text-slate-900">{setMeta?.title || 'Flashcard'}</h1>
               <p className="text-slate-500 mt-1">{setMeta?.description || 'Không có mô tả...'}</p>
@@ -400,7 +551,11 @@ export default function FlashcardSetDetail() {
             Nhập từ PDF
           </button>
 
-          <button className="w-full sm:w-auto flex-grow bg-slate-50 hover:bg-gray-200 text-slate-900 font-bold py-3 px-6 rounded-lg flex items-center justify-center gap-2 transition-colors text-sm border border-gray-300">
+          <button
+            className="w-full sm:w-auto flex-grow bg-slate-50 hover:bg-gray-200 text-slate-900 font-bold py-3 px-6 rounded-lg flex items-center justify-center gap-2 transition-colors text-sm border border-gray-300 disabled:opacity-60 disabled:cursor-not-allowed"
+            onClick={() => setShowPracticeDialog(true)}
+            disabled={!combinedCards.length}
+          >
             <span className="material-symbols-outlined">model_training</span>
             LUYỆN TẬP
           </button>
@@ -433,7 +588,10 @@ export default function FlashcardSetDetail() {
                       )}
                     </div>
                   </div>
-                  <button className="text-slate-500 hover:bg-slate-100 p-1.5 rounded-full">
+                  <button
+                    className="text-slate-500 hover:bg-slate-100 p-1.5 rounded-full"
+                    onClick={() => setActionCardIndex(idx)}
+                  >
                     <span className="material-symbols-outlined">more_vert</span>
                   </button>
                 </div>
@@ -515,6 +673,161 @@ export default function FlashcardSetDetail() {
           setShowUploadResult={setShowUploadResult}
         />
       )}
+      {actionCardIndex !== null && (
+        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center px-4" onClick={() => setActionCardIndex(null)}>
+          <div
+            className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 space-y-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="text-sm text-slate-500">Tùy chọn cho thẻ</p>
+                <h3 className="text-xl font-semibold text-slate-900">
+                  {combinedCards[actionCardIndex]?.front || '—'}
+                </h3>
+              </div>
+              <button className="text-slate-400 hover:text-slate-600" onClick={() => setActionCardIndex(null)}>
+                <span className="material-symbols-outlined">close</span>
+              </button>
+            </div>
+
+            <div className="space-y-3">
+              <button
+                className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border border-slate-200 hover:bg-slate-50 text-left"
+                onClick={() => openEditModal(actionCardIndex)}
+              >
+                <span className="material-symbols-outlined text-slate-600">edit</span>
+                <div>
+                  <p className="font-semibold text-slate-900">Sửa thẻ</p>
+                  <p className="text-sm text-slate-500">Chỉnh sửa nội dung và ví dụ</p>
+                </div>
+              </button>
+
+              <button
+                className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border border-red-200 hover:bg-red-50 text-left"
+                onClick={() => handleDeleteClick(actionCardIndex)}
+              >
+                <span className="material-symbols-outlined text-red-600">delete</span>
+                <div>
+                  <p className="font-semibold text-red-600">Xóa thẻ</p>
+                  <p className="text-sm text-red-500">Thao tác này không thể hoàn tác</p>
+                </div>
+              </button>
+            </div>
+
+            <button
+              className="w-full mt-2 py-2 rounded-xl bg-slate-100 text-slate-600 font-medium hover:bg-slate-200"
+              onClick={() => setActionCardIndex(null)}
+            >
+              Đóng
+            </button>
+          </div>
+        </div>
+      )}
+      {editModalInfo && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center px-4" onClick={closeEditModal}>
+          <div
+            className="bg-white rounded-2xl shadow-2xl w-full max-w-xl p-6 space-y-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="text-sm text-slate-500">Chỉnh sửa thẻ</p>
+                <h3 className="text-2xl font-semibold text-slate-900">{editForm.front || 'Thẻ'}</h3>
+              </div>
+              <button className="text-slate-400 hover:text-slate-600" onClick={closeEditModal}>
+                <span className="material-symbols-outlined">close</span>
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="text-sm font-medium text-slate-600">Mặt trước</label>
+                <input
+                  className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 focus:ring-2 focus:ring-primary/40"
+                  value={editForm.front}
+                  onChange={(e) => handleEditChange('front', e.target.value)}
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium text-slate-600">Định nghĩa / Mặt sau</label>
+                <textarea
+                  className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 min-h-[100px] focus:ring-2 focus:ring-primary/40"
+                  value={editForm.back}
+                  onChange={(e) => handleEditChange('back', e.target.value)}
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium text-slate-600">Ví dụ</label>
+                <textarea
+                  className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 min-h-[80px] focus:ring-2 focus:ring-primary/40"
+                  value={editForm.example}
+                  onChange={(e) => handleEditChange('example', e.target.value)}
+                />
+              </div>
+            </div>
+
+            {editError && <p className="text-sm text-red-600">{editError}</p>}
+
+            <div className="flex flex-col sm:flex-row gap-3 pt-2">
+              <button
+                className="flex-1 py-3 rounded-xl border border-slate-200 text-slate-600 font-medium hover:bg-slate-50"
+                onClick={closeEditModal}
+                disabled={editLoading}
+              >
+                Hủy
+              </button>
+              <button
+                className="flex-1 py-3 rounded-xl bg-primary text-white font-semibold shadow hover:bg-violet-700 disabled:opacity-60"
+                onClick={submitEdit}
+                disabled={editLoading}
+              >
+                {editLoading ? 'Đang lưu...' : 'Lưu thay đổi'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {pendingDelete && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center px-4" onClick={cancelDelete}>
+          <div
+            className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 space-y-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="text-sm text-slate-500">Xác nhận xoá</p>
+                <h3 className="text-xl font-semibold text-slate-900">
+                  {pendingDelete.card?.word || pendingDelete.card?.front || 'Thẻ'}
+                </h3>
+                <p className="text-slate-500 mt-1">Bạn có chắc muốn xoá thẻ này? Thao tác không thể hoàn tác.</p>
+              </div>
+              <button className="text-slate-400 hover:text-slate-600" onClick={cancelDelete}>
+                <span className="material-symbols-outlined">close</span>
+              </button>
+            </div>
+
+            {deleteError && <p className="text-sm text-red-600">{deleteError}</p>}
+
+            <div className="flex flex-col sm:flex-row gap-3 pt-2">
+              <button
+                className="flex-1 py-3 rounded-xl border border-slate-200 text-slate-600 font-medium hover:bg-slate-50"
+                onClick={cancelDelete}
+                disabled={deleteLoading}
+              >
+                Hủy
+              </button>
+              <button
+                className="flex-1 py-3 rounded-xl bg-red-600 text-white font-semibold shadow hover:bg-red-700 disabled:opacity-60"
+                onClick={confirmDelete}
+                disabled={deleteLoading}
+              >
+                {deleteLoading ? 'Đang xoá...' : 'Xóa'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       {showUploadResult && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-white p-5 rounded-lg max-w-md w-[90%]">
@@ -535,6 +848,55 @@ export default function FlashcardSetDetail() {
       <div style={{ display: 'none' }}>
         <UploadPDFButton ref={uploadRef} onResult={handleUploadResult} />
       </div>
+      {showPracticeDialog && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center px-4" onClick={() => setShowPracticeDialog(false)}>
+          <div
+            className="bg-white w-full max-w-md rounded-2xl shadow-2xl p-6 space-y-5"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="text-sm text-slate-500">Luyện tập với bộ</p>
+                <h3 className="text-2xl font-semibold text-slate-900">{setMeta?.title || 'Flashcard'}</h3>
+                <p className="text-slate-500 mt-1">Chọn chế độ bạn muốn bắt đầu.</p>
+              </div>
+              <button className="text-slate-400 hover:text-slate-600" onClick={() => setShowPracticeDialog(false)}>
+                <span className="material-symbols-outlined">close</span>
+              </button>
+            </div>
+
+            <div className="space-y-3">
+              <button
+                className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl border border-slate-200 hover:bg-slate-50 text-left"
+                onClick={startStudyMode}
+              >
+                <span className="material-symbols-outlined text-primary">style</span>
+                <div>
+                  <p className="text-lg font-semibold text-slate-900">Lật thẻ</p>
+                  <p className="text-sm text-slate-500">Ôn tập flashcard theo cách truyền thống</p>
+                </div>
+              </button>
+              <button
+                className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl border border-indigo-200 hover:bg-indigo-50 text-left"
+                onClick={startGameMode}
+              >
+                <span className="material-symbols-outlined text-indigo-600">stadia_controller</span>
+                <div>
+                  <p className="text-lg font-semibold text-slate-900">Chơi game</p>
+                  <p className="text-sm text-slate-500">Chọn mini game để luyện tập hứng thú hơn</p>
+                </div>
+              </button>
+            </div>
+
+            <button
+              className="w-full py-2 rounded-xl bg-slate-100 text-slate-600 font-medium hover:bg-slate-200"
+              onClick={() => setShowPracticeDialog(false)}
+            >
+              Đóng
+            </button>
+          </div>
+        </div>
+      )}
       {showLevelDialog &&
         typeof document !== 'undefined' &&
         createPortal(
