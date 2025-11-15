@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import flashcardsService from '../services/flashcards';
+import { joinExamples } from '../utils/examples';
 
 const ManualCardsEditor = ({ entries, setEntries }) => {
   const updateEntry = (idx, key, value) => {
@@ -83,10 +84,12 @@ export default function AddWordModal({
 
   const buildCardFromInfo = (info, fallbackWord) => {
     const word = info?.word?.trim() || fallbackWord;
-    const backPieces = [info?.part_of_speech, info?.definition_en, info?.definition_vi]
-      .map((s) => (s || '').trim())
-      .filter(Boolean);
-    const exampleText = Array.isArray(info?.examples) ? info.examples.join('\n') : info?.examples || '';
+    const partOfSpeech = (info?.part_of_speech || '').trim();
+    const definitionVi = (info?.definition_vi || '').trim();
+    const definitionEn = (info?.definition_en || '').trim();
+    const preferredDefinition = definitionVi || definitionEn || word;
+    const backPieces = [partOfSpeech, preferredDefinition].filter(Boolean);
+    const exampleText = joinExamples(info?.examples || info?.example || '');
     const notes = info?.notes ? `Ghi chú: ${info.notes}` : '';
 
     const exampleCombined = [exampleText, notes].filter(Boolean).join('\n');

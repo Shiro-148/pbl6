@@ -24,10 +24,22 @@ def flashcards():
         for info in word_info[:60]:
             level = info.get('level', 'medium')
             try:
-                definition = get_concise_definition(info['word'], def_lang=target)
+                definition_vi = get_concise_definition(info['word'], def_lang=target)
             except Exception:  # pylint: disable=broad-except
-                definition = info['word']
-            entries.append({'word': info['word'], 'definition': definition, 'level': level})
+                definition_vi = ''
+
+            definition_en = ''
+            try:
+                raw_en = fetch_definition(info['word'], 'en')
+                definition_en = short_gloss(raw_en, max_words=12) if raw_en else ''
+            except Exception:  # pylint: disable=broad-except
+                definition_en = ''
+
+            combined = ' • '.join(part for part in [definition_en, definition_vi] if part)
+            if not combined:
+                combined = info['word']
+
+            entries.append({'word': info['word'], 'definition': combined, 'level': level})
         return jsonify({'entries': entries, 'def_lang': def_lang, 'translated': True})
 
     for info in word_info[:60]:

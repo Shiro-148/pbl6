@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import flashcardsService from '../services/flashcards';
+import { joinExamples } from '../utils/examples';
 
 export default function UploadModal({
   uploadEntries,
@@ -20,18 +21,29 @@ export default function UploadModal({
   const [examplesLoading, setExamplesLoading] = useState(false);
   const [examplesError, setExamplesError] = useState('');
 
-  const normalizeExamples = (value) => {
-    if (!value && value !== 0) return '';
-    if (Array.isArray(value)) {
-      return value
-        .map((v) => String(v).trim())
-        .filter(Boolean)
-        .join('\n');
+  const pickVietnameseDefinition = (source) => {
+    if (!source) return '';
+    const direct = (source.definition_vi || source.definitionVi || '').trim();
+    if (direct) return direct;
+
+    const combined = (source.definition || '').trim();
+    if (!combined) return '';
+
+    if (combined.includes('•')) {
+      const parts = combined
+        .split('•')
+        .map((part) => part.trim())
+        .filter(Boolean);
+      if (parts.length) {
+        const last = parts[parts.length - 1];
+        if (last) return last;
+      }
     }
-    const text = String(value).trim();
-    if (!text) return '';
-    return text;
+
+    return combined;
   };
+
+  const normalizeExamples = (value) => joinExamples(value || '');
 
   const showExamplesPromptIfNeeded = (targets) => {
     if (targets.length) {
@@ -240,9 +252,15 @@ export default function UploadModal({
                       );
                     if (found) {
                       matchedWords.push(entry.front || found.word || found.term || '');
+                      const vietnameseDefinition = pickVietnameseDefinition(found);
                       return {
                         ...entry,
-                        back: entry.back || found.definition || (found.examples && found.examples[0]) || '',
+                        back:
+                          entry.back ||
+                          vietnameseDefinition ||
+                          found.definition ||
+                          (found.examples && found.examples[0]) ||
+                          '',
                       };
                     }
                     return entry;
@@ -277,7 +295,10 @@ export default function UploadModal({
               }}
               disabled={enrichingUpload}
             >
-              <span className="truncate">{enrichingUpload ? 'Đang bổ sung...' : 'Bổ sung định nghĩa tự động'}</span>
+              <span className="flex items-center gap-2">
+                {enrichingUpload && <span className="enrich-spinner" aria-hidden="true" />}
+                <span className="truncate">{enrichingUpload ? 'Đang bổ sung...' : 'Bổ sung định nghĩa tự động'}</span>
+              </span>
             </button>
             <button
               className="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center gap-2 overflow-hidden rounded-lg h-10 px-4 bg-primary text-white text-sm font-bold leading-normal tracking-[0.015em] hover:bg-primary/90 transition-colors"

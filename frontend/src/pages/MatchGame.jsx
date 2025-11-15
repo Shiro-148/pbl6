@@ -1,12 +1,9 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useCallback } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import '../styles/pages/MatchGame.css';
+import { listCards } from '../services/flashcards';
 
-const initialPairs = [
-  { term: 'eat', definition: 'to consume food' },
-  { term: 'run', definition: 'to move fast' },
-  { term: 'read', definition: 'to look at and comprehend the meaning of written or printed matter' },
-];
+const MAX_PAIRS = 12;
 
 function shuffle(array) {
   const arr = [...array];
@@ -19,18 +16,21 @@ function shuffle(array) {
 
 const MatchGame = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const params = new URLSearchParams(location.search);
+  const setName = params.get('set') || 'Match Game';
+  const setId = params.get('setId') || '';
 
-  const [pairs, setPairs] = useState(initialPairs);
-  const [definitions, setDefinitions] = useState(() =>
-    shuffle(initialPairs.map((p) => p.definition))
-  );
-  const [terms, setTerms] = useState(() =>
-    shuffle(initialPairs.map((p) => p.term))
-  );
+  const [pairs, setPairs] = useState([]);
+  const [definitions, setDefinitions] = useState([]);
+  const [terms, setTerms] = useState([]);
 
-  const [selectedDef, setSelectedDef] = useState(null);
-  const [selectedTerm, setSelectedTerm] = useState(null);
-  const [matchedPairs, setMatchedPairs] = useState([]);
+  const [selectedDefId, setSelectedDefId] = useState(null);
+  const [selectedTermId, setSelectedTermId] = useState(null);
+  const [matchedIds, setMatchedIds] = useState([]);
+
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
   const [startTime, setStartTime] = useState(null); // ban đầu null
   const [endTime, setEndTime] = useState(null);
@@ -45,51 +45,116 @@ const MatchGame = () => {
     return () => clearInterval(interval);
   }, [startTime, endTime]);
 
-  const matched = matchedPairs.length;
+  const matched = matchedIds.length;
+
+  const resetRound = useCallback((nextPairs) => {
+    setPairs(nextPairs);
+    setDefinitions(shuffle(nextPairs.map((p) => ({ id: p.id, text: p.definition }))));
+    setTerms(shuffle(nextPairs.map((p) => ({ id: p.id, text: p.term }))));
+    setMatchedIds([]);
+    setSelectedDefId(null);
+    setSelectedTermId(null);
+    setStartTime(null);
+    setEndTime(null);
+    setTimer(0);
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadPairs = async () => {
+      if (!setId) {
+        setError('Không tìm thấy bộ thẻ. Hãy quay lại và chọn game từ bộ flashcard.');
+        setPairs([]);
+        setLoading(false);
+        return;
+      }
+
+      setLoading(true);
+      setError('');
+      try {
+        const data = await listCards(setId);
+        const rawCards = Array.isArray(data) ? data : data?.cards || [];
+        const normalized = rawCards
+          .map((card, index) => {
+            const term = (card.word || card.front || '').trim();
+            const definition = (card.definition || card.back || '').trim();
+            if (!term || !definition) return null;
+            const id = String(card.id ?? `${term}-${index}`);
+            return { id, term, definition };
+          })
+          .filter(Boolean);
+
+        if (!normalized.length) {
+          throw new Error('Bộ thẻ chưa có dữ liệu để chơi. Vui lòng thêm từ vựng rồi thử lại.');
+        }
+
+        const limited = shuffle(normalized).slice(0, Math.min(MAX_PAIRS, normalized.length));
+        if (!cancelled) {
+          resetRound(limited);
+        }
+      } catch (err) {
+        console.error('Không thể tải dữ liệu game:', err);
+        if (!cancelled) {
+          setError(err?.message || 'Không thể tải dữ liệu game.');
+          setPairs([]);
+          setDefinitions([]);
+          setTerms([]);
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+
+    loadPairs();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [setId, resetRound]);
 
   // Handle clicks
-  const handleDefClick = (def) => {
-    if (matchedPairs.find((mp) => mp.def === def)) return;
+  const handleDefClick = (defId) => {
+    if (matchedIds.includes(defId)) return;
     if (!startTime) setStartTime(Date.now()); // chỉ set khi click đầu tiên
-    setSelectedDef(def);
+    setSelectedDefId(defId);
   };
 
-  const handleTermClick = (term) => {
-    if (matchedPairs.find((mp) => mp.term === term)) return;
+  const handleTermClick = (termId) => {
+    if (matchedIds.includes(termId)) return;
     if (!startTime) setStartTime(Date.now()); // chỉ set khi click đầu tiên
-    setSelectedTerm(term);
+    setSelectedTermId(termId);
   };
 
   // Check match
   useEffect(() => {
-    if (selectedDef && selectedTerm) {
-      const correct = pairs.find(
-        (p) => p.definition === selectedDef && p.term === selectedTerm
-      );
-      if (correct) {
-        setMatchedPairs((prev) => {
-          const newMatched = [...prev, { def: selectedDef, term: selectedTerm }];
-          if (newMatched.length === pairs.length) {
+    if (selectedDefId && selectedTermId) {
+      const isCorrect = selectedDefId === selectedTermId;
+      if (isCorrect) {
+        setMatchedIds((prev) => {
+          if (prev.includes(selectedDefId)) return prev;
+          const updated = [...prev, selectedDefId];
+          if (updated.length === pairs.length) {
             setEndTime(Date.now());
           }
-          return newMatched;
+          return updated;
         });
       }
       setTimeout(() => {
-        setSelectedDef(null);
-        setSelectedTerm(null);
+        setSelectedDefId(null);
+        setSelectedTermId(null);
       }, 500);
     }
-  }, [selectedDef, selectedTerm, pairs]);
+  }, [selectedDefId, selectedTermId, pairs.length]);
 
   // New game
   const handleNewGame = () => {
-    setPairs(initialPairs);
-    setDefinitions(shuffle(initialPairs.map((p) => p.definition)));
-    setTerms(shuffle(initialPairs.map((p) => p.term)));
-    setMatchedPairs([]);
-    setSelectedDef(null);
-    setSelectedTerm(null);
+    if (!pairs.length) return;
+    setDefinitions(shuffle(pairs.map((p) => ({ id: p.id, text: p.definition }))));
+    setTerms(shuffle(pairs.map((p) => ({ id: p.id, text: p.term }))));
+    setMatchedIds([]);
+    setSelectedDefId(null);
+    setSelectedTermId(null);
     setStartTime(null); // reset về null
     setEndTime(null);
     setTimer(0);
@@ -111,6 +176,7 @@ const MatchGame = () => {
       <div className="match-game-header">
         <div className="match-game-header-left">
           <div className="match-game-title">Match Game</div>
+          <div className="match-game-desc">{setName}</div>
         </div>
         <div className="match-game-header-center">
           <div className="match-game-desc">Match terms with their definitions</div>
@@ -122,7 +188,7 @@ const MatchGame = () => {
                   fontWeight: 600,
                 }}
               >
-                {matched} / {pairs.length} pairs matched
+                {matched} / {pairs.length || 0} pairs matched
               </span>
             </span>
           </div>
@@ -140,7 +206,7 @@ const MatchGame = () => {
         </div>
       </div>
 
-      {matched === pairs.length && (
+      {pairs.length > 0 && matched === pairs.length && (
         <div className="match-game-congrats">
           <div className="match-game-congrats-icon">🏆</div>
           <div className="match-game-congrats-title">Congratulations!</div>
@@ -152,43 +218,53 @@ const MatchGame = () => {
       )}
 
       <div className="match-game-board">
-        {/* Definitions */}
-        {definitions.map((def) => {
-          const isMatched = matchedPairs.find((mp) => mp.def === def);
-          const isSelected = selectedDef === def;
-          return (
-            <div
-              key={def}
-              className={`match-card definition${
-                isMatched ? ' matched' : isSelected ? ' selected' : ''
-              }`}
-              onClick={() => handleDefClick(def)}
-              style={{ cursor: isMatched ? 'default' : 'pointer' }}
-            >
-              <div className="match-card-label">DEFINITION</div>
-              <div className="match-card-content">{def}</div>
-            </div>
-          );
-        })}
+        {loading && <div className="match-game-empty">Đang tải dữ liệu...</div>}
+        {!loading && error && <div className="match-game-empty error">{error}</div>}
+        {!loading && !error && pairs.length === 0 && (
+          <div className="match-game-empty">Bộ thẻ chưa có dữ liệu để chơi.</div>
+        )}
 
-        {/* Terms */}
-        {terms.map((term) => {
-          const isMatched = matchedPairs.find((mp) => mp.term === term);
-          const isSelected = selectedTerm === term;
-          return (
-            <div
-              key={term}
-              className={`match-card term${
-                isMatched ? ' matched' : isSelected ? ' selected' : ''
-              }`}
-              onClick={() => handleTermClick(term)}
-              style={{ cursor: isMatched ? 'default' : 'pointer' }}
-            >
-              <div className="match-card-label">TERM</div>
-              <div className="match-card-content">{term}</div>
-            </div>
-          );
-        })}
+        {!loading && !error && pairs.length > 0 && (
+          <>
+            {/* Definitions */}
+            {definitions.map((def) => {
+              const isMatched = matchedIds.includes(def.id);
+              const isSelected = selectedDefId === def.id;
+              return (
+                <div
+                  key={`def-${def.id}`}
+                  className={`match-card definition${
+                    isMatched ? ' matched' : isSelected ? ' selected' : ''
+                  }`}
+                  onClick={() => handleDefClick(def.id)}
+                  style={{ cursor: isMatched ? 'default' : 'pointer' }}
+                >
+                  <div className="match-card-label">DEFINITION</div>
+                  <div className="match-card-content">{def.text}</div>
+                </div>
+              );
+            })}
+
+            {/* Terms */}
+            {terms.map((term) => {
+              const isMatched = matchedIds.includes(term.id);
+              const isSelected = selectedTermId === term.id;
+              return (
+                <div
+                  key={`term-${term.id}`}
+                  className={`match-card term${
+                    isMatched ? ' matched' : isSelected ? ' selected' : ''
+                  }`}
+                  onClick={() => handleTermClick(term.id)}
+                  style={{ cursor: isMatched ? 'default' : 'pointer' }}
+                >
+                  <div className="match-card-label">TERM</div>
+                  <div className="match-card-content">{term.text}</div>
+                </div>
+              );
+            })}
+          </>
+        )}
       </div>
     </div>
   );

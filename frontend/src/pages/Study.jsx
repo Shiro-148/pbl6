@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import '../styles/pages/Study.css';
 import { listCards } from '../services/flashcards';
+import { splitExamples } from '../utils/examples';
 
 const Study = () => {
   const location = useLocation();
@@ -84,6 +85,8 @@ const Study = () => {
     setIsFlipped((prev) => !prev);
     setShowDef((prev) => !prev);
   };
+
+  const currentExamples = splitExamples(card?.example || card?.examples);
 
   return (
     <div className="study-root">
@@ -179,7 +182,18 @@ const Study = () => {
                 <div className="study-term-label">DEFINITION</div>
                 <div className="study-def">
                   {card?.def || '—'}
-                  {card?.example && <p className="study-example">Ví dụ: {card.example}</p>}
+                  {currentExamples.length > 0 && (
+                    <div className="study-example-block">
+                      <p className="study-example-label">Ví dụ:</p>
+                      <ol className="study-example-list">
+                        {currentExamples.map((ex, idx) => (
+                          <li key={idx} className="study-example-item">
+                            {ex}
+                          </li>
+                        ))}
+                      </ol>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

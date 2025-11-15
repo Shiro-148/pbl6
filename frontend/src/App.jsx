@@ -1,5 +1,5 @@
 import './App.css';
-import { Routes, Route, useLocation } from 'react-router-dom';
+import { Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import Header from './components/Header';
 import BottomNav from './components/BottomNav';
 import Home from './pages/home';
@@ -21,10 +21,20 @@ import MatchGame from './pages/MatchGame';
 import MultipleChoice from './pages/MultipleChoice';
 import SentenceChoice from './pages/SentenceChoice';
 import SentenceChoiceGame from './pages/SentenceChoiceGame';
+import { getToken } from './services/auth';
 
 function App() {
   const location = useLocation();
   const hideNavAndHeader = location.pathname === '/login' || location.pathname === '/register';
+
+  const GuestRoute = ({ children }) => {
+    const token = getToken();
+    if (token) {
+      return <Navigate to="/" replace />;
+    }
+    return children;
+  };
+
   return (
     <div className="app-container">
       {!hideNavAndHeader && <Header />}
@@ -35,8 +45,22 @@ function App() {
           <Route path="/library" element={<Library />} />
           <Route path="/sets/:id" element={<FlashcardSetDetail />} />
           <Route path="/study" element={<Study />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
+          <Route
+            path="/login"
+            element={(
+              <GuestRoute>
+                <Login />
+              </GuestRoute>
+            )}
+          />
+          <Route
+            path="/register"
+            element={(
+              <GuestRoute>
+                <Register />
+              </GuestRoute>
+            )}
+          />
           <Route path="/create-flashcard" element={<CreateFlashcard />} />
           <Route path="/upload-pdf" element={<UploadPDF />} />
           <Route path="/community" element={<Community />} />

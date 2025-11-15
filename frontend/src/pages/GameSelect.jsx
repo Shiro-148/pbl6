@@ -53,6 +53,7 @@ const GameSelect = () => {
   // Lấy tên set từ query string
   const params = new URLSearchParams(location.search);
   const setName = params.get('set') || 'Flashcard Set';
+  const setId = params.get('setId') || '';
   // Giả lập số thẻ
   const cardCount = 3;
 
@@ -74,11 +75,17 @@ const GameSelect = () => {
             className={['game-card', g.color].join(' ')}
             onClick={() => {
               if (g.key === 'match') {
-                navigate(`/games/match?set=${encodeURIComponent(setName)}`);
+                const qs = new URLSearchParams({ set: setName });
+                if (setId) qs.set('setId', setId);
+                navigate(`/games/match?${qs.toString()}`);
               } else if (g.key === 'multiple') {
-                navigate(`/games/multiple?set=${encodeURIComponent(setName)}`);
+                const qs = new URLSearchParams({ set: setName });
+                if (setId) qs.set('setId', setId);
+                navigate(`/games/multiple?${qs.toString()}`);
               } else if (g.key === 'Sentence') {
-                navigate(`/games/Sentence?set=${encodeURIComponent(setName)}`);
+                const qs = new URLSearchParams({ set: setName });
+                if (setId) qs.set('setId', setId);
+                navigate(`/games/Sentence?${qs.toString()}`);
               }
             }}
             style={{ cursor: g.key === 'match' || g.key === 'multiple' || g.key === 'Sentence' ? 'pointer' : undefined }}

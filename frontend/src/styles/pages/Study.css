@@ -119,7 +119,7 @@
 }
 .study-card-inner {
   width: 100%;
-  min-height: 240px;
+  min-height: 350px;
   padding: 38px 24px;
   transform-style: preserve-3d;
   transition: transform 0.6s ease;
@@ -129,6 +129,7 @@
   transform: rotateY(180deg);
 }
 .study-card-face {
+  height: auto;
   position: absolute;
   inset: 0;
   display: flex;
@@ -144,10 +145,30 @@
 .study-card-back {
   transform: rotateY(180deg);
 }
-.study-example {
-  margin-top: 14px;
-  font-size: 16px;
+.study-example-block {
+  margin-top: 18px;
+  width: 100%;
+}
+.study-example-label {
+  font-size: 15px;
+  font-weight: 600;
+  color: #444;
+  margin-bottom: 8px;
+  text-align: left;
+}
+.study-example-list {
+  margin: 0;
+  padding-left: 20px;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
   color: #555;
+  font-size: 15px;
+  list-style: decimal;
+}
+.study-example-item {
+  line-height: 1.5;
 }
 .study-term-label {
   color: #2979ff;

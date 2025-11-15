@@ -11,11 +11,13 @@ const Register = () => {
   const [confirm, setConfirm] = useState('');
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
+  const [showSuccessDialog, setShowSuccessDialog] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
     setSuccess(null);
+    setShowSuccessDialog(false);
     if (!username || !password) {
       setError('Username và password là bắt buộc');
       return;
@@ -26,8 +28,8 @@ const Register = () => {
     }
     try {
       await apiRegister(username, password, displayName);
-      setSuccess('Đăng ký thành công. Chuyển tới trang đăng nhập...');
-      setTimeout(() => navigate('/login'), 1200);
+      setSuccess('Đăng ký thành công. Bạn có muốn chuyển sang trang đăng nhập ngay bây giờ?');
+      setShowSuccessDialog(true);
     } catch (err) {
       console.error(err);
       setError(err.message || 'Đăng ký thất bại');
@@ -60,13 +62,35 @@ const Register = () => {
             </label>
             <button type="submit" className="login-btn-main">ĐĂNG KÝ</button>
             {error && <div className="login-error">{error}</div>}
-            {success && <div className="login-success">{success}</div>}
           </form>
           <div className="login-register">
             Đã có tài khoản? <a href="/login">Đăng nhập</a>
           </div>
         </div>
       </div>
+      {showSuccessDialog && (
+        <div className="auth-modal-overlay">
+          <div className="auth-modal" role="alertdialog" aria-modal="true">
+            <h3>Đăng ký thành công</h3>
+            <p>{success}</p>
+            <div className="auth-modal-actions">
+              <button type="button" className="auth-modal-secondary" onClick={() => setShowSuccessDialog(false)}>
+                Ở lại đây
+              </button>
+              <button
+                type="button"
+                className="auth-modal-primary"
+                onClick={() => {
+                  setShowSuccessDialog(false);
+                  navigate('/login');
+                }}
+              >
+                Đi tới đăng nhập
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

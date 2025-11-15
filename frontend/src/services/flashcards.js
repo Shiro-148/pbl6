@@ -1,4 +1,5 @@
 import { authFetch } from './auth';
+import { joinExamples } from '../utils/examples';
 
 // Use VITE_API_BASE if provided, otherwise default to localhost backend for dev
 const API = import.meta.env.VITE_API_BASE || 'http://localhost:8080';
@@ -40,7 +41,7 @@ export async function createCard(setId, cardData) {
   const body = {
     word: cardData.word || cardData.front || '',
     definition: cardData.definition || cardData.back || '',
-    example: cardData.example || '',
+    example: joinExamples(cardData.example || ''),
     phonetic: cardData.phonetic || '',
     type: cardData.type || '',
     audio: cardData.audio || '',
@@ -132,7 +133,7 @@ export async function updateCard(cardId, payload) {
   const body = {
     word: payload.word || payload.front || '',
     definition: payload.definition || payload.back || '',
-    example: payload.example || '',
+    example: joinExamples(payload.example || ''),
     phonetic: payload.phonetic || '',
     type: payload.type || '',
     audio: payload.audio || '',

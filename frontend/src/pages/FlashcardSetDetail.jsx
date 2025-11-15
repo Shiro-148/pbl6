@@ -2,7 +2,8 @@ import React, { useEffect, useState, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { useParams, useNavigate } from 'react-router-dom';
 import { authFetch } from '../services/auth';
-import { listCards, deleteCard as deleteCardApi, updateCard as updateCardApi } from '../services/flashcards';
+import { listCards, deleteCard as deleteCardApi, updateCard as updateCardApi, deleteSet as deleteSetApi } from '../services/flashcards';
+import { splitExamples } from '../utils/examples';
 import UploadPDFButton from '../components/UploadPDFButton';
 import UploadModal from '../components/UploadModal';
 import AddWordModal from '../components/AddWordModal';
@@ -37,6 +38,9 @@ export default function FlashcardSetDetail() {
   const [editLoading, setEditLoading] = useState(false);
   const [editError, setEditError] = useState('');
   const [showPracticeDialog, setShowPracticeDialog] = useState(false);
+  const [showDeleteSetDialog, setShowDeleteSetDialog] = useState(false);
+  const [deleteSetLoading, setDeleteSetLoading] = useState(false);
+  const [deleteSetError, setDeleteSetError] = useState('');
   const uploadRef = useRef(null);
 
   const handleUploadResult = async (data) => {
@@ -273,30 +277,6 @@ export default function FlashcardSetDetail() {
     setClassifyResults(null);
   };
 
-  const normalizeExamples = (value) => {
-    if (!value && value !== 0) return [];
-    if (Array.isArray(value)) {
-      return value.map((v) => String(v).trim()).filter(Boolean);
-    }
-    if (typeof value === 'string') {
-      const trimmed = value.trim();
-      if (!trimmed) return [];
-      try {
-        const parsed = JSON.parse(trimmed);
-        if (Array.isArray(parsed)) {
-          return parsed.map((v) => String(v).trim()).filter(Boolean);
-        }
-      } catch {
-        // not JSON, continue fallback
-      }
-      return trimmed
-        .split(/\n+/)
-        .map((line) => line.trim())
-        .filter(Boolean);
-    }
-    return [];
-  };
-
   if (loading) return <div className="p-6">Loading...</div>;
 
   // combined cards: existing + newly created in-modal
@@ -445,6 +425,37 @@ export default function FlashcardSetDetail() {
     navigate(`/games?${params.toString()}`);
   };
 
+  const openDeleteSetConfirm = () => {
+    setDeleteSetError('');
+    setShowDeleteSetDialog(true);
+  };
+
+  const cancelDeleteSet = () => {
+    if (deleteSetLoading) return;
+    setShowDeleteSetDialog(false);
+    setDeleteSetError('');
+  };
+
+  const confirmDeleteSet = async () => {
+    if (!id) return;
+    setDeleteSetLoading(true);
+    setDeleteSetError('');
+    try {
+      await deleteSetApi(id);
+      setShowDeleteSetDialog(false);
+      setUploadResultTitle('Đã xoá bộ');
+      setUploadResultMessage(`Bộ "${setMeta?.title || ''}" đã được xoá.`);
+      setUploadResultIsError(false);
+      setShowUploadResult(true);
+      setTimeout(() => navigate(-1), 200);
+    } catch (err) {
+      console.error('Xoá bộ flashcard thất bại:', err);
+      setDeleteSetError(err?.message || 'Không thể xoá bộ hiện tại');
+    } finally {
+      setDeleteSetLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen p-4 sm:p-6 md:p-8">
       <div className="max-w-7xl mx-auto">
@@ -480,7 +491,10 @@ export default function FlashcardSetDetail() {
             <button className="flex items-center gap-2 px-3 py-2 text-sm font-medium bg-white hover:bg-slate-50 rounded-lg transition-colors border border-gray-200">
               <span className="material-symbols-outlined text-lg">grid_on</span> Thêm nhiều
             </button>
-            <button className="flex items-center gap-2 px-3 py-2 text-sm font-medium bg-red-50 text-red-600 hover:bg-red-100 rounded-lg transition-colors border border-red-200">
+            <button
+              className="flex items-center gap-2 px-3 py-2 text-sm font-medium bg-red-50 text-red-600 hover:bg-red-100 rounded-lg transition-colors border border-red-200"
+              onClick={openDeleteSetConfirm}
+            >
               <span className="material-symbols-outlined text-lg">delete</span> Xóa
             </button>
           </div>
@@ -569,7 +583,7 @@ export default function FlashcardSetDetail() {
             <p className="text-slate-500 mt-2">Bạn hãy bấm vào nút thêm từ vựng để học nhé.</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 w-list-flashcards">
             {combinedCards.map((c, idx) => (
               <div
                 key={idx}
@@ -604,7 +618,7 @@ export default function FlashcardSetDetail() {
                 <div className="border-t border-slate-200 pt-3 mt-3">
                   {(() => {
                     const cardKey = c.id ? `server-${c.id}` : `local-${idx}`;
-                    const examples = normalizeExamples(c.example || c.examples);
+                    const examples = splitExamples(c.example || c.examples);
                     const hasExamples = examples.length > 0;
                     const isOpen = openExampleIds.includes(cardKey);
                     const toggleExamples = () => {
@@ -846,6 +860,46 @@ export default function FlashcardSetDetail() {
                 className="px-4 py-2 rounded bg-primary text-white"
               >
                 Đóng
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {showDeleteSetDialog && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center px-4" onClick={cancelDeleteSet}>
+          <div
+            className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 space-y-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="text-sm text-slate-500">Xác nhận xoá bộ</p>
+                <h3 className="text-2xl font-semibold text-slate-900">{setMeta?.title || 'Bộ flashcard'}</h3>
+                <p className="text-slate-500 mt-1">
+                  Bạn có chắc chắn muốn xoá bộ flashcard này? Toàn bộ thẻ bên trong cũng sẽ bị xoá và thao tác không thể hoàn tác.
+                </p>
+              </div>
+              <button className="text-slate-400 hover:text-slate-600" onClick={cancelDeleteSet}>
+                <span className="material-symbols-outlined">close</span>
+              </button>
+            </div>
+
+            {deleteSetError && <p className="text-sm text-red-600">{deleteSetError}</p>}
+
+            <div className="flex flex-col sm:flex-row gap-3 pt-2">
+              <button
+                className="flex-1 py-3 rounded-xl border border-slate-200 text-slate-600 font-medium hover:bg-slate-50"
+                onClick={cancelDeleteSet}
+                disabled={deleteSetLoading}
+              >
+                Hủy
+              </button>
+              <button
+                className="flex-1 py-3 rounded-xl bg-red-600 text-white font-semibold shadow hover:bg-red-700 disabled:opacity-60"
+                onClick={confirmDeleteSet}
+                disabled={deleteSetLoading}
+              >
+                {deleteSetLoading ? 'Đang xoá...' : 'Xóa bộ'}
               </button>
             </div>
           </div>
