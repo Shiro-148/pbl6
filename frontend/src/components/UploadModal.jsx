@@ -15,6 +15,94 @@ export default function UploadModal({
   onCardsCreated,
 }) {
   const [saving, setSaving] = useState(false);
+  const [examplePromptTargets, setExamplePromptTargets] = useState([]);
+  const [showExamplePrompt, setShowExamplePrompt] = useState(false);
+  const [examplesLoading, setExamplesLoading] = useState(false);
+  const [examplesError, setExamplesError] = useState('');
+
+  const normalizeExamples = (value) => {
+    if (!value && value !== 0) return '';
+    if (Array.isArray(value)) {
+      return value
+        .map((v) => String(v).trim())
+        .filter(Boolean)
+        .join('\n');
+    }
+    const text = String(value).trim();
+    if (!text) return '';
+    return text;
+  };
+
+  const showExamplesPromptIfNeeded = (targets) => {
+    if (targets.length) {
+      setExamplePromptTargets(targets);
+      setShowExamplePrompt(true);
+    } else {
+      setExamplePromptTargets([]);
+      setShowExamplePrompt(false);
+    }
+  };
+
+  const handleAutoExamples = async () => {
+    if (!examplePromptTargets.length) {
+      setShowExamplePrompt(false);
+      return;
+    }
+
+    setExamplesLoading(true);
+    setExamplesError('');
+    const successUpdates = [];
+    const failedWords = [];
+
+    try {
+      for (const target of examplePromptTargets) {
+        const word = target?.word?.trim();
+        if (!word) continue;
+        try {
+          const info = await flashcardsService.generateWordInfo(word);
+          const exampleText = normalizeExamples(info?.examples || info?.example);
+          if (exampleText) {
+            successUpdates.push({ word, example: exampleText });
+          } else {
+            failedWords.push(word);
+          }
+        } catch (err) {
+          console.error('Auto example failed for', word, err);
+          failedWords.push(word);
+        }
+      }
+
+      if (successUpdates.length) {
+        setUploadEntries((prev) =>
+          prev.map((entry) => {
+            const entryWord = (entry.front || '').trim().toLowerCase();
+            const match = successUpdates.find((item) => item.word.toLowerCase() === entryWord);
+            if (match) {
+              return { ...entry, example: match.example };
+            }
+            return entry;
+          }),
+        );
+      }
+
+      const successMsg = successUpdates.length
+        ? `Đã thêm ví dụ cho ${successUpdates.length} từ.`
+        : 'Không tìm được ví dụ phù hợp.';
+      const failMsg = failedWords.length ? ` Không thể tạo ví dụ cho: ${failedWords.join(', ')}.` : '';
+
+      setUploadResultTitle?.(
+        successUpdates.length ? 'Đã bổ sung ví dụ' : 'Không thể bổ sung ví dụ',
+      );
+      setUploadResultMessage?.(successMsg + failMsg);
+      setUploadResultIsError?.(successUpdates.length === 0);
+      setShowUploadResult?.(true);
+      setExamplesError(failedWords.length ? failMsg.trim() : '');
+    } finally {
+      setExamplesLoading(false);
+      setShowExamplePrompt(false);
+      setExamplePromptTargets([]);
+    }
+  };
 
   return (
     <div>
@@ -142,22 +230,38 @@ export default function UploadModal({
                   const sel = uploadEntries.map((e) => e.front);
                   const res = await flashcardsService.enrichWords(sel);
                   const list = res.flashcards || res.entries || res;
-                  setUploadEntries((prev) => prev.map((e) => {
-                    const found = list && list.find((x) => ((x.word || x.term || '') || '').toLowerCase() === (e.front || '').toLowerCase());
-                    if (found) return { ...e, back: e.back || found.definition || (found.examples && found.examples[0]) || '' };
-                    return e;
-                  }));
-                  const count = list
-                    ? uploadEntries.reduce((acc, ue) => acc + (list.find((x) => ((x.word || x.term || '') || '').toLowerCase() === (ue.front || '').toLowerCase()) ? 1 : 0), 0)
-                    : 0;
+                  const matchedWords = [];
+                  const updatedEntries = uploadEntries.map((entry) => {
+                    const entryWord = (entry.front || '').toLowerCase();
+                    const found =
+                      list &&
+                      list.find(
+                        (x) => ((x.word || x.term || '') || '').toLowerCase() === entryWord,
+                      );
+                    if (found) {
+                      matchedWords.push(entry.front || found.word || found.term || '');
+                      return {
+                        ...entry,
+                        back: entry.back || found.definition || (found.examples && found.examples[0]) || '',
+                      };
+                    }
+                    return entry;
+                  });
+                  setUploadEntries(updatedEntries);
+
+                  const count = matchedWords.length;
                   if (count) {
                     setUploadResultTitle('Hoàn tất');
                     setUploadResultMessage(`Đã bổ sung định nghĩa cho ${count} từ.`);
                     setUploadResultIsError(false);
+                    showExamplesPromptIfNeeded(
+                      matchedWords.map((word) => ({ word })),
+                    );
                   } else {
                     setUploadResultTitle('Không có định nghĩa');
                     setUploadResultMessage('Không tìm thấy định nghĩa cho các từ đã trích xuất.');
                     setUploadResultIsError(true);
+                    showExamplesPromptIfNeeded([]);
                   }
                   setShowUploadResult(true);
                 } catch (err) {
@@ -165,6 +269,7 @@ export default function UploadModal({
                   setUploadResultTitle('Lỗi');
                   setUploadResultMessage('Lỗi khi bổ sung định nghĩa: ' + (err.message || err));
                   setUploadResultIsError(true);
+                  showExamplesPromptIfNeeded([]);
                   setShowUploadResult(true);
                 } finally {
                   setEnrichingUpload(false);
@@ -238,6 +343,57 @@ export default function UploadModal({
           </div>
         </div>
       </div>
+
+      {showExamplePrompt && (
+        <div className="fixed inset-0 z-[999] bg-black/40 flex items-center justify-center px-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg p-6 space-y-4">
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="text-sm text-slate-500">Bổ sung ví dụ</p>
+                <h3 className="text-2xl font-semibold text-slate-900">Định nghĩa đã được thêm</h3>
+                <p className="text-slate-600 mt-1">
+                  Bạn có muốn Gemini tự động tạo ví dụ cho {examplePromptTargets.length} từ vừa được bổ sung
+                  định nghĩa?
+                </p>
+                {examplesError && (
+                  <p className="text-sm text-red-600 mt-2">{examplesError}</p>
+                )}
+              </div>
+              <button
+                className="text-slate-400 hover:text-slate-600"
+                onClick={() => {
+                  if (!examplesLoading) {
+                    setShowExamplePrompt(false);
+                    setExamplePromptTargets([]);
+                  }
+                }}
+              >
+                <span className="material-symbols-outlined">close</span>
+              </button>
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-3 pt-2">
+              <button
+                className="flex-1 py-3 rounded-xl border border-slate-200 text-slate-600 font-medium hover:bg-slate-50"
+                onClick={() => {
+                  setShowExamplePrompt(false);
+                  setExamplePromptTargets([]);
+                }}
+                disabled={examplesLoading}
+              >
+                Để sau
+              </button>
+              <button
+                className="flex-1 py-3 rounded-xl bg-primary text-white font-semibold shadow hover:bg-violet-700 disabled:opacity-60"
+                onClick={handleAutoExamples}
+                disabled={examplesLoading}
+              >
+                {examplesLoading ? 'Đang tạo...' : 'Tự động thêm ví dụ'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -27,7 +27,7 @@ export default function FlashcardSetDetail() {
   const [showLevelDialog, setShowLevelDialog] = useState(false);
   const [selectedLevels, setSelectedLevels] = useState([]);
   const [classifyResults, setClassifyResults] = useState(null);
-  const [exampleOpenIndex, setExampleOpenIndex] = useState(null);
+  const [openExampleIds, setOpenExampleIds] = useState([]);
   const [actionCardIndex, setActionCardIndex] = useState(null);
   const [pendingDelete, setPendingDelete] = useState(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
@@ -573,7 +573,7 @@ export default function FlashcardSetDetail() {
             {combinedCards.map((c, idx) => (
               <div
                 key={idx}
-                className="list-flashcard bg-white rounded-lg shadow-sm p-5 border border-slate-200 flex flex-col"
+                className="list-flashcard bg-white rounded-lg shadow-sm p-5 border border-slate-200 flex flex-col self-start"
               >
                 <div className="flex justify-between items-start mb-3">
                   <div className="flex-1">
@@ -596,21 +596,28 @@ export default function FlashcardSetDetail() {
                   </button>
                 </div>
 
-                <div className="text-sm text-slate-600 flex-grow">
+                <div className="text-sm text-slate-600">
                   <p className="font-semibold mb-1">Định nghĩa:</p>
                   <p className="pl-2 text-slate-700">{c.back || '—'}</p>
                 </div>
 
                 <div className="border-t border-slate-200 pt-3 mt-3">
                   {(() => {
+                    const cardKey = c.id ? `server-${c.id}` : `local-${idx}`;
                     const examples = normalizeExamples(c.example || c.examples);
                     const hasExamples = examples.length > 0;
-                    const isOpen = exampleOpenIndex === idx;
+                    const isOpen = openExampleIds.includes(cardKey);
+                    const toggleExamples = () => {
+                      if (!hasExamples) return;
+                      setOpenExampleIds((prev) =>
+                        prev.includes(cardKey) ? prev.filter((key) => key !== cardKey) : [...prev, cardKey],
+                      );
+                    };
                     return (
                       <>
                         <button
-                          className="w-full flex justify-between items-center text-sm font-medium text-slate-500 hover:text-primary transition-colors"
-                          onClick={() => setExampleOpenIndex((prev) => (prev === idx ? null : idx))}
+                          className="flashcard-example-toggle w-full text-sm font-medium text-slate-500 hover:text-primary transition-colors"
+                          onClick={toggleExamples}
                           disabled={!hasExamples}
                         >
                           <span>
@@ -620,7 +627,7 @@ export default function FlashcardSetDetail() {
                           <span className="material-symbols-outlined">{isOpen ? 'expand_less' : 'expand_more'}</span>
                         </button>
                         {hasExamples && isOpen && (
-                          <div className="mt-2 rounded-lg bg-slate-50 border border-slate-200 p-3 text-sm text-slate-700 space-y-2">
+                          <div className="flashcard-example-content rounded-lg bg-slate-50 border border-slate-200 p-3 text-sm text-slate-700 space-y-2">
                             {examples.map((ex, exIdx) => (
                               <p key={exIdx} className="leading-relaxed">
                                 {ex}
