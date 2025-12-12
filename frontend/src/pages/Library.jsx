@@ -163,6 +163,7 @@ export default function Library() {
                   if (!set.folderId) return false;
                   return folders.some(folder => folder.id === set.folderId);
                 })
+                .slice(0, 5)
                 .map((set) => (
                   <div
                     key={set.id}

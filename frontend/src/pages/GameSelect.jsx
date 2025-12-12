@@ -50,11 +50,9 @@ const instructions = [
 const GameSelect = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  // Lấy tên set từ query string
   const params = new URLSearchParams(location.search);
   const setName = params.get('set') || 'Flashcard Set';
   const setId = params.get('setId') || '';
-  // Giả lập số thẻ
   const cardCount = 3;
 
   return (

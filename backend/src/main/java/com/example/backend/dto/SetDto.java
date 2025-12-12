@@ -7,6 +7,7 @@ public class SetDto {
     private Long id;
     private String title;
     private String description;
+    private String access;
     private List<FlashcardDto> cards = new ArrayList<>();
     private Long folderId;
     private int cardCount;
@@ -36,6 +37,14 @@ public class SetDto {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public String getAccess() {
+        return access;
+    }
+
+    public void setAccess(String access) {
+        this.access = access;
     }
 
     public List<FlashcardDto> getCards() {

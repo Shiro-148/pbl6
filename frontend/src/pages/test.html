@@ -1,300 +1,189 @@
 <!DOCTYPE html>
-<html lang="vi">
+
+<html class="light" lang="en">
 
 <head>
     <meta charset="utf-8" />
     <meta content="width=device-width, initial-scale=1.0" name="viewport" />
-    <title>Flashcard Grid View</title>
-    <link href="https://fonts.googleapis.com" rel="preconnect" />
-    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect" />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap"
+    <title>Personal Information Modal</title>
+    <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&amp;display=swap"
         rel="stylesheet" />
     <link
-        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200"
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
         rel="stylesheet" />
-    <script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>
-    <style>
-        .material-symbols-outlined {
-            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
-        }
-    </style>
-    <script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script id="tailwind-config">
         tailwind.config = {
             darkMode: "class",
             theme: {
                 extend: {
                     colors: {
-                        primary: "#6366F1",
-                        "background-light": "#F8FAFC",
-                        "background-dark": "#18181B",
+                        "primary": "#137fec",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#101922",
                     },
                     fontFamily: {
-                        display: ["Inter", "sans-serif"],
+                        "display": ["Lexend", "sans-serif"]
                     },
-                    borderRadius: {
-                        DEFAULT: "0.5rem",
-                    },
+                    borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" },
                 },
             },
-        };
+        }
     </script>
 </head>
 
-<body class="font-display bg-background-light dark:bg-background-dark text-slate-800 dark:text-slate-200">
-    <div class="min-h-screen p-4 sm:p-6 lg:p-8">
-        <div class="max-w-7xl mx-auto">
-            <header class="mb-6">
-                <div class="flex flex-wrap items-center justify-between gap-4">
-                    <div class="flex-1">
-                        <button
-                            class="flex items-center gap-2 text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-primary dark:hover:text-primary transition-colors">
-                            <span class="material-symbols-outlined">arrow_back</span>
-                            Quay lại
-                        </button>
-                        <h1 class="text-3xl font-bold text-slate-900 dark:text-white mt-2">Flashcard: anh</h1>
-                        <p class="text-slate-500 dark:text-slate-400">Không có mô tả...</p>
+<body
+    class="bg-background-light dark:bg-background-dark min-h-screen font-display text-[#111418] dark:text-white flex items-center justify-center p-4">
+    <!-- Background Decoration (simulating app behind modal) -->
+    <div class="fixed inset-0 z-0 opacity-20 pointer-events-none"
+        style="background-image: radial-gradient(#137fec 1px, transparent 1px); background-size: 24px 24px;"></div>
+    <!-- Modal Overlay -->
+    <div
+        class="relative z-10 w-full max-w-[640px] flex flex-col bg-white dark:bg-[#1a2632] rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] overflow-hidden border border-[#dbe0e6] dark:border-gray-700">
+        <!-- Modal Header -->
+        <div
+            class="flex items-center justify-between px-6 py-5 border-b border-[#dbe0e6] dark:border-gray-700 bg-white dark:bg-[#1a2632]">
+            <h3 class="text-[#111418] dark:text-white text-xl font-bold leading-tight tracking-tight">Thông tin cá nhân
+            </h3>
+            <button
+                class="flex items-center justify-center w-8 h-8 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors cursor-pointer text-[#617589] dark:text-gray-400">
+                <span class="material-symbols-outlined" style="font-size: 24px;">close</span>
+            </button>
+        </div>
+        <!-- Modal Body (Scrollable) -->
+        <div class="flex flex-col px-6 py-6 overflow-y-auto max-h-[75vh]">
+            <!-- Profile Picture Section -->
+            <div class="flex flex-col sm:flex-row items-start sm:items-center gap-6 mb-8">
+                <div class="relative group cursor-pointer">
+                    <div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full w-24 h-24 ring-4 ring-gray-50 dark:ring-gray-800"
+                        data-alt="User profile avatar showing a smiling person"
+                        style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuD5yZqGBiL5gDxKW1-xoanynXarCu73zConGsMOQ3eeYCtxNBi95dCk5NFTX-zy7dR9Zd5m3ecMh5PeZp8cxmXYOlc-QddIizC7K4TOcXc62w1wsfjU8TrVNRkNrM_9H6p6_KQSQxTYUBpicRSZDq3Iuzy7kV0msuyQwwKoxaIXDgZ_zEBZhuD8FKxViq6dIRFeC19vQ9m85mNFjvr20wuetecuQavg1tQlqiYPaVaEC-4gyeN-2MD9i30pssixsx4CM7ndWY7N2y__");'>
                     </div>
-                    <div class="flex items-center flex-wrap gap-2">
-                        <button
-                            class="px-4 py-2 text-sm font-medium border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 rounded hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors flex items-center gap-2">
-                            <span class="material-symbols-outlined text-base">edit</span>Chỉnh sửa
-                        </button>
-                        <button
-                            class="px-4 py-2 text-sm font-medium border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 rounded hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors flex items-center gap-2">
-                            <span class="material-symbols-outlined text-base">add_box</span>Thêm nhiều
-                        </button>
-                        <button
-                            class="px-4 py-2 text-sm font-medium text-white bg-red-500 rounded hover:bg-red-600 transition-colors flex items-center gap-2">
-                            <span class="material-symbols-outlined text-base">delete</span>Xóa
-                        </button>
-                    </div>
-                </div>
-                <div class="flex items-center gap-6 mt-4 text-sm text-slate-600 dark:text-slate-400">
-                    <div class="flex items-center gap-2">
-                        <span class="material-symbols-outlined text-lg">flag</span>
-                        <span>Ngôn ngữ: <span
-                                class="bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-200 px-2 py-0.5 rounded-full text-xs font-medium">usEnglish</span></span>
-                    </div>
-                    <div class="flex items-center gap-2">
-                        <span class="material-symbols-outlined text-lg">person</span>
-                        <span>Người chia sẻ: <span
-                                class="font-medium text-slate-800 dark:text-slate-200">Shiro</span></span>
+                    <div
+                        class="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                        <span class="material-symbols-outlined text-white">photo_camera</span>
                     </div>
                 </div>
-            </header>
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-                <div
-                    class="p-4 bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700 flex justify-between items-center">
+                <div class="flex flex-col gap-3 flex-1">
                     <div>
-                        <p class="text-sm text-slate-500 dark:text-slate-400">Tất cả thẻ</p>
-                        <p class="text-3xl font-bold text-slate-900 dark:text-white">6</p>
+                        <p class="text-[#111418] dark:text-white text-lg font-bold leading-tight">Nguyễn Văn A</p>
+                        <p class="text-[#617589] dark:text-gray-400 text-sm font-normal">Học viên Flashcard Pro</p>
                     </div>
-                    <span class="material-symbols-outlined text-3xl text-slate-400 dark:text-slate-500">style</span>
-                </div>
-                <div
-                    class="p-4 bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700 flex justify-between items-center">
-                    <div>
-                        <p class="text-sm text-green-600 dark:text-green-400">Đã nhớ</p>
-                        <p class="text-3xl font-bold text-green-600 dark:text-green-400">0</p>
-                    </div>
-                    <span class="material-symbols-outlined text-3xl text-green-500">book</span>
-                </div>
-                <div
-                    class="p-4 bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700 flex justify-between items-center">
-                    <div>
-                        <p class="text-sm text-blue-600 dark:text-blue-400">Đang ghi nhớ</p>
-                        <p class="text-3xl font-bold text-blue-600 dark:text-blue-400">0</p>
-                    </div>
-                    <span class="material-symbols-outlined text-3xl text-blue-500">psychology</span>
-                </div>
-                <div
-                    class="p-4 bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700 flex justify-between items-center">
-                    <div>
-                        <p class="text-sm text-orange-600 dark:text-orange-400">Cần ôn tập</p>
-                        <p class="text-3xl font-bold text-orange-600 dark:text-orange-400">3</p>
-                    </div>
-                    <span class="material-symbols-outlined text-3xl text-orange-500">refresh</span>
-                </div>
-            </div>
-            <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
-                <div class="flex items-center gap-2">
-                    <div class="flex items-center bg-slate-200 dark:bg-slate-700 p-1 rounded-lg">
+                    <div class="flex gap-3">
                         <button
-                            class="p-2 rounded-md bg-white dark:bg-primary text-primary dark:text-white shadow-sm transition-colors">
-                            <span class="material-symbols-outlined">grid_view</span>
+                            class="flex items-center justify-center rounded-lg h-9 px-4 bg-[#f0f2f4] hover:bg-[#e5e7eb] dark:bg-gray-700 dark:hover:bg-gray-600 text-[#111418] dark:text-white text-sm font-bold transition-colors">
+                            <span class="mr-2 material-symbols-outlined text-[18px]">upload</span>
+                            Tải ảnh lên
                         </button>
                         <button
-                            class="p-2 rounded-md bg-transparent text-slate-500 dark:text-slate-400 hover:bg-white dark:hover:bg-slate-600 transition-colors">
-                            <span class="material-symbols-outlined">view_list</span>
+                            class="flex items-center justify-center rounded-lg h-9 px-4 border border-[#dbe0e6] dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800 text-[#617589] dark:text-gray-300 text-sm font-medium transition-colors">
+                            Xóa
                         </button>
-                    </div>
-                    <button
-                        class="px-4 py-2.5 text-sm font-semibold text-white bg-primary rounded-lg hover:bg-indigo-700 transition-colors flex items-center gap-2 shadow-sm">
-                        <span class="material-symbols-outlined text-base">add</span>
-                        Thêm từ vựng
-                    </button>
-                </div>
-                <button
-                    class="w-full sm:w-auto px-6 py-2.5 text-sm font-semibold border-2 border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors flex items-center justify-center gap-2">
-                    <span class="material-symbols-outlined">psychology_alt</span>
-                    LUYỆN TẬP
-                </button>
-            </div>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                <div
-                    class="bg-white dark:bg-slate-800 rounded-lg shadow-sm p-5 border border-slate-200 dark:border-slate-700 flex flex-col">
-                    <div class="flex justify-between items-start mb-3">
-                        <div class="flex-1">
-                            <span
-                                class="inline-block text-xs font-medium bg-orange-100 dark:bg-orange-900/50 text-orange-600 dark:text-orange-400 px-2 py-1 rounded-full mb-2">Cần
-                                ôn tập</span>
-                            <div class="flex items-center gap-3">
-                                <h3 class="text-2xl font-bold text-slate-900 dark:text-white">speed</h3>
-                                <button class="text-slate-500 dark:text-slate-400 hover:text-primary transition-colors">
-                                    <span class="material-symbols-outlined text-2xl">volume_up</span>
-                                </button>
-                            </div>
-                            <div
-                                class="flex items-center flex-wrap gap-x-3 gap-y-1 mt-1 text-sm text-slate-500 dark:text-slate-400">
-                                <span>/spiːd/</span>
-                                <span class="w-px h-4 bg-slate-300 dark:bg-slate-600 hidden sm:inline"></span>
-                                <span
-                                    class="px-2 py-0.5 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded text-xs font-medium">Noun,
-                                    Verb</span>
-                                <span
-                                    class="px-2 py-0.5 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded text-xs font-medium">B1</span>
-                            </div>
-                        </div>
-                        <button
-                            class="text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 p-1.5 rounded-full">
-                            <span class="material-symbols-outlined">more_vert</span>
-                        </button>
-                    </div>
-                    <div class="text-sm text-slate-600 dark:text-slate-300 space-y-3 flex-grow flex flex-col">
-                        <div class="flex-grow">
-                            <p class="font-semibold text-slate-800 dark:text-slate-200 mb-1">Định nghĩa:</p>
-                            <ol class="list-decimal list-inside pl-2 space-y-1 text-slate-700 dark:text-slate-300">
-                                <li>(Danh từ) Tốc độ, sự nhanh chóng; sự vội vã.</li>
-                                <li>(Động từ) Di chuyển nhanh; phóng nhanh; tăng tốc; đẩy nhanh.</li>
-                            </ol>
-                        </div>
-                        <div class="border-t border-slate-200 dark:border-slate-700 pt-3 mt-3">
-                            <button
-                                class="w-full flex justify-between items-center text-sm font-medium text-slate-500 dark:text-slate-400 hover:text-primary dark:hover:text-primary transition-colors">
-                                <span>Ví dụ (3)</span>
-                                <span class="material-symbols-outlined">expand_more</span>
-                            </button>
-                        </div>
-                        <div class="border-t border-slate-200 dark:border-slate-700 pt-3">
-                            <button
-                                class="w-full flex justify-between items-center text-sm font-medium text-slate-500 dark:text-slate-400 hover:text-primary dark:hover:text-primary transition-colors">
-                                <span>Ghi chú:</span>
-                                <span class="material-symbols-outlined">expand_more</span>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-                <div
-                    class="bg-white dark:bg-slate-800 rounded-lg shadow-sm p-5 border border-slate-200 dark:border-slate-700 flex flex-col">
-                    <div class="flex justify-between items-start mb-3">
-                        <div class="flex-1">
-                            <span
-                                class="inline-block text-xs font-medium bg-orange-100 dark:bg-orange-900/50 text-orange-600 dark:text-orange-400 px-2 py-1 rounded-full mb-2">Cần
-                                ôn tập</span>
-                            <div class="flex items-center gap-3">
-                                <h3 class="text-2xl font-bold text-slate-900 dark:text-white">eat</h3>
-                                <button class="text-slate-500 dark:text-slate-400 hover:text-primary transition-colors">
-                                    <span class="material-symbols-outlined text-2xl">volume_up</span>
-                                </button>
-                            </div>
-                            <div
-                                class="flex items-center flex-wrap gap-x-3 gap-y-1 mt-1 text-sm text-slate-500 dark:text-slate-400">
-                                <span>/iːt/</span>
-                                <span class="w-px h-4 bg-slate-300 dark:bg-slate-600 hidden sm:inline"></span>
-                                <span
-                                    class="px-2 py-0.5 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded text-xs font-medium">Động
-                                    từ</span>
-                                <span
-                                    class="px-2 py-0.5 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded text-xs font-medium">A1</span>
-                            </div>
-                        </div>
-                        <button
-                            class="text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 p-1.5 rounded-full">
-                            <span class="material-symbols-outlined">more_vert</span>
-                        </button>
-                    </div>
-                    <div class="text-sm text-slate-600 dark:text-slate-300 space-y-3 flex-grow flex flex-col">
-                        <div class="flex-grow">
-                            <p class="font-semibold text-slate-800 dark:text-slate-200 mb-1">Định nghĩa:</p>
-                            <p class="pl-2 text-slate-700 dark:text-slate-300">Ăn, tiêu thụ thức ăn; dùng bữa.</p>
-                        </div>
-                        <div class="border-t border-slate-200 dark:border-slate-700 pt-3 mt-3">
-                            <button
-                                class="w-full flex justify-between items-center text-sm font-medium text-slate-500 dark:text-slate-400 hover:text-primary dark:hover:text-primary transition-colors">
-                                <span>Ví dụ (3)</span>
-                                <span class="material-symbols-outlined">expand_more</span>
-                            </button>
-                        </div>
-                        <div class="border-t border-slate-200 dark:border-slate-700 pt-3">
-                            <button
-                                class="w-full flex justify-between items-center text-sm font-medium text-slate-500 dark:text-slate-400 hover:text-primary dark:hover:text-primary transition-colors">
-                                <span>Ghi chú:</span>
-                                <span class="material-symbols-outlined">expand_more</span>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-                <div
-                    class="bg-white dark:bg-slate-800 rounded-lg shadow-sm p-5 border border-slate-200 dark:border-slate-700 flex flex-col">
-                    <div class="flex justify-between items-start mb-3">
-                        <div class="flex-1">
-                            <span
-                                class="inline-block text-xs font-medium bg-orange-100 dark:bg-orange-900/50 text-orange-600 dark:text-orange-400 px-2 py-1 rounded-full mb-2">Cần
-                                ôn tập</span>
-                            <div class="flex items-center gap-3">
-                                <h3 class="text-2xl font-bold text-slate-900 dark:text-white">run</h3>
-                                <button class="text-slate-500 dark:text-slate-400 hover:text-primary transition-colors">
-                                    <span class="material-symbols-outlined text-2xl">volume_up</span>
-                                </button>
-                            </div>
-                            <div
-                                class="flex items-center flex-wrap gap-x-3 gap-y-1 mt-1 text-sm text-slate-500 dark:text-slate-400">
-                                <span>/rʌn/</span>
-                                <span class="w-px h-4 bg-slate-300 dark:bg-slate-600 hidden sm:inline"></span>
-                                <span
-                                    class="px-2 py-0.5 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded text-xs font-medium">Động
-                                    từ</span>
-                                <span
-                                    class="px-2 py-0.5 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded text-xs font-medium">A1</span>
-                            </div>
-                        </div>
-                        <button
-                            class="text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 p-1.5 rounded-full">
-                            <span class="material-symbols-outlined">more_vert</span>
-                        </button>
-                    </div>
-                    <div class="text-sm text-slate-600 dark:text-slate-300 space-y-3 flex-grow flex flex-col">
-                        <div class="flex-grow">
-                            <p class="font-semibold text-slate-800 dark:text-slate-200 mb-1">Định nghĩa:</p>
-                            <p class="pl-2 text-slate-700 dark:text-slate-300">Chạy; vận hành, điều hành; chảy.</p>
-                        </div>
-                        <div class="border-t border-slate-200 dark:border-slate-700 pt-3 mt-3">
-                            <button
-                                class="w-full flex justify-between items-center text-sm font-medium text-slate-500 dark:text-slate-400 hover:text-primary dark:hover:text-primary transition-colors">
-                                <span>Ví dụ (3)</span>
-                                <span class="material-symbols-outlined">expand_more</span>
-                            </button>
-                        </div>
-                        <div class="border-t border-slate-200 dark:border-slate-700 pt-3">
-                            <button
-                                class="w-full flex justify-between items-center text-sm font-medium text-slate-500 dark:text-slate-400 hover:text-primary dark:hover:text-primary transition-colors">
-                                <span>Ghi chú:</span>
-                                <span class="material-symbols-outlined">expand_more</span>
-                            </button>
-                        </div>
                     </div>
                 </div>
             </div>
+            <!-- Form Fields -->
+            <div class="flex flex-col gap-5">
+                <!-- Name Field -->
+                <div class="flex flex-col gap-2">
+                    <label class="text-[#111418] dark:text-gray-200 text-sm font-medium leading-normal">Tên hiển
+                        thị</label>
+                    <div class="relative">
+                        <input
+                            class="form-input flex w-full min-w-0 resize-none overflow-hidden rounded-lg text-[#111418] dark:text-white dark:bg-[#101922] focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary border border-[#dbe0e6] dark:border-gray-600 bg-white h-12 px-4 text-base font-normal leading-normal transition-all"
+                            placeholder="Nhập tên của bạn" type="text" value="Nguyễn Văn A" />
+                        <span
+                            class="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-[#617589] text-[20px]">person</span>
+                    </div>
+                </div>
+                <!-- Email Field -->
+                <div class="flex flex-col gap-2">
+                    <label class="text-[#111418] dark:text-gray-200 text-sm font-medium leading-normal">Email</label>
+                    <div class="relative">
+                        <input
+                            class="form-input flex w-full min-w-0 resize-none overflow-hidden rounded-lg text-[#111418] dark:text-white dark:bg-[#101922] focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary border border-[#dbe0e6] dark:border-gray-600 bg-white h-12 px-4 text-base font-normal leading-normal transition-all"
+                            placeholder="example@email.com" type="email" value="nguyen.a@email.com" />
+                        <span
+                            class="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-[#617589] text-[20px]">mail</span>
+                    </div>
+                    <p class="text-xs text-[#617589] dark:text-gray-500">Email này sẽ được dùng để đăng nhập và khôi
+                        phục tài khoản.</p>
+                </div>
+                <!-- Bio / Description Field -->
+                <div class="flex flex-col gap-2">
+                    <label class="text-[#111418] dark:text-gray-200 text-sm font-medium leading-normal">Giới thiệu bản
+                        thân</label>
+                    <textarea
+                        class="form-textarea flex w-full min-w-0 resize-none rounded-lg text-[#111418] dark:text-white dark:bg-[#101922] focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary border border-[#dbe0e6] dark:border-gray-600 bg-white min-h-[100px] p-4 text-sm font-normal leading-normal transition-all"
+                        placeholder="Chia sẻ một chút về mục tiêu học tập của bạn..."></textarea>
+                </div>
+            </div>
+            <!-- Change Password Accordion -->
+            <div class="mt-8 pt-6 border-t border-[#dbe0e6] dark:border-gray-700">
+                <details
+                    class="group rounded-lg border border-[#dbe0e6] dark:border-gray-600 bg-gray-50 dark:bg-gray-800/50 open:bg-white dark:open:bg-[#1a2632] open:ring-1 open:ring-[#dbe0e6] dark:open:ring-gray-600 transition-all duration-200">
+                    <summary class="flex cursor-pointer items-center justify-between px-4 py-3 select-none">
+                        <div class="flex items-center gap-3">
+                            <div
+                                class="flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 text-primary">
+                                <span class="material-symbols-outlined text-[18px]">lock</span>
+                            </div>
+                            <div>
+                                <p class="text-[#111418] dark:text-white text-sm font-semibold leading-normal">Bảo mật
+                                </p>
+                                <p class="text-[#617589] dark:text-gray-400 text-xs font-normal">Đổi mật khẩu và cài đặt
+                                    bảo mật</p>
+                            </div>
+                        </div>
+                        <span
+                            class="material-symbols-outlined text-[#617589] group-open:rotate-180 transition-transform duration-200">expand_more</span>
+                    </summary>
+                    <div class="px-4 pb-4 pt-2 flex flex-col gap-4">
+                        <div class="flex flex-col gap-2">
+                            <label class="text-[#111418] dark:text-gray-300 text-xs font-medium">Mật khẩu hiện
+                                tại</label>
+                            <input
+                                class="w-full rounded-lg border border-[#dbe0e6] dark:border-gray-600 dark:bg-[#101922] dark:text-white h-10 px-3 text-sm focus:border-primary focus:ring-1 focus:ring-primary"
+                                placeholder="••••••••" type="password" />
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div class="flex flex-col gap-2">
+                                <label class="text-[#111418] dark:text-gray-300 text-xs font-medium">Mật khẩu
+                                    mới</label>
+                                <input
+                                    class="w-full rounded-lg border border-[#dbe0e6] dark:border-gray-600 dark:bg-[#101922] dark:text-white h-10 px-3 text-sm focus:border-primary focus:ring-1 focus:ring-primary"
+                                    placeholder="••••••••" type="password" />
+                            </div>
+                            <div class="flex flex-col gap-2">
+                                <label class="text-[#111418] dark:text-gray-300 text-xs font-medium">Xác nhận mật
+                                    khẩu</label>
+                                <input
+                                    class="w-full rounded-lg border border-[#dbe0e6] dark:border-gray-600 dark:bg-[#101922] dark:text-white h-10 px-3 text-sm focus:border-primary focus:ring-1 focus:ring-primary"
+                                    placeholder="••••••••" type="password" />
+                            </div>
+                        </div>
+                        <div class="flex justify-end pt-2">
+                            <button class="text-xs text-primary font-medium hover:underline">Quên mật khẩu?</button>
+                        </div>
+                    </div>
+                </details>
+            </div>
+        </div>
+        <!-- Modal Footer -->
+        <div
+            class="flex items-center justify-end gap-3 px-6 py-4 bg-gray-50 dark:bg-[#101922]/50 border-t border-[#dbe0e6] dark:border-gray-700">
+            <button
+                class="h-10 px-5 rounded-lg text-[#111418] dark:text-gray-200 text-sm font-bold hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
+                Hủy
+            </button>
+            <button
+                class="h-10 px-5 rounded-lg bg-primary hover:bg-blue-600 text-white text-sm font-bold shadow-sm transition-colors flex items-center gap-2">
+                <span class="material-symbols-outlined text-[18px]">check</span>
+                Lưu thay đổi
+            </button>
         </div>
     </div>
 </body>

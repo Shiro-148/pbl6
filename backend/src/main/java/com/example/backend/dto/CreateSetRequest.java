@@ -4,6 +4,7 @@ public class CreateSetRequest {
     private String title;
     private String description;
     private Long folderId;
+    private String access;
 
     public CreateSetRequest() {
     }
@@ -30,5 +31,13 @@ public class CreateSetRequest {
 
     public void setFolderId(Long folderId) {
         this.folderId = folderId;
+    }
+
+    public String getAccess() {
+        return access;
+    }
+
+    public void setAccess(String access) {
+        this.access = access;
     }
 }

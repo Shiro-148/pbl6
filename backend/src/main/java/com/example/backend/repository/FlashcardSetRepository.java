@@ -9,4 +9,5 @@ import java.util.List;
 @Repository
 public interface FlashcardSetRepository extends JpaRepository<FlashcardSet, Long> {
     List<FlashcardSet> findByFolderId(Long folderId);
+    List<FlashcardSet> findByAccess(String access);
 }

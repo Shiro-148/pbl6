@@ -5,10 +5,9 @@ import GameBackButton from '../components/GameBackButton';
 import GameResult from '../components/GameResult';
 import '../styles/pages/MatchGame.css';
 import '../styles/pages/MultipleChoice.css';
-// using AI backend to generate distractors
+
 const MODEL_SERVICE = import.meta.env.VITE_MODEL_SERVICE || 'http://localhost:5000';
 
-// initial pairs (you can replace this with your real card data)
 const initialPairs = [
   { term: 'run', definition: 'Chạy' },
   { term: 'eat', definition: 'Ăn' },

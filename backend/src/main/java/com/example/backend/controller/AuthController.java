@@ -30,24 +30,26 @@ public class AuthController {
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody Map<String, String> body) {
         String username = body.get("username");
+        String email = body.get("email");
         String password = body.get("password");
-        if (username == null || password == null)
+        if (username == null || email == null || password == null)
             return ResponseEntity.badRequest().build();
         if (userRepo.findByUsername(username).isPresent())
             return ResponseEntity.status(409).body("User exists");
+        if (userRepo.findByEmail(email).isPresent())
+            return ResponseEntity.status(409).body("Email exists");
         User u = new User();
         u.setUsername(username);
+        u.setEmail(email);
         u.setPassword(encoder.encode(password));
         User saved = userRepo.save(u);
 
         // optional profile fields
         String displayName = body.get("displayName");
-        String email = body.get("email");
-        if ((displayName != null && !displayName.isBlank()) || (email != null && !email.isBlank())) {
+        if ((displayName != null && !displayName.isBlank())) {
             UserProfile p = new UserProfile();
             p.setUser(saved);
             p.setDisplayName(displayName);
-            p.setEmail(email);
             profileRepo.save(p);
         }
 
@@ -56,17 +58,43 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody Map<String, String> body) {
-        String username = body.get("username");
+        String identifier = body.get("username");
         String password = body.get("password");
-        if (username == null || password == null)
+        if (identifier == null || password == null)
             return ResponseEntity.badRequest().build();
-        return userRepo.findByUsername(username)
-                .map(u -> {
-                    if (encoder.matches(password, u.getPassword())) {
-                        String token = jwtUtil.generateToken(username);
-                        return ResponseEntity.ok(Map.of("token", token));
-                    }
-                    return ResponseEntity.status(401).body("Invalid credentials");
-                }).orElse(ResponseEntity.status(401).body("Invalid credentials"));
+        // allow login by username or email
+        User u = userRepo.findByUsername(identifier).orElseGet(() -> userRepo.findByEmail(identifier).orElse(null));
+        if (u != null) {
+            if (encoder.matches(password, u.getPassword())) {
+                String token = jwtUtil.generateToken(u.getUsername());
+                return ResponseEntity.ok(Map.of("token", token));
+            }
+            return ResponseEntity.status(401).body("Invalid credentials");
+        }
+        return ResponseEntity.status(401).body("Invalid credentials");
+    }
+
+    @PostMapping("/change-password")
+    public ResponseEntity<?> changePassword(@RequestHeader("Authorization") String authHeader,
+            @RequestBody Map<String, String> body) {
+        String oldPass = body.get("oldPassword");
+        String newPass = body.get("newPassword");
+        if (oldPass == null || newPass == null)
+            return ResponseEntity.badRequest().body("Missing fields");
+        String token = null;
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            token = authHeader.substring(7);
+        }
+        String username = token != null ? jwtUtil.extractUsername(token) : null;
+        if (username == null)
+            return ResponseEntity.status(401).body("Unauthorized");
+        return userRepo.findByUsername(username).map(u -> {
+            if (!this.encoder.matches(oldPass, u.getPassword())) {
+                return ResponseEntity.status(400).body("Old password incorrect");
+            }
+            u.setPassword(this.encoder.encode(newPass));
+            userRepo.save(u);
+            return ResponseEntity.ok(Map.of("status", "ok"));
+        }).orElse(ResponseEntity.status(404).body("User not found"));
     }
 }

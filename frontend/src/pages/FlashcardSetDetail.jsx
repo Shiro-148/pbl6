@@ -2,7 +2,9 @@ import React, { useEffect, useState, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { useParams, useNavigate } from 'react-router-dom';
 import { authFetch } from '../services/auth';
-import { listCards, deleteCard as deleteCardApi, updateCard as updateCardApi, deleteSet as deleteSetApi } from '../services/flashcards';
+import { listCards, deleteCard as deleteCardApi, updateCard as updateCardApi, deleteSet as deleteSetApi, updateSet as updateSetApi } from '../services/flashcards';
+import { listFolders } from '../services/folders';
+import CreateSetDialog from '../components/CreateSetDialog';
 import { splitExamples } from '../utils/examples';
 import UploadPDFButton from '../components/UploadPDFButton';
 import UploadModal from '../components/UploadModal';
@@ -41,6 +43,8 @@ export default function FlashcardSetDetail() {
   const [showDeleteSetDialog, setShowDeleteSetDialog] = useState(false);
   const [deleteSetLoading, setDeleteSetLoading] = useState(false);
   const [deleteSetError, setDeleteSetError] = useState('');
+  const [showEditSetDialog, setShowEditSetDialog] = useState(false);
+  const [folders, setFolders] = useState([]);
   const uploadRef = useRef(null);
 
   const handleUploadResult = async (data) => {
@@ -177,6 +181,16 @@ export default function FlashcardSetDetail() {
     };
 
     load();
+    // load folders for edit dialog
+    (async () => {
+      try {
+        const fs = await listFolders();
+        if (mounted) setFolders(fs || []);
+      } catch (e) {
+        console.warn('Load folders failed', e);
+        if (mounted) setFolders([]);
+      }
+    })();
     return () => {
       mounted = false;
     };
@@ -485,7 +499,7 @@ export default function FlashcardSetDetail() {
           </div>
 
           <div className="flex flex-wrap items-center justify-start md:justify-end gap-2">
-            <button className="flex items-center gap-2 px-3 py-2 text-sm font-medium bg-white hover:bg-slate-50 rounded-lg transition-colors border border-gray-200">
+            <button className="flex items-center gap-2 px-3 py-2 text-sm font-medium bg-white hover:bg-slate-50 rounded-lg transition-colors border border-gray-200" onClick={() => setShowEditSetDialog(true)}>
               <span className="material-symbols-outlined text-lg">edit</span> Chỉnh sửa
             </button>
             <button className="flex items-center gap-2 px-3 py-2 text-sm font-medium bg-white hover:bg-slate-50 rounded-lg transition-colors border border-gray-200">
@@ -904,6 +918,39 @@ export default function FlashcardSetDetail() {
             </div>
           </div>
         </div>
+      )}
+      {showEditSetDialog && (
+        <CreateSetDialog
+          open={showEditSetDialog}
+          onClose={() => setShowEditSetDialog(false)}
+          folders={folders}
+          initial={{
+            title: setMeta?.title || '',
+            description: setMeta?.description || '',
+            folderId: setMeta?.folderId || '',
+            access: setMeta?.access || 'public',
+          }}
+          submitLabel="Lưu thay đổi"
+          titleLabel="Chỉnh sửa bộ flashcard"
+          onCreate={async (data) => {
+            try {
+              const title = data.name || data.title || '';
+              const description = data.description || '';
+              const folderId = data.folder && data.folder !== 'new' ? data.folder : null;
+              const access = data.access || undefined;
+              await updateSetApi(id, { title, description, folderId, access });
+              // reload meta
+              const API = import.meta.env.VITE_API_BASE || 'http://localhost:8080';
+              const res = await authFetch(`${API}/api/sets/${id}`);
+              const meta = res.ok ? await res.json() : null;
+              setSetMeta(meta || { id, title });
+              setShowEditSetDialog(false);
+            } catch (err) {
+              console.error('Update set failed', err);
+              setShowEditSetDialog(false);
+            }
+          }}
+        />
       )}
       {/* Hidden Upload button instance used to trigger file dialog programmatically */}
       <div style={{ display: 'none' }}>

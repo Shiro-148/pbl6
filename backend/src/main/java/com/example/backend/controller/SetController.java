@@ -31,7 +31,7 @@ public class SetController {
     private final FolderService folderService;
 
     public SetController(FlashcardSetService service, FlashcardRepository flashcardRepository,
-                        UserRepository userRepository, FolderService folderService) {
+            UserRepository userRepository, FolderService folderService) {
         this.service = service;
         this.flashcardRepository = flashcardRepository;
         this.userRepository = userRepository;
@@ -45,7 +45,7 @@ public class SetController {
         String username = auth.getName();
         User currentUser = userRepository.findByUsername(username)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found: " + username));
-        
+
         List<FlashcardSet> sets;
         if (folderId != null) {
             // Kiểm tra folder có thuộc về user hiện tại không
@@ -58,7 +58,7 @@ public class SetController {
             // Lấy tất cả folders của user
             List<Folder> userFolders = folderService.findByUser(currentUser);
             List<Long> folderIds = userFolders.stream().map(Folder::getId).collect(Collectors.toList());
-            
+
             // Lấy tất cả sets thuộc các folders của user
             sets = service.findAll().stream()
                     .filter(set -> set.getFolder() != null && folderIds.contains(set.getFolder().getId()))
@@ -67,11 +67,20 @@ public class SetController {
         return sets.stream().map(this::toDto).toList();
     }
 
+    @GetMapping("/public")
+    public List<SetDto> listPublic() {
+        List<FlashcardSet> sets = service.findPublic();
+        return sets.stream().map(this::toDto).toList();
+    }
+
     @PostMapping
     public ResponseEntity<SetDto> create(@RequestBody CreateSetRequest req) {
         FlashcardSet set = new FlashcardSet();
         set.setTitle(req.getTitle());
         set.setDescription(req.getDescription());
+        if (req.getAccess() != null && !req.getAccess().isBlank()) {
+            set.setAccess(req.getAccess());
+        }
         if (req.getFolderId() != null) {
             // avoid direct repo access here; lazy assign a Folder with id to reference
             Folder folder = new Folder();
@@ -95,6 +104,9 @@ public class SetController {
         FlashcardSet updated = new FlashcardSet();
         updated.setTitle(req.getTitle());
         updated.setDescription(req.getDescription());
+        if (req.getAccess() != null && !req.getAccess().isBlank()) {
+            updated.setAccess(req.getAccess());
+        }
         if (req.getFolderId() != null) {
             Folder folder = new Folder();
             folder.setId(req.getFolderId());
@@ -117,18 +129,19 @@ public class SetController {
         d.setId(s.getId());
         d.setTitle(s.getTitle());
         d.setDescription(s.getDescription());
+        d.setAccess(s.getAccess());
         if (s.getFolder() != null)
             d.setFolderId(s.getFolder().getId());
-        
+
         // Count cards using repository to avoid lazy loading issues
         long cardCount = flashcardRepository.countBySetId(s.getId());
         d.setCardCount((int) cardCount);
-        
+
         // Only load full cards if needed
         if (s.getCards() != null && !s.getCards().isEmpty()) {
             d.setCards(s.getCards().stream().map(this::cardToDto).toList());
         }
-        
+
         return d;
     }
 

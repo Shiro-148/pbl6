@@ -57,11 +57,23 @@ export async function register(username, password, email, displayName) {
 }
 
 export function saveToken(token) {
-  localStorage.setItem('jwt', token);
+  const t = token == null ? null : String(token).trim();
+  if (!t || t === 'null' || t === 'undefined') {
+    localStorage.removeItem('jwt');
+  } else {
+    localStorage.setItem('jwt', t);
+  }
+  try {
+    window.dispatchEvent(new Event('auth-token-change'));
+  } catch {
+    // ignore dispatch errors in non-browser contexts
+  }
 }
 
 export function getToken() {
-  return localStorage.getItem('jwt');
+  const t = localStorage.getItem('jwt');
+  if (!t || t === 'null' || t === 'undefined') return null;
+  return t;
 }
 
 export function authFetch(url, opts = {}) {
@@ -72,3 +84,9 @@ export function authFetch(url, opts = {}) {
 }
 
 export default { login, register, saveToken, getToken, authFetch };
+
+try {
+  window.dispatchEvent(new Event('auth-token-change'));
+} catch {
+  // ignore
+}

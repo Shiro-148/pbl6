@@ -23,6 +23,10 @@ public class FlashcardSetService {
         return repo.findByFolderId(folderId);
     }
 
+    public List<FlashcardSet> findPublic() {
+        return repo.findByAccess("public");
+    }
+
     public FlashcardSet findById(Long id) {
         return repo.findById(id).orElse(null);
     }
@@ -35,6 +39,10 @@ public class FlashcardSetService {
         return repo.findById(id).map(existing -> {
             existing.setTitle(updated.getTitle());
             existing.setDescription(updated.getDescription());
+            if (updated.getAccess() != null)
+                existing.setAccess(updated.getAccess());
+            if (updated.getFolder() != null)
+                existing.setFolder(updated.getFolder());
             return repo.save(existing);
         }).orElse(null);
     }

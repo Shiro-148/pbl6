@@ -26,6 +26,7 @@ CREATE TABLE `flashcard_sets` (
   `id` bigint NOT NULL AUTO_INCREMENT,
   `description` varchar(255) DEFAULT NULL,
   `title` varchar(255) NOT NULL,
+  `access` varchar(20) NOT NULL DEFAULT 'public',
   `folder_id` bigint DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `FKc8s79d71mfyrnbmfm3yynk893` (`folder_id`),
@@ -86,16 +87,18 @@ CREATE TABLE `user_profiles` (
   `id` bigint NOT NULL AUTO_INCREMENT,
   `user_id` bigint NOT NULL,
   `display_name` varchar(255) DEFAULT NULL,
-  `email` varchar(255) DEFAULT NULL,
+  `avatar_url` varchar(500) DEFAULT NULL,
+  `bio` text,
   PRIMARY KEY (`id`),
   KEY `fk_user_profile_user` (`user_id`),
   CONSTRAINT `fk_user_profile_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- If existing databases have email in user_profiles, migrate then drop:
+-- UPDATE users u JOIN user_profiles p ON p.user_id = u.id SET u.email = p.email WHERE u.email IS NULL AND p.email IS NOT NULL;
+-- ALTER TABLE user_profiles DROP COLUMN email;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
---
--- Table structure for table `users`
---
 
 DROP TABLE IF EXISTS `users`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
@@ -105,8 +108,12 @@ CREATE TABLE `users` (
   `username` varchar(255) NOT NULL,
   `password` varchar(255) NOT NULL,
   PRIMARY KEY (`id`),
-  UNIQUE KEY `username` (`username`)
+  UNIQUE KEY `username` (`username`),
+  `email` varchar(255) NOT NULL UNIQUE
 ) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- If table already exists without email, add column (idempotent in MySQL using dynamic SQL is tricky; run manually if needed)
+-- ALTER TABLE users ADD COLUMN email VARCHAR(255) NOT NULL UNIQUE;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 

@@ -50,8 +50,9 @@ public class SecurityConfig {
 
     @Bean
     public UserDetailsService userDetailsService() {
-        return username -> {
-            return userRepository.findByUsername(username)
+        return identifier -> {
+            return userRepository.findByUsername(identifier)
+                    .or(() -> userRepository.findByEmail(identifier))
                     .map(u -> org.springframework.security.core.userdetails.User.withUsername(u.getUsername())
                             .password(u.getPassword()).authorities(Collections.emptyList()).build())
                     .orElseThrow(() -> new UsernameNotFoundException("User not found"));

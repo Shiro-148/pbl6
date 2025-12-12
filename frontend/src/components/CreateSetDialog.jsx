@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 
-export default function CreateSetDialog({ open, onClose, folders = [], onCreate }) {
+export default function CreateSetDialog({ open, onClose, folders = [], onCreate, initial = null, submitLabel, titleLabel }) {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [folder, setFolder] = useState('');
@@ -8,13 +8,13 @@ export default function CreateSetDialog({ open, onClose, folders = [], onCreate 
 
   useEffect(() => {
     if (open) {
-      // reset when opening
-      setName('');
-      setDescription('');
-      setFolder('');
-      setAccess('public');
+      // initialize when opening
+      setName((initial && (initial.name || initial.title)) || '');
+      setDescription((initial && initial.description) || '');
+      setFolder((initial && initial.folderId) || '');
+      setAccess((initial && initial.access) || 'public');
     }
-  }, [open]);
+  }, [open, initial]);
 
   if (!open) return null;
 
@@ -38,7 +38,7 @@ export default function CreateSetDialog({ open, onClose, folders = [], onCreate 
                 add
               </span>
             </div>
-            <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100">Tạo bộ flashcard mới</h2>
+            <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100">{titleLabel || 'Tạo bộ flashcard mới'}</h2>
           </div>
           <button
             type="button"
@@ -241,7 +241,7 @@ export default function CreateSetDialog({ open, onClose, folders = [], onCreate 
             type="submit"
             className="px-6 py-2.5 text-sm font-semibold text-white bg-primary rounded-lg hover:bg-indigo-500 transition-colors"
           >
-            Tạo flashcard
+            {submitLabel || 'Tạo flashcard'}
           </button>
         </div>
       </form>

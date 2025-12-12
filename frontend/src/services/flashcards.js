@@ -117,6 +117,25 @@ export async function deleteSet(setId) {
   }
 }
 
+export async function updateSet(setId, { title, description, folderId, access }) {
+  if (!setId) throw new Error('Thiếu setId khi cập nhật');
+  const body = {};
+  if (typeof title === 'string') body.title = title;
+  if (typeof description === 'string') body.description = description;
+  if (folderId) body.folderId = folderId;
+  if (access) body.access = access;
+  const res = await authFetch(`${API}/api/sets/${setId}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) {
+    const txt = await res.text().catch(() => res.statusText);
+    throw new Error(`${res.status} ${txt}`);
+  }
+  return res.json();
+}
+
 export async function deleteCard(cardId) {
   if (!cardId) throw new Error('Thiếu cardId khi xoá');
   const res = await authFetch(`${API}/api/cards/${cardId}`, {

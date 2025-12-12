@@ -51,8 +51,6 @@ const CreateFlashcard = () => {
   };
 
   const allLevels = ['easy', 'medium', 'hard'];
-
-  // normalizeLevel used in multiple places (CEFR/numeric/simple -> easy/medium/hard)
   const normalizeLevel = (lvl) => {
     if (!lvl && lvl !== 0) return '';
     const s = String(lvl).trim();
@@ -86,7 +84,6 @@ const CreateFlashcard = () => {
     const chosen = selectedLevels.includes('All') || selectedLevels.length === 0 ? allLevels : selectedLevels;
     const c = classifyResults.classify;
     const f = classifyResults.flash || [];
-    // normalize level values (CEFR, numeric, or already simple) to 'easy'|'medium'|'hard'
     const normalizeLevel = (lvl) => {
       if (!lvl && lvl !== 0) return '';
       const s = String(lvl).trim();
@@ -105,7 +102,6 @@ const CreateFlashcard = () => {
     let filtered = [];
     if (Array.isArray(c)) {
       if (selectedLevels.includes('All') || selectedLevels.length === 0) {
-        // user selected All -> import all tokens
         filtered = c.slice();
       } else {
         filtered = c.filter((w) => chosen.includes(normalizeLevel(w.level || w.difficulty || w.token || w.text || w.word || '')));
@@ -123,7 +119,6 @@ const CreateFlashcard = () => {
       return { term: word, definition, image: '', selected: true, level };
     });
     setCards(imported);
-    // setMessage(`Hiển thị ${imported.length} từ phù hợp với cấp độ`);
     setShowLevelDialog(false);
     setClassifyResults(null);
   };
@@ -139,7 +134,6 @@ const CreateFlashcard = () => {
       try {
         const data = await foldersService.listFolders();
         if (!mounted) return;
-        // accept either array or { folders: [...] }
         const list = Array.isArray(data) ? data : (data.folders || data.data || []);
         setFolders(list);
       } catch (err) {

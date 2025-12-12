@@ -2,11 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import '../styles/pages/AiTutor.css';
 
 const AiTutor = () => {
-  // This page was repurposed as AI Chatbot for vocabulary learning.
   const sanitizeText = (text) => {
     if (!text || typeof text !== 'string') return text;
-    // Remove Markdown-style bold (**text**) and italic (*text*) markers but keep inner text
-    // Use [\s\S] to match across newlines safely.
     return text
       .replace(/\*\*([\s\S]*?)\*\*/g, '$1')
       .replace(/\*([\s\S]*?)\*/g, '$1');
@@ -20,7 +17,6 @@ const AiTutor = () => {
   const listRef = useRef(null);
 
   useEffect(() => {
-    // scroll to bottom on new message
     if (listRef.current) {
       listRef.current.scrollTop = listRef.current.scrollHeight;
     }

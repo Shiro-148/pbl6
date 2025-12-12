@@ -1,78 +1,38 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { authFetch } from '../services/auth';
 import '../styles/pages/Community.css';
-
-const communitySets = [
-  {
-    id: 1,
-    title: 'Kanji N5',
-    terms: 528,
-    today: 75,
-    rating: 4.8,
-    ratingCount: 33,
-    author: 'abdef...',
-    description: 'Tiếng Anh ôn thi',
-    avatar: '',
-  },
-  {
-    id: 2,
-    title: 'Kanji',
-    terms: 220,
-    today: 0,
-    rating: null,
-    ratingCount: 0,
-    author: 'abdef',
-    description: 'Tiếng Anh ôn thi',
-    avatar: '',
-  },
-  {
-    id: 3,
-    title: 'Kanji N4',
-    terms: 282,
-    today: 26,
-    rating: 4.3,
-    ratingCount: 3,
-    author: 'abdef...',
-    description: 'Tiếng Anh ôn thi',
-    avatar: '',
-  },
-  {
-    id: 4,
-    title: 'Kanji N5',
-    terms: 255,
-    today: 11,
-    rating: 5,
-    ratingCount: 1,
-    author: 'abdef...',
-    description: 'Tiếng Anh ôn thi',
-    avatar: '',
-  },
-  {
-    id: 5,
-    title: 'KANJI N5',
-    terms: 131,
-    today: 10,
-    rating: 4.5,
-    ratingCount: 2,
-    author: 'abdef',
-    description: 'Tiếng Anh ôn thi',
-    avatar: '',
-  },
-  {
-    id: 6,
-    title: 'Kanji N4',
-    terms: 282,
-    today: 10,
-    rating: 5,
-    ratingCount: 1,
-    author: 'abdefssssssssssssssssss',
-    description: 'Tiếng Anh ôn thi',
-    avatar: '',
-  },
-];
 
 const Community = () => {
   const navigate = useNavigate();
+  const [sets, setSets] = useState([]);
+
+  useEffect(() => {
+    const API = import.meta.env.VITE_API_BASE || 'http://localhost:8080';
+    (async () => {
+      try {
+        const res = await authFetch(`${API}/api/sets/public`);
+        if (res.ok) {
+          const data = await res.json();
+          // sort newest first by createdAt if available or id desc
+          const sorted = (data || []).slice().sort((a, b) => {
+            const timeA = a?.createdAt ? new Date(a.createdAt).getTime() : 0;
+            const timeB = b?.createdAt ? new Date(b.createdAt).getTime() : 0;
+            if (timeA !== timeB) return timeB - timeA;
+            const idA = typeof a?.id === 'number' ? a.id : 0;
+            const idB = typeof b?.id === 'number' ? b.id : 0;
+            return idB - idA;
+          });
+          setSets(sorted);
+        } else {
+          setSets([]);
+        }
+      } catch (err) {
+        console.error('Failed to load public sets', err);
+        setSets([]);
+      }
+    })();
+  }, []);
   return (
     <div className="community-page">
       <div className="community-header-row">
@@ -104,7 +64,7 @@ const Community = () => {
       </div>
 
       <div className="community-grid">
-        {communitySets.map((set) => (
+        {sets.map((set) => (
           <div key={set.id} className="community-card" onClick={() => navigate('/community-set')}>
             <div className="community-title-row">
               <div className="community-title">
@@ -116,15 +76,11 @@ const Community = () => {
               </div>
             </div>
 
-            <div className="community-terms-row">{set.terms} từ</div>
+            <div className="community-terms-row">{typeof set.cardCount === 'number' ? set.cardCount : (set.cards?.length || 0)} từ</div>
 
             <div className="community-author-row">
-              {set.avatar ? (
-                <img className="community-avatar" src={set.avatar} alt={set.author} />
-              ) : (
-                <div className="community-avatar community-avatar-fallback">{set.author[0]}</div>
-              )}
-              <div className="community-author">{set.author}</div>
+              <div className="community-avatar community-avatar-fallback">F</div>
+              <div className="community-author">Cộng đồng</div>
 
               <button
                 className="community-preview"

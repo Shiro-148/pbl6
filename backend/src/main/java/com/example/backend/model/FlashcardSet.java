@@ -19,6 +19,9 @@ public class FlashcardSet {
 
     private String description;
 
+    @Column(name = "access", nullable = false)
+    private String access = "public";
+
     @OneToMany(mappedBy = "set", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonManagedReference
     private List<Flashcard> cards = new ArrayList<>();
@@ -53,6 +56,14 @@ public class FlashcardSet {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public String getAccess() {
+        return access;
+    }
+
+    public void setAccess(String access) {
+        this.access = access;
     }
 
     public List<Flashcard> getCards() {

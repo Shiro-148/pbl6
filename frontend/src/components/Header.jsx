@@ -2,20 +2,31 @@ import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import '../styles/components/Header.css';
 import { getToken } from '../services/auth';
+import PersonalInfoModal from './PersonalInfoModal';
 
 const Header = () => {
   const navigate = useNavigate();
   const [tokenPresent, setTokenPresent] = useState(!!getToken());
+  const [showProfileModal, setShowProfileModal] = useState(false);
 
   useEffect(() => {
-    const onStorage = () => setTokenPresent(!!getToken());
-    window.addEventListener('storage', onStorage);
-    return () => window.removeEventListener('storage', onStorage);
+    const onTokenChange = () => setTokenPresent(!!getToken());
+    window.addEventListener('storage', onTokenChange);
+    window.addEventListener('auth-token-change', onTokenChange);
+    return () => {
+      window.removeEventListener('storage', onTokenChange);
+      window.removeEventListener('auth-token-change', onTokenChange);
+    };
   }, []);
 
   const handleLogout = () => {
     localStorage.removeItem('jwt');
     setTokenPresent(false);
+    try {
+      window.dispatchEvent(new Event('auth-token-change'));
+    } catch {
+      // ignore
+    }
     navigate('/');
   };
 
@@ -52,12 +63,13 @@ const Header = () => {
           Đăng nhập
         </Link>
       )}
-      <button className="mode-btn" title="Toggle dark mode">
-        <span role="img" aria-label="mode">
-          &#x1F31C;
-        </span>
+      <button className="mode-btn" title="Trang cá nhân" onClick={() => setShowProfileModal(true)}>
+        <span className="material-symbols-outlined">account_circle</span>
       </button>
     </div>
+    {showProfileModal && (
+      <PersonalInfoModal open={showProfileModal} onClose={() => setShowProfileModal(false)} />)
+    }
   </header>
   );
 };
