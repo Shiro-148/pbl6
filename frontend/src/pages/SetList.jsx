@@ -169,8 +169,11 @@ const SetList = ({ folder, onBack }) => {
     navigate(`/study?${params.toString()}`);
   };
 
-  const handleGames = (setName) => {
-    navigate(`/games?set=${encodeURIComponent(setName)}`);
+  const handleGames = (setItem) => {
+    const title = setItem?.name || 'Flashcard';
+    const params = new URLSearchParams({ set: title });
+    if (setItem?.id) params.set('setId', String(setItem.id));
+    navigate(`/games?${params.toString()}`);
   };
 
   const handleDetails = (setId) => {
@@ -294,7 +297,7 @@ const SetList = ({ folder, onBack }) => {
               <button className="set-btn set-btn-study" onClick={() => handleStudy(set)}>
                 <i className="bx bx-play"></i> Study
               </button>
-              <button className="set-btn set-btn-games" onClick={() => handleGames(set.name)}>
+              <button className="set-btn set-btn-games" onClick={() => handleGames(set)}>
                 <i className="bx bx-bar-chart"></i> Games
               </button>
               <button className="set-btn set-btn-details" onClick={() => handleDetails(set.id)}>

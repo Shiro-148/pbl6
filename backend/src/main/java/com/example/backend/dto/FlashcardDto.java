@@ -9,6 +9,8 @@ public class FlashcardDto {
     private String type;
     private String audio;
     private Long setId;
+    private String mcqOptions;
+    private String sentenceOptions;
 
     public FlashcardDto() {
     }
@@ -75,5 +77,21 @@ public class FlashcardDto {
 
     public void setSetId(Long setId) {
         this.setId = setId;
+    }
+
+    public String getMcqOptions() {
+        return mcqOptions;
+    }
+
+    public void setMcqOptions(String mcqOptions) {
+        this.mcqOptions = mcqOptions;
+    }
+
+    public String getSentenceOptions() {
+        return sentenceOptions;
+    }
+
+    public void setSentenceOptions(String sentenceOptions) {
+        this.sentenceOptions = sentenceOptions;
     }
 }

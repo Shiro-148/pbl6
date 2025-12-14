@@ -51,11 +51,34 @@ export default function Library() {
   };
 
   useEffect(() => {
-    loadFolders();
-    loadSets();
+    const token = getToken();
+    if (!token) {
+      // Nếu chưa đăng nhập, chuyển về trang đăng nhập
+      try {
+        // dùng navigate nếu có sẵn
+        // lưu lại ý định để sau đăng nhập quay lại
+        sessionStorage.setItem('postLoginRedirect', '/library');
+      } catch (err) {
+        console.warn('Failed to persist post-login redirect', err);
+      }   
+      const nav = typeof window !== 'undefined' ? window.location : null;
+      if (nav) {
+        nav.href = '/login';
+      }
+    }
+    if (token) {
+      loadFolders();
+      loadSets();
+    }
   }, []);
 
   const navigate = useNavigate();
+  useEffect(() => {
+    const token = getToken();
+    if (!token) {
+      navigate('/login');
+    }
+  }, [navigate]);
 
   const handleDeleteClick = (e, folder) => {
     e.stopPropagation();
@@ -104,22 +127,27 @@ export default function Library() {
           <div className="flex flex-col gap-6">
             <div className="flex items-center justify-between gap-4">
               <h2 className="text-xl font-bold text-slate-900">My Folders</h2>
-              <button onClick={() => setShowCreateFolder(true)} className="flex cursor-pointer items-center justify-center gap-2 overflow-hidden rounded-lg h-10 px-4 bg-primary/10 text-primary text-sm font-bold tracking-[0.015em] hover:bg-primary/20">
+              <button
+                onClick={() => setShowCreateFolder(true)}
+                className="flex cursor-pointer items-center justify-center gap-2 overflow-hidden rounded-lg h-10 px-4 bg-primary/10 text-primary text-sm font-bold tracking-[0.015em] hover:bg-primary/20"
+              >
                 <span className="material-symbols-outlined">create_new_folder</span>
                 <span className="truncate">Create new folder</span>
               </button>
             </div>
 
             <div className="grid grid-cols-1 gap-4 @[480px]:grid-cols-2 @[864px]:grid-cols-3 @[1200px]:grid-cols-4">
-            {folders.map((folder) => (
-              <div
-                key={folder.id ?? folder.name}
-                className="flex flex-col gap-4 rounded-xl border border-slate-200 bg-white p-4 cursor-pointer"
-                onClick={() => setSelectedFolder(folder)}
-                role="button"
-                tabIndex={0}
-                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setSelectedFolder(folder); }}
-              >
+              {folders.map((folder) => (
+                <div
+                  key={folder.id ?? folder.name}
+                  className="flex flex-col gap-4 rounded-xl border border-slate-200 bg-white p-4 cursor-pointer"
+                  onClick={() => setSelectedFolder(folder)}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') setSelectedFolder(folder);
+                  }}
+                >
                   <div className="flex items-center gap-3">
                     <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100 text-blue-600">
                       <span className="material-symbols-outlined">folder</span>
@@ -150,7 +178,10 @@ export default function Library() {
           <div className="flex flex-col gap-6">
             <div className="flex items-center justify-between gap-4">
               <h2 className="text-xl font-bold text-slate-900">My Flashcard Sets</h2>
-              <button onClick={() => setShowCreateSet(true)} className="flex cursor-pointer items-center justify-center gap-2 overflow-hidden rounded-lg h-10 px-4 bg-primary text-white text-sm font-bold tracking-[0.015em] hover:bg-primary/90">
+              <button
+                onClick={() => setShowCreateSet(true)}
+                className="flex cursor-pointer items-center justify-center gap-2 overflow-hidden rounded-lg h-10 px-4 bg-primary text-white text-sm font-bold tracking-[0.015em] hover:bg-primary/90"
+              >
                 <span className="material-symbols-outlined">add</span>
                 <span className="truncate">Create new set</span>
               </button>
@@ -158,10 +189,10 @@ export default function Library() {
 
             <div className="grid grid-cols-1 gap-4 @[480px]:grid-cols-2 @[864px]:grid-cols-3 @[1200px]:grid-cols-4">
               {sets
-                .filter(set => {
+                .filter((set) => {
                   // Lọc các sets có folderId thuộc về folders của user hiện tại
                   if (!set.folderId) return false;
-                  return folders.some(folder => folder.id === set.folderId);
+                  return folders.some((folder) => folder.id === set.folderId);
                 })
                 .slice(0, 5)
                 .map((set) => (
@@ -170,24 +201,28 @@ export default function Library() {
                     role="button"
                     tabIndex={0}
                     onClick={() => navigate(`/sets/${set.id}`)}
-                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') navigate(`/sets/${set.id}`); }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') navigate(`/sets/${set.id}`);
+                    }}
                     className="flex flex-col gap-4 rounded-xl border border-slate-200 bg-white p-4 cursor-pointer hover:shadow-md transition-shadow"
                   >
                     <div className="flex flex-col">
                       <h3 className="font-semibold text-slate-800">{set.title}</h3>
-                      <p className="text-sm text-slate-500">{typeof set.cardCount === 'number' ? set.cardCount : (set.flashcards?.length || 0)} cards</p>
+                      <p className="text-sm text-slate-500">
+                        {typeof set.cardCount === 'number' ? set.cardCount : set.flashcards?.length || 0} cards
+                      </p>
                     </div>
                     <div className="flex items-center gap-2">
-                      <img 
-                        alt="Creator avatar" 
-                        className="h-6 w-6 rounded-full object-cover bg-slate-200" 
+                      <img
+                        alt="Creator avatar"
+                        className="h-6 w-6 rounded-full object-cover bg-slate-200"
                         src="https://ui-avatars.com/api/?name=User&background=3b82f6&color=fff&size=24"
                       />
                       <span className="text-sm text-slate-600">Bạn</span>
                     </div>
                   </div>
                 ))}
-              {sets.filter(set => set.folderId && folders.some(f => f.id === set.folderId)).length === 0 && (
+              {sets.filter((set) => set.folderId && folders.some((f) => f.id === set.folderId)).length === 0 && (
                 <div className="col-span-full text-center py-8 text-slate-500">
                   Chưa có bộ thẻ nào trong các thư mục của bạn.
                 </div>
@@ -226,7 +261,10 @@ export default function Library() {
               <div className="mt-4 flex justify-end gap-2">
                 <button
                   className="px-4 py-2 bg-slate-200 rounded"
-                  onClick={() => { setShowCreateFolder(false); setFolderName(''); }}
+                  onClick={() => {
+                    setShowCreateFolder(false);
+                    setFolderName('');
+                  }}
                 >
                   Hủy
                 </button>
@@ -317,13 +355,12 @@ export default function Library() {
         {showSetResult && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
             <div className="bg-white p-5 rounded-lg max-w-md w-[90%]">
-              <h3 className={`text-lg font-semibold ${setResultIsError ? 'text-red-600' : 'text-slate-900'}`}>{setResultTitle}</h3>
+              <h3 className={`text-lg font-semibold ${setResultIsError ? 'text-red-600' : 'text-slate-900'}`}>
+                {setResultTitle}
+              </h3>
               <p className="mt-2">{setResultMessage}</p>
               <div className="mt-4 flex justify-end">
-                <button
-                  onClick={() => setShowSetResult(false)}
-                  className="px-4 py-2 rounded bg-primary text-white"
-                >
+                <button onClick={() => setShowSetResult(false)} className="px-4 py-2 rounded bg-primary text-white">
                   Đóng
                 </button>
               </div>

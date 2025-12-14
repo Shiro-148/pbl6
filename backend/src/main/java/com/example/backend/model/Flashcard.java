@@ -29,6 +29,10 @@ public class Flashcard {
     @Column(length = 500)
     private String audio;
 
+    @Column(columnDefinition = "TEXT")
+    private String mcqOptions; // JSON array of options for multiple choice caching
+    private String sentenceOptions; // JSON array of sentences for sentence choice caching
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "set_id")
     @JsonBackReference
@@ -91,6 +95,22 @@ public class Flashcard {
 
     public void setAudio(String audio) {
         this.audio = audio;
+    }
+
+    public String getMcqOptions() {
+        return mcqOptions;
+    }
+
+    public void setMcqOptions(String mcqOptions) {
+        this.mcqOptions = mcqOptions;
+    }
+
+    public String getSentenceOptions() {
+        return sentenceOptions;
+    }
+
+    public void setSentenceOptions(String sentenceOptions) {
+        this.sentenceOptions = sentenceOptions;
     }
 
     public FlashcardSet getSet() {

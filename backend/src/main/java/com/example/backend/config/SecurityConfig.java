@@ -6,6 +6,7 @@ import com.example.backend.security.JwtUtil;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -33,6 +34,9 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/**", "/h2-console/**",
                                 "/api/flashcards/ai-word", "/api/flashcards/enrich")
                         .permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/sets/public", "/api/sets/public/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/sets/*").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/games/**").permitAll()
                         .anyRequest().authenticated())
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 // allow H2 console frames

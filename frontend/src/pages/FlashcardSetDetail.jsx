@@ -436,6 +436,7 @@ export default function FlashcardSetDetail() {
     const title = setMeta?.title || 'Flashcard';
     const params = new URLSearchParams({ set: title, setId: id });
     setShowPracticeDialog(false);
+    // Quay về trang chọn game với setId được truyền
     navigate(`/games?${params.toString()}`);
   };
 
@@ -666,13 +667,6 @@ export default function FlashcardSetDetail() {
                       </>
                     );
                   })()}
-                </div>
-
-                <div className="border-t border-slate-200 pt-3 mt-3">
-                  <button className="w-full flex justify-between items-center text-sm font-medium text-slate-500 hover:text-primary transition-colors">
-                    <span>Ghi chú:</span>
-                    <span className="material-symbols-outlined">expand_more</span>
-                  </button>
                 </div>
               </div>
             ))}

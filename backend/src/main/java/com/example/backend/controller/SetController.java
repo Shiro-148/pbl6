@@ -10,9 +10,14 @@ import com.example.backend.model.Folder;
 import com.example.backend.model.User;
 import com.example.backend.repository.FlashcardRepository;
 import com.example.backend.repository.UserRepository;
+import com.example.backend.repository.UserProfileRepository;
 import com.example.backend.service.FlashcardSetService;
 import com.example.backend.service.FolderService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
@@ -29,13 +34,15 @@ public class SetController {
     private final FlashcardRepository flashcardRepository;
     private final UserRepository userRepository;
     private final FolderService folderService;
+    private final UserProfileRepository userProfileRepository;
 
     public SetController(FlashcardSetService service, FlashcardRepository flashcardRepository,
-            UserRepository userRepository, FolderService folderService) {
+            UserRepository userRepository, FolderService folderService, UserProfileRepository userProfileRepository) {
         this.service = service;
         this.flashcardRepository = flashcardRepository;
         this.userRepository = userRepository;
         this.folderService = folderService;
+        this.userProfileRepository = userProfileRepository;
     }
 
     @GetMapping
@@ -68,9 +75,28 @@ public class SetController {
     }
 
     @GetMapping("/public")
-    public List<SetDto> listPublic() {
-        List<FlashcardSet> sets = service.findPublic();
-        return sets.stream().map(this::toDto).toList();
+    public ResponseEntity<?> listPublic(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "9") int size,
+            @RequestParam(defaultValue = "createdAt") String sortBy,
+            @RequestParam(defaultValue = "desc") String order) {
+        Sort sort = Sort.unsorted();
+        // Try to sort by createdAt or id if available; fallback to id
+        if ("desc".equalsIgnoreCase(order)) {
+            sort = Sort.by(sortBy != null && !sortBy.isBlank() ? sortBy : "id").descending();
+        } else {
+            sort = Sort.by(sortBy != null && !sortBy.isBlank() ? sortBy : "id").ascending();
+        }
+        Pageable pageable = PageRequest.of(Math.max(page, 0), Math.max(size, 1), sort);
+        Page<FlashcardSet> setsPage = service.findPublic(pageable);
+        var content = setsPage.getContent().stream().map(this::toDto).toList();
+        var body = new java.util.HashMap<String, Object>();
+        body.put("content", content);
+        body.put("page", setsPage.getNumber());
+        body.put("size", setsPage.getSize());
+        body.put("totalElements", setsPage.getTotalElements());
+        body.put("totalPages", setsPage.getTotalPages());
+        return ResponseEntity.ok(body);
     }
 
     @PostMapping
@@ -133,13 +159,25 @@ public class SetController {
         if (s.getFolder() != null)
             d.setFolderId(s.getFolder().getId());
 
+        // Owner info: resolve from folder's user and user profile
+        if (s.getFolder() != null && s.getFolder().getUser() != null) {
+            var owner = s.getFolder().getUser();
+            d.setOwnerUsername(owner.getUsername());
+            var profile = userProfileRepository.findByUserId(owner.getId());
+            if (profile != null) {
+                d.setOwnerDisplayName(profile.getDisplayName());
+                d.setOwnerAvatarUrl(profile.getAvatarUrl());
+            }
+        }
+
         // Count cards using repository to avoid lazy loading issues
         long cardCount = flashcardRepository.countBySetId(s.getId());
         d.setCardCount((int) cardCount);
 
-        // Only load full cards if needed
-        if (s.getCards() != null && !s.getCards().isEmpty()) {
-            d.setCards(s.getCards().stream().map(this::cardToDto).toList());
+        // Always load cards via repository to ensure data is returned
+        List<Flashcard> cards = flashcardRepository.findBySetId(s.getId());
+        if (cards != null && !cards.isEmpty()) {
+            d.setCards(cards.stream().map(this::cardToDto).toList());
         }
 
         return d;

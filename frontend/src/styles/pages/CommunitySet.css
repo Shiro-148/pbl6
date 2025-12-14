@@ -258,7 +258,7 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  justify-content: flex-start;
+  justify-content: center;
   max-width: 900px;
   margin: 0 auto 24px auto;
   padding: 0 12px;
@@ -321,6 +321,7 @@
   max-width: 1100px;
   width: 100%;
   margin: 0 auto;
+  margin-top: 20px;
   margin-bottom: 120px;
 }
 
@@ -355,6 +356,35 @@
   justify-content: center;
   font-weight: 600;
   font-size: 1.1rem;
+}
+
+.add-to-library-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #000;
+  border: solid 2px #908f8f;
+  border-radius: 5px;
+  font-size: 1rem;
+  font-weight: 600;
+  padding: 4px;
+  cursor: pointer;
+  box-shadow: 0 6px 18px rgba(228, 229, 231, 0.25);
+  transition: transform 0.1s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+}
+
+.add-to-library-btn i {
+  font-size: 1.2rem;
+}
+
+.add-to-library-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 22px rgba(41, 98, 255, 0.32);
+}
+
+.add-to-library-btn:active {
+  transform: translateY(0);
+  opacity: 0.95;
 }
 
 .community-set-actions {

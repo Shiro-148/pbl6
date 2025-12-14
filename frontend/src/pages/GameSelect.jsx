@@ -77,13 +77,20 @@ const GameSelect = () => {
                 if (setId) qs.set('setId', setId);
                 navigate(`/games/match?${qs.toString()}`);
               } else if (g.key === 'multiple') {
-                const qs = new URLSearchParams({ set: setName });
-                if (setId) qs.set('setId', setId);
-                navigate(`/games/multiple?${qs.toString()}`);
+                // Nếu có setId, đi thẳng vào Multiple Choice với setId
+                if (setId) {
+                  navigate(`/games/multiple/${setId}`);
+                } else {
+                  const qs = new URLSearchParams({ set: setName });
+                  navigate(`/games/multiple?${qs.toString()}`);
+                }
               } else if (g.key === 'Sentence') {
-                const qs = new URLSearchParams({ set: setName });
-                if (setId) qs.set('setId', setId);
-                navigate(`/games/Sentence?${qs.toString()}`);
+                if (setId) {
+                  navigate(`/games/Sentence/${setId}`);
+                } else {
+                  const qs = new URLSearchParams({ set: setName });
+                  navigate(`/games/Sentence?${qs.toString()}`);
+                }
               }
             }}
             style={{ cursor: g.key === 'match' || g.key === 'multiple' || g.key === 'Sentence' ? 'pointer' : undefined }}

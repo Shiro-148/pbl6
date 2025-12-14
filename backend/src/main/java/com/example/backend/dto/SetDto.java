@@ -12,6 +12,11 @@ public class SetDto {
     private Long folderId;
     private int cardCount;
 
+    // Owner info for community display
+    private String ownerDisplayName;
+    private String ownerUsername;
+    private String ownerAvatarUrl;
+
     public SetDto() {
     }
 
@@ -69,5 +74,29 @@ public class SetDto {
 
     public void setCardCount(int cardCount) {
         this.cardCount = cardCount;
+    }
+
+    public String getOwnerDisplayName() {
+        return ownerDisplayName;
+    }
+
+    public void setOwnerDisplayName(String ownerDisplayName) {
+        this.ownerDisplayName = ownerDisplayName;
+    }
+
+    public String getOwnerUsername() {
+        return ownerUsername;
+    }
+
+    public void setOwnerUsername(String ownerUsername) {
+        this.ownerUsername = ownerUsername;
+    }
+
+    public String getOwnerAvatarUrl() {
+        return ownerAvatarUrl;
+    }
+
+    public void setOwnerAvatarUrl(String ownerAvatarUrl) {
+        this.ownerAvatarUrl = ownerAvatarUrl;
     }
 }

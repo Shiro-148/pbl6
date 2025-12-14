@@ -1,7 +1,6 @@
 import './App.css';
 import { Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import Header from './components/Header';
-import BottomNav from './components/BottomNav';
 import Home from './pages/home';
 import About from './pages/About';
 import Login from './pages/Login';
@@ -19,7 +18,6 @@ import FlashcardSetDetail from './pages/FlashcardSetDetail';
 import GameSelect from './pages/GameSelect';
 import MatchGame from './pages/MatchGame';
 import MultipleChoice from './pages/MultipleChoice';
-import SentenceChoice from './pages/SentenceChoice';
 import SentenceChoiceGame from './pages/SentenceChoiceGame';
 import { getToken } from './services/auth';
 
@@ -65,6 +63,7 @@ function App() {
           <Route path="/upload-pdf" element={<UploadPDF />} />
           <Route path="/community" element={<Community />} />
           <Route path="/community-set" element={<CommunitySet />} />
+          <Route path="/community-set/:id" element={<CommunitySet />} />
           {/* <Route path="/upload-pdf" element={<UploadPDF />} />
           <Route path="/share" element={<Share />} /> */}
           <Route path="/statistic" element={<AiTutor />} />
@@ -73,11 +72,11 @@ function App() {
           <Route path="/games" element={<GameSelect />} />
           <Route path="/games/match" element={<MatchGame />} />
           <Route path="/games/multiple" element={<MultipleChoice />} />
-          <Route path="/games/type" element={<SentenceChoice />} />
+          <Route path="/games/multiple/:setId" element={<MultipleChoice />} />
           <Route path="/games/Sentence" element={<SentenceChoiceGame />} />
+          <Route path="/games/Sentence/:setId" element={<SentenceChoiceGame />} />
         </Routes>
       </main>
-      {!hideNavAndHeader && <BottomNav />}
     </div>
   );
 }

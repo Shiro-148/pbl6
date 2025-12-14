@@ -5,20 +5,14 @@ import GameBackButton from '../components/GameBackButton';
 import GameResult from '../components/GameResult';
 import '../styles/pages/MatchGame.css';
 import '../styles/pages/MultipleChoice.css';
+import { useParams } from 'react-router-dom';
+import { listSets } from '../services/flashcards';
 
-const MODEL_SERVICE = import.meta.env.VITE_MODEL_SERVICE || 'http://localhost:5000';
-
-const initialPairs = [
-  { term: 'run', definition: 'Chạy' },
-  { term: 'eat', definition: 'Ăn' },
-  {
-    term: 'read',
-    definition: 'Đọc',
-  },
-];
+const API = import.meta.env.VITE_API_BASE || 'http://localhost:8080';
 
 const MultipleChoice = () => {
   const navigate = useNavigate();
+  const { setId } = useParams();
   const [questions, setQuestions] = useState([]);
   const [current, setCurrent] = useState(0);
   const [score, setScore] = useState(0);
@@ -28,21 +22,45 @@ const MultipleChoice = () => {
   const [aiError, setAiError] = useState(null);
   const [startTime, setStartTime] = useState(null);
   const [timer, setTimer] = useState(0);
+  const [setsList, setSetsList] = useState([]);
+  const [setsLoading, setSetsLoading] = useState(false);
+  const [selectedSetId, setSelectedSetId] = useState('');
+  const [setsError, setSetsError] = useState(null);
 
-  // initialize: ask model_service to generate questions
+  // If no setId, load user's sets to let them pick
+  useEffect(() => {
+    let mounted = true;
+    const controller = new AbortController();
+    (async () => {
+      if (setId) return;
+      setSetsLoading(true);
+      setSetsError(null);
+      try {
+        const sets = await listSets();
+        if (!mounted) return;
+        setSetsList(Array.isArray(sets) ? sets : []);
+      } catch (e) {
+        if (!mounted) return;
+        setSetsError(e?.message || String(e));
+        setSetsList([]);
+      } finally {
+        if (mounted) setSetsLoading(false);
+      }
+    })();
+    return () => { mounted = false; controller.abort(); };
+  }, [setId]);
+
+  // initialize: fetch questions from backend (cache or AI-generated server-side)
   useEffect(() => {
     let mounted = true;
     const controller = new AbortController();
     const generate = async () => {
       setAiLoading(true);
       setAiError(null);
+      if (!setId) { setAiLoading(false); return; }
       try {
-        const res = await fetch(`${MODEL_SERVICE}/generate-distractors`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ pairs: initialPairs, options_count: 4 }),
-          signal: controller.signal,
-        });
+        const params = new URLSearchParams({ setId: String(setId || ''), optionsCount: '4' });
+        const res = await fetch(`${API}/api/games/multiple-choice?${params.toString()}`, { signal: controller.signal });
         if (!mounted) return;
         if (!res.ok) {
           const t = await res.text().catch(() => res.statusText || 'Error');
@@ -50,8 +68,10 @@ const MultipleChoice = () => {
         }
         const data = await res.json();
         if (!mounted) return;
-        if (data && data.questions && Array.isArray(data.questions) && data.questions.length) {
-          setQuestions(data.questions);
+        const qs = data?.questions || [];
+        if (Array.isArray(qs) && qs.length) {
+          const sanitized = qs.map(sanitizeQuestion);
+          setQuestions(sanitized);
         } else {
           setAiError('No questions returned from model service');
         }
@@ -65,7 +85,7 @@ const MultipleChoice = () => {
     };
     generate();
     return () => { mounted = false; controller.abort(); };
-  }, []);
+  }, [setId]);
 
   // Chạy timer khi có startTime và chưa kết thúc game
   useEffect(() => {
@@ -100,27 +120,22 @@ const MultipleChoice = () => {
   };
 
   const handleNewGame = () => {
-    // request new questions from model service
+    // fetch again from backend (will reuse cache; frontend will reshuffle per question)
     (async () => {
       setAiLoading(true);
       setAiError(null);
+      if (!setId) { setAiLoading(false); return; }
       try {
-        const res = await fetch(`${MODEL_SERVICE}/generate-distractors`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ pairs: initialPairs, options_count: 4 }),
-        });
+        const params = new URLSearchParams({ setId: String(setId || ''), optionsCount: '4' });
+        const res = await fetch(`${API}/api/games/multiple-choice?${params.toString()}`);
         if (!res.ok) {
           const t = await res.text().catch(() => res.statusText || 'Error');
           throw new Error(`${res.status} ${t}`);
         }
         const data = await res.json();
-        if (data && data.questions && Array.isArray(data.questions) && data.questions.length) {
-          setQuestions(data.questions);
-        } else {
-          setAiError('No questions returned from model service');
-          setQuestions([]);
-        }
+        const qs = data?.questions || [];
+        const sanitized = Array.isArray(qs) ? qs.map(sanitizeQuestion) : [];
+        setQuestions(sanitized.map(q => ({ ...q, options: shuffle(q.options) })));
       } catch (e) {
         console.error('generate-distractors error', e);
         setAiError(String(e.message || e));
@@ -135,6 +150,89 @@ const MultipleChoice = () => {
         setTimer(0);
       }
     })();
+  };
+  // If no setId provided, show set picker
+  if (!setId) {
+    return (
+      <div className="match-game-page multiple-choice-page">
+        <GameBackButton onClick={() => navigate(-1)} />
+        <GameHeader
+          left={<div className="match-game-title">Multiple Choice</div>}
+          center={<div className="match-game-desc">Chọn học phần để chơi</div>}
+        />
+        <div style={{ padding: '2rem', maxWidth: 640, margin: '0 auto' }}>
+          {setsLoading && <div style={{ color: '#607d8b' }}>Đang tải danh sách học phần...</div>}
+          {setsError && <div style={{ color: '#e53935' }}>Lỗi: {setsError}</div>}
+          {!setsLoading && (
+            <div style={{ display: 'grid', gap: 12 }}>
+              <label style={{ color: '#37474f' }}>Học phần</label>
+              <select
+                className="match-game-new-btn"
+                style={{ padding: 12, borderRadius: 8, background: '#fff', color: '#263238' }}
+                value={selectedSetId}
+                onChange={(e) => setSelectedSetId(e.target.value)}
+              >
+                <option value="">(Chọn học phần)</option>
+                {setsList.map((s) => (
+                  <option key={s.id} value={s.id}>{s.title || s.name || `Set ${s.id}`}</option>
+                ))}
+              </select>
+              <div style={{ display: 'flex', gap: 12 }}>
+                <button className="match-game-new-btn" onClick={() => navigate(-1)}>Đóng</button>
+                <button
+                  className="match-game-new-btn"
+                  disabled={!selectedSetId}
+                  onClick={() => navigate(`/games/multiple/${selectedSetId}`)}
+                >
+                  Bắt đầu
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  const shuffle = (arr = []) => {
+    const a = [...arr];
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  };
+
+  // Remove part-of-speech markers like noun/verb/adj before answers
+  const stripPosLabel = (s) => {
+    if (!s || typeof s !== 'string') return s;
+    let t = s.trim();
+    // Patterns at start: "noun:", "verb -", "adj.", "(adv)" etc.
+    t = t.replace(
+      /^\s*(?:[\(\[]\s*)?(?:noun|verb|adjective|adverb|pronoun|preposition|conjunction|interjection|n\.|v\.|adj\.|adv\.)\s*(?:[\)\]]\s*)?(?::|\-|–|—)?\s*/i,
+      ''
+    );
+    // Also remove leading Vietnamese POS markers if present (e.g., "danh từ:", "động từ:")
+    t = t.replace(/^\s*(?:danh từ|động từ|tính từ|trạng từ)\s*[:\-–—]?\s*/i, '');
+    // If a bullet dot exists, keep text after it
+    if (t.includes('•')) {
+      const parts = t.split('•');
+      t = parts[parts.length - 1];
+    }
+    // Strip leading quotes/punctuation/bullets
+    t = t.replace(/^[\s\"'“”•\-–—\*]+/, '');
+    return t.trim();
+  };
+
+  const sanitizeQuestion = (q) => {
+    const correct = stripPosLabel(q.correct || '');
+    const opts = Array.isArray(q.options) ? q.options.map((o) => stripPosLabel(o || '')) : [];
+    // ensure correct is included
+    const set = new Set(opts.map((o) => o));
+    if (correct && !set.has(correct)) {
+      set.add(correct);
+    }
+    return { ...q, correct, options: Array.from(set) };
   };
 
   const formatTime = (sec) => {

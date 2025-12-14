@@ -5,6 +5,8 @@ import com.example.backend.repository.FlashcardSetRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 @Service
 public class FlashcardSetService {
@@ -25,6 +27,10 @@ public class FlashcardSetService {
 
     public List<FlashcardSet> findPublic() {
         return repo.findByAccess("public");
+    }
+
+    public Page<FlashcardSet> findPublic(Pageable pageable) {
+        return repo.findByAccess("public", pageable);
     }
 
     public FlashcardSet findById(Long id) {

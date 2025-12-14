@@ -1,19 +1,19 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import GameHeader from '../components/GameHeader';
 import GameBackButton from '../components/GameBackButton';
 import GameResult from '../components/GameResult';
 import '../styles/pages/MatchGame.css';
 import '../styles/pages/MultipleChoice.css';
 
-// model service base (Vite env + fallback)
-const MODEL_SERVICE = import.meta.env.VITE_MODEL_SERVICE || 'http://localhost:5000';
+const API = import.meta.env.VITE_API_BASE || 'http://localhost:8080';
 
 // initial set of words (replace with real card data when available)
 const initialWords = ['run', 'eat', 'read'];
 
 const SentenceChoiceGame = () => {
   const navigate = useNavigate();
+  const { setId } = useParams();
   const [questions, setQuestions] = useState([]);
   const [current, setCurrent] = useState(0);
   const [score, setScore] = useState(0);
@@ -32,23 +32,38 @@ const SentenceChoiceGame = () => {
       setAiLoading(true);
       setAiError(null);
       try {
-        const res = await fetch(`${MODEL_SERVICE}/generate-sentences`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ words: initialWords }),
-          signal: controller.signal,
-        });
-        if (!mounted) return;
-        if (!res.ok) {
-          const t = await res.text().catch(() => res.statusText || 'Error');
-          throw new Error(`${res.status} ${t}`);
-        }
-        const data = await res.json();
-        if (!mounted) return;
-        if (data && Array.isArray(data.questions) && data.questions.length) {
-          setQuestions(data.questions);
+        let data;
+        if (setId) {
+          const params = new URLSearchParams({ setId: String(setId), optionsCount: '4' });
+          const res = await fetch(`${API}/api/games/sentence-choice?${params.toString()}`, { signal: controller.signal });
+          if (!mounted) return;
+          if (!res.ok) {
+            const t = await res.text().catch(() => res.statusText || 'Error');
+            throw new Error(`${res.status} ${t}`);
+          }
+          data = await res.json();
         } else {
-          setAiError('No questions returned from model service');
+          // fallback to model service with demo words
+          const MODEL_SERVICE = import.meta.env.VITE_MODEL_SERVICE_BASE || 'http://localhost:5000';
+          const res = await fetch(`${MODEL_SERVICE}/generate-sentences`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ words: initialWords, options_count: 4 }),
+            signal: controller.signal,
+          });
+          if (!mounted) return;
+          if (!res.ok) {
+            const t = await res.text().catch(() => res.statusText || 'Error');
+            throw new Error(`${res.status} ${t}`);
+          }
+          data = await res.json();
+        }
+        if (!mounted) return;
+        const qs = data && Array.isArray(data.questions) ? data.questions : [];
+        if (qs.length) {
+          setQuestions(qs);
+        } else {
+          setAiError('No questions returned');
         }
       } catch (e) {
         if (!mounted) return;
@@ -100,20 +115,33 @@ const SentenceChoiceGame = () => {
     setAiLoading(true);
     setAiError(null);
     try {
-      const res = await fetch(`${MODEL_SERVICE}/generate-sentences`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ words: initialWords }),
-      });
-      if (!res.ok) {
-        const t = await res.text().catch(() => res.statusText || 'Error');
-        throw new Error(`${res.status} ${t}`);
-      }
-      const data = await res.json();
-      if (data && Array.isArray(data.questions) && data.questions.length) {
-        setQuestions(data.questions);
+      let data;
+      if (setId) {
+        const params = new URLSearchParams({ setId: String(setId), optionsCount: '4' });
+        const res = await fetch(`${API}/api/games/sentence-choice?${params.toString()}`);
+        if (!res.ok) {
+          const t = await res.text().catch(() => res.statusText || 'Error');
+          throw new Error(`${res.status} ${t}`);
+        }
+        data = await res.json();
       } else {
-        setAiError('No questions returned from model service');
+        const MODEL_SERVICE = import.meta.env.VITE_MODEL_SERVICE_BASE || 'http://localhost:5000';
+        const res = await fetch(`${MODEL_SERVICE}/generate-sentences`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ words: initialWords, options_count: 4 }),
+        });
+        if (!res.ok) {
+          const t = await res.text().catch(() => res.statusText || 'Error');
+          throw new Error(`${res.status} ${t}`);
+        }
+        data = await res.json();
+      }
+      const qs = data && Array.isArray(data.questions) ? data.questions : [];
+      if (qs.length) {
+        setQuestions(qs);
+      } else {
+        setAiError('No questions returned');
         setQuestions([]);
       }
     } catch (e) {

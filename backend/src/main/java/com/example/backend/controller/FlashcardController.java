@@ -65,6 +65,8 @@ public class FlashcardController {
         d.setExample(f.getExample());
         d.setType(f.getType());
         d.setAudio(f.getAudio());
+        d.setMcqOptions(f.getMcqOptions());
+        d.setSentenceOptions(f.getSentenceOptions());
         if (f.getSet() != null)
             d.setSetId(f.getSet().getId());
         return d;
@@ -78,6 +80,8 @@ public class FlashcardController {
         f.setExample(d.getExample());
         f.setType(d.getType());
         f.setAudio(d.getAudio());
+        f.setMcqOptions(d.getMcqOptions());
+        f.setSentenceOptions(d.getSentenceOptions());
         return f;
     }
 }
