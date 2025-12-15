@@ -1,18 +1,24 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import '../styles/pages/Community.css';
 
 export default function Community() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [sets, setSets] = useState([]);
   const [page, setPage] = useState(0);
   const [size] = useState(9);
   const [totalPages, setTotalPages] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [isSearching, setIsSearching] = useState(false);
+
+  const searchParam = new URLSearchParams(location.search).get('search') || '';
 
   useEffect(() => {
     const API = import.meta.env.VITE_API_BASE || 'http://localhost:8080';
+    if (isSearching) return;
     (async () => {
       setLoading(true);
       setError(null);
@@ -49,7 +55,66 @@ export default function Community() {
         setLoading(false);
       }
     })();
-  }, [page, size]);
+  }, [page, size, isSearching]);
+
+  const runSearch = async (term) => {
+    const API = import.meta.env.VITE_API_BASE || 'http://localhost:8080';
+    const normalizedTerm = term.trim().toLowerCase();
+    setSearchTerm(term);
+    if (!normalizedTerm) {
+      setIsSearching(false);
+      setPage(0);
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+    try {
+      const params = new URLSearchParams({ page: '0', size: '50', sortBy: 'id', order: 'desc' });
+      const res = await fetch(`${API}/api/sets/public?${params.toString()}`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const json = await res.json();
+      const content = Array.isArray(json) ? json : (json?.content || []);
+      const normalized = (content || []).map((s) => ({
+        id: s?.id,
+        title: s?.name || s?.title || 'Không có tiêu đề',
+        description: s?.description || s?.communityTrend || 'Không có mô tả',
+        authorName:
+          s?.ownerDisplayName ||
+          s?.ownerUsername ||
+          s?.owner?.profile?.displayName ||
+          s?.owner?.username ||
+          'Cộng đồng',
+        coverUrl: s?.coverUrl || '/assets/images/flashcard.png',
+        cardCount: typeof s?.cardCount === 'number' ? s.cardCount : (Array.isArray(s?.cards) ? s.cards.length : undefined),
+      }));
+
+      const filtered = normalized.filter((s) =>
+        (s.title || '').toLowerCase().includes(normalizedTerm) || (s.description || '').toLowerCase().includes(normalizedTerm)
+      );
+      setSets(filtered);
+      setTotalPages(1);
+      setPage(0);
+      setIsSearching(true);
+    } catch (err) {
+      console.error('Failed to search public sets', err);
+      setSets([]);
+      setError(err.message || String(err));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    const paramTerm = searchParam || '';
+    if (!paramTerm) {
+      setIsSearching(false);
+      setSearchTerm('');
+      return;
+    }
+    runSearch(paramTerm);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParam]);
   return (
     <div className="community-page">
       <div className="community-header-row">

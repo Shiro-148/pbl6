@@ -7,6 +7,7 @@ const Header = () => {
   const navigate = useNavigate();
   const [tokenPresent, setTokenPresent] = useState(!!getToken());
   const [showProfileModal, setShowProfileModal] = useState(false);
+  const [searchValue, setSearchValue] = useState('');
 
   useEffect(() => {
     const onTokenChange = () => setTokenPresent(!!getToken());
@@ -50,19 +51,33 @@ const Header = () => {
         </div>
 
         <div className="flex-1 flex justify-center">
-          <div className="relative w-full max-w-[720px]">
+          <form
+            className="relative w-full max-w-[720px]"
+            onSubmit={(e) => {
+              e.preventDefault();
+              const term = searchValue.trim();
+              if (!term) {
+                navigate('/community');
+                return;
+              }
+              navigate(`/community?search=${encodeURIComponent(term)}`);
+            }}
+          >
             <input
               className="w-full h-8 rounded-full border border-gray-200 bg-gray-50 pl-4 pr-11 text-[15px] outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="Học phần, sách giáo khoa, câu hỏi"
-              type="text"
+              type="search"
+              value={searchValue}
+              onChange={(e) => setSearchValue(e.target.value)}
             />
             <button
+              type="submit"
               className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full grid place-items-center text-gray-600 hover:bg-gray-200"
               aria-label="Tìm kiếm"
             >
               <span className="material-symbols-outlined">search</span>
             </button>
-          </div>
+          </form>
         </div>
 
         <div className="flex items-center gap-3">
