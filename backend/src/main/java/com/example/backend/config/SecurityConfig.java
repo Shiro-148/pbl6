@@ -34,8 +34,13 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/**", "/h2-console/**",
                                 "/api/flashcards/ai-word", "/api/flashcards/enrich")
                         .permitAll()
+                        // allow all CORS preflight
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/sets/public", "/api/sets/public/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/sets/*").permitAll()
+                        // allow starring/un-starring public sets without forcing login
+                        .requestMatchers(HttpMethod.POST, "/api/sets/*/cards/*/star").permitAll()
+                        .requestMatchers(HttpMethod.DELETE, "/api/sets/*/cards/*/star").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/games/**").permitAll()
                         .anyRequest().authenticated())
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))

@@ -85,6 +85,57 @@
   height: 20px;
 }
 
+/* Custom switch */
+.community-set-switch {
+  position: relative;
+  display: inline-block;
+  width: 42px;
+  height: 24px;
+}
+
+.community-set-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.community-set-switch-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #e5e7eb; /* gray-200 */
+  transition: 0.2s;
+  border-radius: 999px;
+}
+
+.community-set-switch-slider:before {
+  position: absolute;
+  content: "";
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  top: 3px;
+  background-color: white;
+  transition: 0.2s;
+  border-radius: 50%;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
+.community-set-switch input:checked + .community-set-switch-slider {
+  background-color: #2962ff;
+}
+
+.community-set-switch input:checked + .community-set-switch-slider:before {
+  transform: translateX(18px);
+}
+
+.community-set-switch input:focus + .community-set-switch-slider {
+  box-shadow: 0 0 0 3px rgba(41, 98, 255, 0.25);
+}
+
 .community-set-modal-dropdown {
   background: #f5f7fa;
   border: none;
@@ -117,7 +168,7 @@
   font-weight: 500;
   cursor: pointer;
   margin-left: 2px;
-  margin-top: 8px;
+  margin-bottom: 3px;
   transition: color 0.15s;
 }
 
@@ -196,9 +247,10 @@
 }
 
 .community-set-flashcard-modern {
-  background: #fff;
+  background: #f7f9ff; /* light blue base */
+  border: 1px solid #d5deed;
   border-radius: 24px;
-  box-shadow: 0 4px 32px rgba(30, 40, 90, 0.1);
+  box-shadow: 0 4px 32px rgba(30, 40, 90, 0.08);
   margin: 0 auto 24px auto;
   padding: 32px 24px 48px 24px;
   max-width: 900px;
@@ -206,6 +258,14 @@
   display: flex;
   flex-direction: column;
   position: relative;
+  transition: background 0.2s ease, box-shadow 0.2s ease, border 0.2s ease;
+}
+
+/* Starred cards now look the same as normal cards */
+.community-set-flashcard-modern.starred {
+  background: #f7f9ff;
+  border: 1px solid #d5deed;
+  box-shadow: 0 4px 32px rgba(30, 40, 90, 0.08);
 }
 
 .community-set-flashcard-top {
@@ -242,6 +302,7 @@
 }
 
 .community-set-flashcard-content-modern {
+  position: relative;
   font-size: 2.4rem;
   font-weight: 600;
   color: #232a3d;
@@ -251,8 +312,26 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 120px;
+  min-height: 140px;
+  cursor: pointer;
 }
+
+/* Click zones overlay the entire card container */
+.community-set-flashcard-zone {
+  position: absolute;
+  cursor: pointer;
+  min-width: 70px;
+  top: 0;
+  bottom: 0;
+  height: 100%;
+  z-index: 2;
+}
+.community-set-flashcard-zone.left { left: 0; width: 22%; }
+.community-set-flashcard-zone.center { left: 22%; width: 56%; }
+.community-set-flashcard-zone.right { right: 0; width: 22%; }
+
+/* Keep top bar clickable above zones */
+.community-set-flashcard-top { position: relative; z-index: 4; }
 
 .community-set-flashcard-nav-modern {
   display: flex;
@@ -309,6 +388,7 @@
   font-size: 1.1rem;
   font-weight: 500;
   color: #232a3d;
+  cursor: pointer;
   min-width: 70px;
   text-align: center;
 }

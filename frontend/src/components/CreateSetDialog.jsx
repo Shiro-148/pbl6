@@ -5,6 +5,8 @@ export default function CreateSetDialog({ open, onClose, folders = [], onCreate,
   const [description, setDescription] = useState('');
   const [folder, setFolder] = useState('');
   const [access, setAccess] = useState('public');
+  const [newFolderName, setNewFolderName] = useState('');
+  const [error, setError] = useState('');
 
   useEffect(() => {
     if (open) {
@@ -13,6 +15,8 @@ export default function CreateSetDialog({ open, onClose, folders = [], onCreate,
       setDescription((initial && initial.description) || '');
       setFolder((initial && initial.folderId) || '');
       setAccess((initial && initial.access) || 'public');
+      setNewFolderName('');
+      setError('');
     }
   }, [open, initial]);
 
@@ -20,7 +24,16 @@ export default function CreateSetDialog({ open, onClose, folders = [], onCreate,
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    const payload = { name, description, folder, access };
+    if (!folder) {
+      setError('Hãy chọn thư mục hoặc tạo mới.');
+      return;
+    }
+    if (folder === 'new' && !newFolderName.trim()) {
+      setError('Nhập tên thư mục mới.');
+      return;
+    }
+    setError('');
+    const payload = { name, description, folder, access, newFolderName: newFolderName.trim() };
     if (onCreate) onCreate(payload);
   };
 
@@ -100,17 +113,21 @@ export default function CreateSetDialog({ open, onClose, folders = [], onCreate,
               className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5"
               htmlFor="folder-select"
             >
-              Thêm vào thư mục (tùy chọn)
+              Thêm vào thư mục (bắt buộc)
             </label>
             <div className="relative">
               <select
                 id="folder-select"
                 name="folder"
                 value={folder}
-                onChange={(e) => setFolder(e.target.value)}
+                onChange={(e) => {
+                  setFolder(e.target.value);
+                  setError('');
+                }}
                 className="w-full bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-600 rounded-lg focus:ring-primary focus:border-primary dark:focus:ring-indigo-500 dark:focus:border-indigo-500 text-slate-900 dark:text-slate-50 appearance-none pl-4 pr-10 py-2.5"
+                required
               >
-                <option value="">Chọn một thư mục</option>
+                <option value="">(Chọn thư mục)</option>
                 {folders.map((f) => (
                   <option key={f.id} value={f.id}>
                     {f.name}
@@ -124,6 +141,17 @@ export default function CreateSetDialog({ open, onClose, folders = [], onCreate,
                 </span>
               </div>
             </div>
+            {folder === 'new' && (
+              <div className="mt-3">
+                <input
+                  className="w-full bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-600 rounded-lg placeholder-slate-400 dark:placeholder-slate-500 focus:ring-primary focus:border-primary dark:focus:ring-indigo-500 dark:focus:border-indigo-500 text-slate-900 dark:text-slate-50 px-3 py-2"
+                  placeholder="Tên thư mục mới"
+                  value={newFolderName}
+                  onChange={(e) => setNewFolderName(e.target.value)}
+                />
+              </div>
+            )}
+            {error && <p className="mt-2 text-sm text-red-500">{error}</p>}
             <p className="mt-1.5 text-xs text-slate-500 dark:text-slate-400">
               Sắp xếp các bộ flashcard vào các thư mục để dễ quản lý.
             </p>

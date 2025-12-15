@@ -81,22 +81,7 @@
 .set-card-privacy-menu-item i {
   font-size: 1.1rem;
 }
-.set-card-share {
-  background: #e3e8f0;
-  color: #2979ff;
-  border: none;
-  border-radius: 8px;
-  padding: 6px 18px 6px 12px;
-  font-size: 1rem;
-  font-weight: 500;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  transition: background 0.15s, color 0.15s;
-  box-shadow: 0 1px 4px rgba(41, 121, 255, 0.08);
-  margin-left: 8px;
-}
+
 .set-card-share:hover {
   background: #d0e2ff;
   color: #1565c0;
@@ -119,7 +104,7 @@
 }
 .set-list-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: 24px;
 }
 .set-card {
@@ -145,7 +130,7 @@
 .set-card-option {
   display: flex;
   align-items: center;
-  gap: 0;
+  gap: 6px;
   position: relative;
 }
 .set-card-icon {
@@ -157,14 +142,14 @@
   background: #726bdf;
   color: #fff;
   border: none;
-  border-radius: 8px;
-  padding: 6px 18px 6px 12px;
-  font-size: 1rem;
-  font-weight: 500;
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
   cursor: pointer;
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
   transition: background 0.15s;
   box-shadow: 0 1px 4px rgba(114, 107, 223, 0.08);
 }
@@ -204,21 +189,54 @@
 }
 
 .set-card-actions {
-  display: flex;
-  justify-content: space-between;
-  margin-top: 2px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 8px;
 }
 .set-btn {
   border: none;
-  border-radius: 6px;
-  font-size: 1rem;
-  font-weight: 500;
-  padding: 7px 18px 7px 12px;
-  display: flex;
+  border-radius: 5px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 6px 8px;
+  display: inline-flex;
   align-items: center;
-  gap: 6px;
+  justify-content: center;
+  gap: 4px;
   cursor: pointer;
-  transition: background 0.15s, color 0.15s;
+  transition: background 0.15s, color 0.15s, transform 0.1s;
+  width: 100%;
+}
+.set-btn:active {
+  transform: translateY(1px);
+}
+.set-btn i {
+  font-size: 0.9rem;
+}
+.set-card-share {
+  border: none;
+  border-radius: 5px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 6px 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, transform 0.1s;
+  background: #e3e8f0;
+  color: #2979ff;
+  box-shadow: 0 1px 4px rgba(41, 121, 255, 0.08);
+  width: 100%;
+}
+.set-card-share:hover {
+  background: #d0e2ff;
+  color: #1565c0;
+}
+.set-card-share i {
+  font-size: 0.9rem;
 }
 .set-btn-study {
   background: #2979ff;
@@ -241,6 +259,4 @@
 .set-btn-details:hover {
   background: #bfc3c9;
 }
-.set-btn i {
-  font-size: 1.1rem;
-}
+

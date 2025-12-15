@@ -119,3 +119,19 @@ CREATE TABLE `users` (
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
 -- Dump completed on 2025-11-13 16:30:30
+
+-- Additional table for starred flashcards
+DROP TABLE IF EXISTS `flashcard_stars`;
+CREATE TABLE `flashcard_stars` (
+  `id` bigint NOT NULL AUTO_INCREMENT,
+  `set_id` bigint NOT NULL,
+  `card_id` bigint NOT NULL,
+  `user_id` bigint DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_set_card` (`set_id`, `card_id`),
+  KEY `fk_star_set` (`set_id`),
+  KEY `fk_star_card` (`card_id`),
+  CONSTRAINT `fk_star_set` FOREIGN KEY (`set_id`) REFERENCES `flashcard_sets` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_star_card` FOREIGN KEY (`card_id`) REFERENCES `flashcards` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+

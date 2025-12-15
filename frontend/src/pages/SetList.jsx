@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../styles/pages/SetList.css';
-import { listSets, deleteSet } from '../services/flashcards';
+import { listSets, deleteSet, updateSet } from '../services/flashcards';
 
 // Removed static sample data - now only using real data from API
 
@@ -96,11 +96,13 @@ const SetList = ({ folder, onBack }) => {
           desc: set.description || 'Không có mô tả',
           lang: 'Tiếng Việt → Tiếng Việt', // Default language
           used: false,
-          count: set.cardCount || 0 // Backend should provide this
+          count: set.cardCount || 0, // Backend should provide this
+          access: set.access === 'public' ? 'public' : 'private',
+          folderId: set.folderId
         }));
         
         setSets(formattedSets);
-        setPrivacyStates(formattedSets.map(() => defaultPrivacy));
+        setPrivacyStates(formattedSets.map((s) => s.access || defaultPrivacy));
       } catch (err) {
         console.error('Error loading sets:', err);
         setError('Không thể tải danh sách sets');
@@ -191,9 +193,24 @@ const SetList = ({ folder, onBack }) => {
     setPrivacyMenuIdx(idx === privacyMenuIdx ? null : idx);
   };
 
-  const handlePrivacyChange = (idx, type) => {
+  const handlePrivacyChange = async (idx, type) => {
+    const setItem = sets[idx];
+    if (!setItem?.id) return;
+    const prev = privacyStates[idx];
     setPrivacyStates((states) => states.map((v, i) => (i === idx ? type : v)));
     setPrivacyMenuIdx(null);
+    try {
+      await updateSet(setItem.id, {
+        access: type,
+        title: setItem.name,
+        description: setItem.desc,
+        folderId: setItem.folderId || folder?.id,
+      });
+    } catch (err) {
+      // rollback on failure
+      setPrivacyStates((states) => states.map((v, i) => (i === idx ? prev : v)));
+      alert('Không thể cập nhật quyền truy cập: ' + (err?.message || err));
+    }
   };
 
   // Đóng menu khi click ngoài
@@ -306,7 +323,6 @@ const SetList = ({ folder, onBack }) => {
               <button
                 className="set-card-share"
                 title="Share"
-                style={{ marginLeft: 8 }}
                 onClick={() => handleShare(set.name)}
               >
                 <i className="bx bx-share-alt"></i> Share

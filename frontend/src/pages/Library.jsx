@@ -136,7 +136,7 @@ export default function Library() {
               </button>
             </div>
 
-            <div className="grid grid-cols-1 gap-4 @[480px]:grid-cols-2 @[864px]:grid-cols-3 @[1200px]:grid-cols-4">
+            <div className="library-grid">
               {folders.map((folder) => (
                 <div
                   key={folder.id ?? folder.name}
@@ -187,14 +187,13 @@ export default function Library() {
               </button>
             </div>
 
-            <div className="grid grid-cols-1 gap-4 @[480px]:grid-cols-2 @[864px]:grid-cols-3 @[1200px]:grid-cols-4">
+            <div className="library-grid">
               {sets
                 .filter((set) => {
                   // Lọc các sets có folderId thuộc về folders của user hiện tại
                   if (!set.folderId) return false;
                   return folders.some((folder) => folder.id === set.folderId);
                 })
-                .slice(0, 5)
                 .map((set) => (
                   <div
                     key={set.id}
@@ -317,7 +316,7 @@ export default function Library() {
               // map dialog fields to API
               const title = data.name || data.title || '';
               const description = data.description || '';
-              const folderId = data.folder && data.folder !== 'new' ? data.folder : null;
+              const selectedFolder = data.folder;
 
               if (!title) {
                 setSetResultTitle('Tạo bộ flashcard');
@@ -325,6 +324,30 @@ export default function Library() {
                 setSetResultIsError(true);
                 setShowSetResult(true);
                 return;
+              }
+
+              if (!selectedFolder) {
+                setSetResultTitle('Tạo bộ flashcard');
+                setSetResultMessage('Vui lòng chọn thư mục hoặc tạo mới.');
+                setSetResultIsError(true);
+                setShowSetResult(true);
+                return;
+              }
+
+              let folderId = selectedFolder;
+              if (selectedFolder === 'new') {
+                const newName = (data.newFolderName || '').trim();
+                if (!newName) {
+                  setSetResultTitle('Tạo thư mục');
+                  setSetResultMessage('Vui lòng nhập tên thư mục mới.');
+                  setSetResultIsError(true);
+                  setShowSetResult(true);
+                  return;
+                }
+
+                const createdFolder = await createFolder(newName);
+                folderId = createdFolder?.id;
+                await loadFolders();
               }
 
               // Call backend API to create the set (requires auth)
