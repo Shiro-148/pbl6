@@ -44,7 +44,6 @@ public class StarController {
             return ResponseEntity.notFound().build();
         var existing = starRepo.findBySetIdAndCardId(setId, cardId);
         if (existing.isPresent()) {
-            // already starred
             return ResponseEntity.ok(Map.of("starred", true));
         }
         FlashcardStar star = new FlashcardStar(setId, cardId, null);

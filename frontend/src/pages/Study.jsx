@@ -94,7 +94,6 @@ const Study = () => {
         <button
           className="study-back"
           onClick={() => {
-            // Quay lại SetList nếu có setName, mặc định về /library
             navigate(-1);
           }}
         >
@@ -152,7 +151,7 @@ const Study = () => {
             <span style={{ flex: 1 }}>Auto Play Settings</span>
             <i className="bx bx-chevron-down"></i>
           </div>
-          {/* Có thể thêm cài đặt ở đây */}
+          {}
         </div>
 
         {loading || error || !cards.length ? (

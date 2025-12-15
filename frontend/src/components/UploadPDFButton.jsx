@@ -1,9 +1,5 @@
 import React, { useImperativeHandle, useRef } from 'react';
 
-// Simple UploadPDFButton replacement: exposes `open()` via ref and
-// reads plain text files, calling `onResult({ rawText })`.
-// For non-text files (e.g. PDF) it returns `{ fileName, fileType }` so
-// callers can handle server-side processing if needed.
 const UploadPDFButton = React.forwardRef(function UploadPDFButton({ onResult }, ref) {
   const inputRef = useRef(null);
 
@@ -30,16 +26,14 @@ const UploadPDFButton = React.forwardRef(function UploadPDFButton({ onResult }, 
       return;
     }
 
-    // Try extracting text from PDF client-side using pdfjs-dist
     if (type === 'application/pdf' || /\.pdf$/i.test(name)) {
       try {
         const arrayBuf = await file.arrayBuffer();
         const pdfjs = await import('pdfjs-dist/legacy/build/pdf');
-        // Set workerSrc for pdfjs (vite will handle bundling)
         try {
           pdfjs.GlobalWorkerOptions.workerSrc = await import('pdfjs-dist/build/pdf.worker.entry');
-        } catch (e) {
-          // ignore if worker import fails; pdfjs may still work
+        } catch (err) {
+          console.warn('pdf.worker entry load failed, using default worker', err);
         }
         const loadingTask = pdfjs.getDocument({ data: arrayBuf });
         const pdf = await loadingTask.promise;
@@ -54,13 +48,11 @@ const UploadPDFButton = React.forwardRef(function UploadPDFButton({ onResult }, 
         return;
       } catch (err) {
         console.error('PDF text extraction failed:', err);
-        // fallback to returning basic info
         onResult && onResult({ fileName: name, fileType: type });
         return;
       }
     }
 
-    // For other unknown types, return basic info
     onResult && onResult({ fileName: name, fileType: type });
   };
 
@@ -73,7 +65,6 @@ const UploadPDFButton = React.forwardRef(function UploadPDFButton({ onResult }, 
         style={{ display: 'none' }}
         onChange={(e) => {
           handleFiles(e.target.files);
-          // reset so same file can be selected again
           e.target.value = '';
         }}
       />

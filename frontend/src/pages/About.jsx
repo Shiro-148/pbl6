@@ -2,7 +2,7 @@ function About() {
   return (
     <main className="flex flex-1 justify-center py-5 sm:px-6 md:px-8 lg:px-16 xl:px-40">
       <div className="layout-content-container flex flex-col max-w-[960px] flex-1 pb-24">
-        {/* Page Heading */}
+        {}
         <div className="flex flex-wrap justify-between gap-3 p-4">
           <div className="flex min-w-72 flex-col gap-3">
             <h1 className="text-slate-900 dark:text-slate-50 text-4xl font-black leading-tight tracking-[-0.033em]">Về Chúng Tôi</h1>
@@ -13,7 +13,7 @@ function About() {
           </div>
         </div>
 
-        {/* Section: Sứ Mệnh & Tầm Nhìn */}
+        {}
         <div className="mt-8">
           <h2 className="text-slate-900 dark:text-slate-50 text-[22px] font-bold leading-tight tracking-[-0.015em] px-4 pb-3 pt-5">
             Sứ Mệnh &amp; Tầm Nhìn
@@ -43,7 +43,7 @@ function About() {
           </div>
         </div>
 
-        {/* Section: Giá Trị Cốt Lõi */}
+        {}
         <div className="mt-8">
           <h2 className="text-slate-900 dark:text-slate-50 text-[22px] font-bold leading-tight tracking-[-0.015em] px-4 pb-3 pt-5">
             Giá Trị Cốt Lõi
@@ -70,7 +70,7 @@ function About() {
           </div>
         </div>
 
-        {/* Section: Legal & Contact */}
+        {}
         <div className="mt-12 px-4">
           <div className="border-t border-slate-200 dark:border-slate-700 pt-6 flex flex-wrap gap-x-6 gap-y-2">
             <a className="text-slate-600 dark:text-slate-400 hover:text-primary dark:hover:text-primary transition-colors" href="#">Chính sách Bảo mật</a>

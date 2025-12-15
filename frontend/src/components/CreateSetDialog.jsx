@@ -10,7 +10,6 @@ export default function CreateSetDialog({ open, onClose, folders = [], onCreate,
 
   useEffect(() => {
     if (open) {
-      // initialize when opening
       setName((initial && (initial.name || initial.title)) || '');
       setDescription((initial && initial.description) || '');
       setFolder((initial && initial.folderId) || '');

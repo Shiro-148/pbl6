@@ -10,7 +10,7 @@ const UploadPDF = () => {
           Chọn file PDF
         </button>
       </form>
-      {/* Kết quả xử lý sẽ hiển thị ở đây */}
+      {}
       <div className="ai-result">(Kết quả AI sẽ hiển thị ở đây)</div>
     </div>
   );

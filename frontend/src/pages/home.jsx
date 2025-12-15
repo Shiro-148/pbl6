@@ -38,7 +38,6 @@ function Home() {
           arr.push(created);
           localStorage.setItem('localFolders', JSON.stringify(arr));
         } catch (e) {
-          // ignore localStorage errors
           console.warn('localStorage write failed', e);
         }
         handleCloseDialog();

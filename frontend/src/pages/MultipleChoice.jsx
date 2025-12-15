@@ -27,7 +27,6 @@ const MultipleChoice = () => {
   const [selectedSetId, setSelectedSetId] = useState('');
   const [setsError, setSetsError] = useState(null);
 
-  // If no setId, load user's sets to let them pick
   useEffect(() => {
     let mounted = true;
     const controller = new AbortController();
@@ -50,7 +49,6 @@ const MultipleChoice = () => {
     return () => { mounted = false; controller.abort(); };
   }, [setId]);
 
-  // initialize: fetch questions from backend (cache or AI-generated server-side)
   useEffect(() => {
     let mounted = true;
     const controller = new AbortController();
@@ -87,7 +85,6 @@ const MultipleChoice = () => {
     return () => { mounted = false; controller.abort(); };
   }, [setId]);
 
-  // Chạy timer khi có startTime và chưa kết thúc game
   useEffect(() => {
     if (!startTime || showResult) return;
     const interval = setInterval(() => {
@@ -100,7 +97,6 @@ const MultipleChoice = () => {
     if (selected !== null) return;
     setSelected(option);
 
-    // Bắt đầu thời gian ở lần chọn đầu tiên
     if (!startTime) {
       setStartTime(Date.now());
     }
@@ -114,13 +110,12 @@ const MultipleChoice = () => {
         setCurrent((c) => c + 1);
         setSelected(null);
       } else {
-        setShowResult(true); // Kết thúc => timer dừng
+        setShowResult(true); 
       }
     }, 700);
   };
 
   const handleNewGame = () => {
-    // fetch again from backend (will reuse cache; frontend will reshuffle per question)
     (async () => {
       setAiLoading(true);
       setAiError(null);
@@ -151,7 +146,6 @@ const MultipleChoice = () => {
       }
     })();
   };
-  // If no setId provided, show set picker
   if (!setId) {
     return (
       <div className="match-game-page multiple-choice-page">
@@ -203,31 +197,25 @@ const MultipleChoice = () => {
     return a;
   };
 
-  // Remove part-of-speech markers like noun/verb/adj before answers
   const stripPosLabel = (s) => {
     if (!s || typeof s !== 'string') return s;
     let t = s.trim();
-    // Patterns at start: "noun:", "verb -", "adj.", "(adv)" etc.
     t = t.replace(
-      /^\s*(?:[\(\[]\s*)?(?:noun|verb|adjective|adverb|pronoun|preposition|conjunction|interjection|n\.|v\.|adj\.|adv\.)\s*(?:[\)\]]\s*)?(?::|\-|–|—)?\s*/i,
+      /^\s*(?:[([]\s*)?(?:noun|verb|adjective|adverb|pronoun|preposition|conjunction|interjection|n\.|v\.|adj\.|adv\.)\s*(?:[)\]]\s*)?(?::|[-–—])?\s*/i,
       ''
     );
-    // Also remove leading Vietnamese POS markers if present (e.g., "danh từ:", "động từ:")
     t = t.replace(/^\s*(?:danh từ|động từ|tính từ|trạng từ)\s*[:\-–—]?\s*/i, '');
-    // If a bullet dot exists, keep text after it
     if (t.includes('•')) {
       const parts = t.split('•');
       t = parts[parts.length - 1];
     }
-    // Strip leading quotes/punctuation/bullets
-    t = t.replace(/^[\s\"'“”•\-–—\*]+/, '');
+    t = t.replace(/^[\s"'“”•\-–—*]+/, '');
     return t.trim();
   };
 
   const sanitizeQuestion = (q) => {
     const correct = stripPosLabel(q.correct || '');
     const opts = Array.isArray(q.options) ? q.options.map((o) => stripPosLabel(o || '')) : [];
-    // ensure correct is included
     const set = new Set(opts.map((o) => o));
     if (correct && !set.has(correct)) {
       set.add(correct);
@@ -257,7 +245,6 @@ const MultipleChoice = () => {
       />
     );
   }
-  // if loading, show loading UI
   if (aiLoading) {
     return (
       <div className="match-game-page multiple-choice-page">
@@ -274,7 +261,6 @@ const MultipleChoice = () => {
     );
   }
 
-  // if error and no questions, show error UI
   if (aiError && (!questions || questions.length === 0)) {
     return (
       <div className="match-game-page multiple-choice-page">

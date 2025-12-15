@@ -50,7 +50,6 @@ export default function FlashcardSetDetail() {
   const handleUploadResult = async (data) => {
     if (!data) return;
 
-    // Normalize classify array
     let classify = null;
     if (data.classify) {
       if (Array.isArray(data.classify)) classify = data.classify;
@@ -61,7 +60,6 @@ export default function FlashcardSetDetail() {
     const flash = data.flashcards && data.flashcards.entries ? data.flashcards.entries : data.flashcards || null;
 
     if (classify && classify.length) {
-      // Nếu có kết quả phân loại, mở dialog chọn cấp độ
       setClassifyResults({ classify, flash });
       setSelectedLevels([]);
       setShowLevelDialog(true);
@@ -80,7 +78,6 @@ export default function FlashcardSetDetail() {
     if (data.rawText) {
       const text = String(data.rawText || '');
 
-      // Try to fetch classification from model service so the level dialog can open
       try {
         const MODEL_BASE = import.meta.env.VITE_MODEL_SERVICE_BASE || 'http://localhost:5000';
         const resp = await fetch(`${MODEL_BASE}/classify`, {
@@ -91,7 +88,6 @@ export default function FlashcardSetDetail() {
         if (resp.ok) {
           const json = await resp.json();
 
-          // normalize classify array from response
           let classifyResp = null;
           if (json.classify) {
             if (Array.isArray(json.classify)) classifyResp = json.classify;
@@ -119,11 +115,9 @@ export default function FlashcardSetDetail() {
           }
         }
       } catch (err) {
-        // classification failed, fallback to client tokenization
         console.warn('Classification request failed:', err);
       }
 
-      // Fallback: tokenize raw text and open upload modal with words
       const tokens = text
         .replace(/[^A-Za-zÀ-ỹ0-9\s]/g, ' ')
         .split(/\s+/)
@@ -138,7 +132,6 @@ export default function FlashcardSetDetail() {
       return;
     }
 
-    // no useful data
     setShowUploadModal(false);
   };
 
@@ -149,18 +142,15 @@ export default function FlashcardSetDetail() {
       const API = import.meta.env.VITE_API_BASE || 'http://localhost:8080';
       setLoading(true);
       try {
-        // Lấy thông tin bộ flashcard
         const res = await authFetch(`${API}/api/sets/${id}`);
         let meta = null;
         if (res.ok) meta = await res.json();
 
-        // Lấy danh sách thẻ
         const cs = await listCards(id);
 
         if (!mounted) return;
         setSetMeta(meta || { id, title: meta?.title || 'Flashcard' });
         
-        // Map dữ liệu từ database sang format hiển thị
         const mappedCards = (Array.isArray(cs) ? cs : cs.cards || []).map(card => ({
           ...card,
           front: card.word || card.front || '',
@@ -181,7 +171,6 @@ export default function FlashcardSetDetail() {
     };
 
     load();
-    // load folders for edit dialog
     (async () => {
       try {
         const fs = await listFolders();
@@ -196,7 +185,6 @@ export default function FlashcardSetDetail() {
     };
   }, [id]);
 
-  // Function to reload cards
   const reloadCards = async () => {
     try {
       const cs = await listCards(id);
@@ -212,9 +200,7 @@ export default function FlashcardSetDetail() {
     }
   };
 
-  // Moved UploadModal and AddWordModal into standalone components
 
-  // Level chooser logic (copied/adapted from CreateFlashcard)
   const allLevels = ['easy', 'medium', 'hard'];
 
   const normalizeLevel = (lvl) => {
@@ -274,11 +260,9 @@ export default function FlashcardSetDetail() {
       .filter((c) => c.front);
 
     if (imported.length) {
-      // đặt các thẻ vào uploadEntries để hiển thị trong modal và cho phép chỉnh sửa
       setUploadEntries(imported);
       setShowLevelDialog(false);
       setClassifyResults(null);
-      // mở UploadModal để hiển thị các ô từ
       setShowUploadModal(true);
     } else {
       setShowLevelDialog(false);
@@ -293,7 +277,6 @@ export default function FlashcardSetDetail() {
 
   if (loading) return <div className="p-6">Loading...</div>;
 
-  // combined cards: existing + newly created in-modal
   const combinedCards = [...cards, ...newCards];
 
   const openEditModal = (index) => {
@@ -436,7 +419,6 @@ export default function FlashcardSetDetail() {
     const title = setMeta?.title || 'Flashcard';
     const params = new URLSearchParams({ set: title, setId: id });
     setShowPracticeDialog(false);
-    // Quay về trang chọn game với setId được truyền
     navigate(`/games?${params.toString()}`);
   };
 
@@ -474,7 +456,7 @@ export default function FlashcardSetDetail() {
   return (
     <div className="min-h-screen p-4 sm:p-6 md:p-8">
       <div className="max-w-7xl mx-auto">
-        {/* Header */}
+        {}
         <header className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
           <div className="flex-shrink-0">
             <button
@@ -515,7 +497,7 @@ export default function FlashcardSetDetail() {
           </div>
         </header>
 
-        {/* Stats */}
+        {}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
           {[
             { label: 'Tất cả thẻ', count: cards.length, color: 'slate', icon: 'style' },
@@ -544,7 +526,7 @@ export default function FlashcardSetDetail() {
           })}
         </div>
 
-        {/* Actions */}
+        {}
         <div className="bg-white p-3 rounded-xl flex flex-col sm:flex-row items-center gap-3 mb-8 border border-gray-200 shadow-sm">
           <div className="flex items-center gap-2 w-full sm:w-auto">
             <button className="p-3 bg-slate-50 rounded-lg hover:bg-gray-200 transition-colors">
@@ -565,7 +547,6 @@ export default function FlashcardSetDetail() {
 
           <button
             onClick={() => {
-              // Mở file chooser trực tiếp
               if (uploadRef && uploadRef.current && typeof uploadRef.current.open === 'function') {
                 uploadRef.current.open();
                 return;
@@ -590,7 +571,7 @@ export default function FlashcardSetDetail() {
           </button>
         </div>
 
-        {/* Cards grid or empty summary */}
+        {}
         {combinedCards.length === 0 ? (
           <div className="text-center py-24 px-6 bg-slate-50 rounded-xl">
             <span className="material-symbols-outlined text-6xl text-slate-400 mb-4">inbox</span>
@@ -933,7 +914,6 @@ export default function FlashcardSetDetail() {
               const folderId = data.folder && data.folder !== 'new' ? data.folder : null;
               const access = data.access || undefined;
               await updateSetApi(id, { title, description, folderId, access });
-              // reload meta
               const API = import.meta.env.VITE_API_BASE || 'http://localhost:8080';
               const res = await authFetch(`${API}/api/sets/${id}`);
               const meta = res.ok ? await res.json() : null;
@@ -946,7 +926,7 @@ export default function FlashcardSetDetail() {
           }}
         />
       )}
-      {/* Hidden Upload button instance used to trigger file dialog programmatically */}
+      {}
       <div style={{ display: 'none' }}>
         <UploadPDFButton ref={uploadRef} onResult={handleUploadResult} />
       </div>

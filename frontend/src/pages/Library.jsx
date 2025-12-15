@@ -38,10 +38,10 @@ export default function Library() {
       const sorted = (allSets || []).slice().sort((a, b) => {
         const timeA = a?.createdAt ? new Date(a.createdAt).getTime() : 0;
         const timeB = b?.createdAt ? new Date(b.createdAt).getTime() : 0;
-        if (timeA !== timeB) return timeB - timeA; // newest createdAt first
+        if (timeA !== timeB) return timeB - timeA; 
         const idA = typeof a?.id === 'number' ? a.id : 0;
         const idB = typeof b?.id === 'number' ? b.id : 0;
-        return idB - idA; // fallback to biggest id first
+        return idB - idA;
       });
       setSets(sorted);
     } catch (error) {
@@ -53,10 +53,7 @@ export default function Library() {
   useEffect(() => {
     const token = getToken();
     if (!token) {
-      // Nếu chưa đăng nhập, chuyển về trang đăng nhập
       try {
-        // dùng navigate nếu có sẵn
-        // lưu lại ý định để sau đăng nhập quay lại
         sessionStorage.setItem('postLoginRedirect', '/library');
       } catch (err) {
         console.warn('Failed to persist post-login redirect', err);
@@ -108,7 +105,6 @@ export default function Library() {
     return <SetList folder={selectedFolder} onBack={() => setSelectedFolder(null)} />;
   }
 
-  // Render using classes taken from library.html to match layout
   return (
     <div className="library-page">
       <div className="layout-content-container flex flex-col w-full max-w-[1280px] px-4 md:px-10 gap-8">
@@ -190,7 +186,6 @@ export default function Library() {
             <div className="library-grid">
               {sets
                 .filter((set) => {
-                  // Lọc các sets có folderId thuộc về folders của user hiện tại
                   if (!set.folderId) return false;
                   return folders.some((folder) => folder.id === set.folderId);
                 })
@@ -273,7 +268,6 @@ export default function Library() {
                     if (!folderName) return;
                     const token = getToken();
                     if (!token) {
-                      // local fallback: save locally and update UI
                       try {
                         const local = { id: `local-${Date.now()}`, name: folderName, sets: [] };
                         const arr = JSON.parse(localStorage.getItem('localFolders') || '[]');
@@ -289,7 +283,6 @@ export default function Library() {
                       return;
                     }
 
-                    // authenticated: call backend then reload folders
                     try {
                       await createFolder(folderName);
                       setShowCreateFolder(false);
@@ -313,7 +306,6 @@ export default function Library() {
           folders={folders}
           onCreate={async (data) => {
             try {
-              // map dialog fields to API
               const title = data.name || data.title || '';
               const description = data.description || '';
               const selectedFolder = data.folder;
@@ -350,20 +342,16 @@ export default function Library() {
                 await loadFolders();
               }
 
-              // Call backend API to create the set (requires auth)
               const created = await createSet(title, description, folderId);
 
-              // close dialog and show result modal
               setShowCreateSet(false);
               setSetResultTitle('Tạo thành công');
               setSetResultMessage('Đã tạo bộ flashcard: ' + (created.title || created.name || title));
               setSetResultIsError(false);
               setShowSetResult(true);
 
-              // Refresh visible lists - reload folders to pick up server counts
               await loadFolders();
               await loadSets();
-              // Optionally, you could navigate to the created set or open it here.
             } catch (err) {
               console.error('Error creating set:', err);
               setShowCreateSet(false);

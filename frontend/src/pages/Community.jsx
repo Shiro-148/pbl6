@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { authFetch } from '../services/auth';
 import '../styles/pages/Community.css';
 
 export default function Community() {
@@ -9,7 +8,6 @@ export default function Community() {
   const [page, setPage] = useState(0);
   const [size] = useState(9);
   const [totalPages, setTotalPages] = useState(0);
-  // totalElements removed to satisfy eslint no-unused-vars
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
@@ -20,7 +18,6 @@ export default function Community() {
       setError(null);
       try {
         const params = new URLSearchParams({ page: String(page), size: String(size), sortBy: 'id', order: 'desc' });
-        // Public endpoint: no auth required
         const res = await fetch(`${API}/api/sets/public?${params.toString()}`);
         if (res.ok) {
           const json = await res.json();
@@ -136,7 +133,7 @@ export default function Community() {
             <span className="material-symbols-outlined">chevron_left</span>
           </button>
           <span>Quay về</span>
-          {/* Page buttons: first, current-1..current+1, last */}
+          {}
           {(() => {
             const buttons = [];
             const tp = totalPages || 1;

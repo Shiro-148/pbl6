@@ -1,7 +1,5 @@
 import React from 'react';
 
-// Small, local SVG icon component for a few icons used on the home page.
-// Keeps size and color controllable via props and className.
 export default function Icon({ name, size = 24, className = '', ...props }) {
   const common = {
     width: size,

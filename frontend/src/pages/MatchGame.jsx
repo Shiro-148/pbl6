@@ -32,11 +32,10 @@ const MatchGame = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  const [startTime, setStartTime] = useState(null); // ban đầu null
+  const [startTime, setStartTime] = useState(null); 
   const [endTime, setEndTime] = useState(null);
   const [timer, setTimer] = useState(0);
 
-  // Timer effect
   useEffect(() => {
     if (!startTime || endTime) return;
     const interval = setInterval(() => {
@@ -113,20 +112,18 @@ const MatchGame = () => {
     };
   }, [setId, resetRound]);
 
-  // Handle clicks
   const handleDefClick = (defId) => {
     if (matchedIds.includes(defId)) return;
-    if (!startTime) setStartTime(Date.now()); // chỉ set khi click đầu tiên
+    if (!startTime) setStartTime(Date.now()); 
     setSelectedDefId(defId);
   };
 
   const handleTermClick = (termId) => {
     if (matchedIds.includes(termId)) return;
-    if (!startTime) setStartTime(Date.now()); // chỉ set khi click đầu tiên
+    if (!startTime) setStartTime(Date.now()); 
     setSelectedTermId(termId);
   };
 
-  // Check match
   useEffect(() => {
     if (selectedDefId && selectedTermId) {
       const isCorrect = selectedDefId === selectedTermId;
@@ -147,7 +144,6 @@ const MatchGame = () => {
     }
   }, [selectedDefId, selectedTermId, pairs.length]);
 
-  // New game
   const handleNewGame = () => {
     if (!pairs.length) return;
     setDefinitions(shuffle(pairs.map((p) => ({ id: p.id, text: p.definition }))));
@@ -155,12 +151,11 @@ const MatchGame = () => {
     setMatchedIds([]);
     setSelectedDefId(null);
     setSelectedTermId(null);
-    setStartTime(null); // reset về null
+    setStartTime(null); 
     setEndTime(null);
     setTimer(0);
   };
 
-  // Format time
   const formatTime = (sec) => {
     const m = Math.floor(sec / 60);
     const s = sec % 60;
@@ -226,7 +221,7 @@ const MatchGame = () => {
 
         {!loading && !error && pairs.length > 0 && (
           <>
-            {/* Definitions */}
+            {}
             {definitions.map((def) => {
               const isMatched = matchedIds.includes(def.id);
               const isSelected = selectedDefId === def.id;
@@ -245,7 +240,7 @@ const MatchGame = () => {
               );
             })}
 
-            {/* Terms */}
+            {}
             {terms.map((term) => {
               const isMatched = matchedIds.includes(term.id);
               const isSelected = selectedTermId === term.id;

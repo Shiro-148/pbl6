@@ -23,7 +23,6 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        // register JWT filter
         JwtAuthenticationFilter jwtFilter = new JwtAuthenticationFilter(jwtUtil, userRepository);
 
         http
@@ -34,17 +33,14 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/**", "/h2-console/**",
                                 "/api/flashcards/ai-word", "/api/flashcards/enrich")
                         .permitAll()
-                        // allow all CORS preflight
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/sets/public", "/api/sets/public/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/sets/*").permitAll()
-                        // allow starring/un-starring public sets without forcing login
                         .requestMatchers(HttpMethod.POST, "/api/sets/*/cards/*/star").permitAll()
                         .requestMatchers(HttpMethod.DELETE, "/api/sets/*/cards/*/star").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/games/**").permitAll()
                         .anyRequest().authenticated())
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                // allow H2 console frames
                 .headers(headers -> headers.frameOptions().disable());
 
         http.addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
@@ -68,7 +64,6 @@ public class SecurityConfig {
         };
     }
 
-    // inject UserRepository and JwtUtil for building filter and userDetailsService
     private final UserRepository userRepository;
     private final JwtUtil jwtUtil;
 

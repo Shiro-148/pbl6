@@ -44,7 +44,6 @@ public class AuthController {
         u.setPassword(encoder.encode(password));
         User saved = userRepo.save(u);
 
-        // optional profile fields
         String displayName = body.get("displayName");
         if ((displayName != null && !displayName.isBlank())) {
             UserProfile p = new UserProfile();
@@ -62,7 +61,6 @@ public class AuthController {
         String password = body.get("password");
         if (identifier == null || password == null)
             return ResponseEntity.badRequest().build();
-        // allow login by username or email
         User u = userRepo.findByUsername(identifier).orElseGet(() -> userRepo.findByEmail(identifier).orElse(null));
         if (u != null) {
             if (encoder.matches(password, u.getPassword())) {

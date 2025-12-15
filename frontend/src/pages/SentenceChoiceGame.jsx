@@ -8,7 +8,6 @@ import '../styles/pages/MultipleChoice.css';
 
 const API = import.meta.env.VITE_API_BASE || 'http://localhost:8080';
 
-// initial set of words (replace with real card data when available)
 const initialWords = ['run', 'eat', 'read'];
 
 const SentenceChoiceGame = () => {
@@ -43,7 +42,6 @@ const SentenceChoiceGame = () => {
           }
           data = await res.json();
         } else {
-          // fallback to model service with demo words
           const MODEL_SERVICE = import.meta.env.VITE_MODEL_SERVICE_BASE || 'http://localhost:5000';
           const res = await fetch(`${MODEL_SERVICE}/generate-sentences`, {
             method: 'POST',

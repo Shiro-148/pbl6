@@ -25,7 +25,6 @@ public class FolderController {
 
     @GetMapping
     public List<Folder> list() {
-        // Get current authenticated user and return only their folders
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth == null || !auth.isAuthenticated() || auth.getName() == null
                 || "anonymousUser".equals(auth.getName())) {
@@ -39,7 +38,6 @@ public class FolderController {
 
     @PostMapping
     public ResponseEntity<Folder> create(@RequestBody Folder f) {
-        // Always assign folder to authenticated user
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth == null || !auth.isAuthenticated() || auth.getName() == null
                 || "anonymousUser".equals(auth.getName())) {

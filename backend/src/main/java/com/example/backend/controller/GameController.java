@@ -44,7 +44,6 @@ public class GameController {
             String cached = c.getMcqOptions();
             if (cached != null && !cached.isBlank()) {
                 List<String> options = parseOptionsJson(cached);
-                // ensure correct included, shuffle
                 if (options.stream().noneMatch(o -> o.equalsIgnoreCase(correct))) {
                     options.add(correct);
                 }
@@ -65,10 +64,8 @@ public class GameController {
                     List<String> opts = (List<String>) q.getOrDefault("options", List.of());
                     Flashcard card = byTerm.get(term);
                     if (card != null && opts != null && !opts.isEmpty()) {
-                        // store cached options as JSON array
                         card.setMcqOptions(toJsonArray(opts));
                         flashcardRepository.save(card);
-                        // ensure correct included and shuffle
                         if (opts.stream().noneMatch(o -> o.equalsIgnoreCase(correct))) {
                             opts.add(correct);
                         }
@@ -77,7 +74,6 @@ public class GameController {
                     }
                 }
             } catch (Exception ex) {
-                // If model service fails, return what we have
             }
         }
 
@@ -110,7 +106,7 @@ public class GameController {
                 List<String> sentences = parseOptionsJson(cached);
                 if (sentences.size() > nOptions)
                     sentences = sentences.subList(0, nOptions);
-                int correctIdx = 0; // assume first generated is correct by convention
+                int correctIdx = 0; 
                 questions.add(Map.of("word", word, "sentences", sentences, "correct_index", correctIdx));
             } else {
                 toGenerate.add(Map.of("word", word));
@@ -135,7 +131,6 @@ public class GameController {
                     }
                 }
             } catch (Exception ex) {
-                // ignore and return what we have
             }
         }
 
@@ -144,11 +139,9 @@ public class GameController {
 
     private List<String> parseOptionsJson(String json) {
         try {
-            // Very simple parser: split by \n or comma if not valid JSON array
             if (json.trim().startsWith("[")) {
-                // naive parse without external libs
                 String s = json.trim();
-                s = s.substring(1, s.length() - 1); // remove [ ]
+                s = s.substring(1, s.length() - 1); 
                 String[] parts = s.split(",");
                 List<String> list = new ArrayList<>();
                 for (String p : parts) {
@@ -161,7 +154,6 @@ public class GameController {
                 }
                 return list;
             }
-            // fallback: split lines
             return Arrays.stream(json.split("\n")).map(String::trim).filter(s -> !s.isBlank())
                     .collect(Collectors.toList());
         } catch (Exception e) {
@@ -192,7 +184,6 @@ public class GameController {
     }
 
     private List<String> shuffleWithCorrect(String correct, List<String> options, int nDistractors) {
-        // Keep exactly nDistractors + 1 options including correct
         List<String> pool = new ArrayList<>();
         pool.add(correct);
         for (String o : options) {
@@ -222,7 +213,6 @@ public class GameController {
             int status = conn.getResponseCode();
             if (status >= 200 && status < 300) {
                 String resp = new String(conn.getInputStream().readAllBytes(), java.nio.charset.StandardCharsets.UTF_8);
-                // Crude parsing: look for "questions": [ ... ] and split
                 var mapper = new com.fasterxml.jackson.databind.ObjectMapper();
                 Map<String, Object> root = mapper.readValue(resp, Map.class);
                 Object qs = root.get("questions");
@@ -231,7 +221,6 @@ public class GameController {
                 }
             }
         } catch (Exception e) {
-            // ignored: return empty list
         }
         return List.of();
     }

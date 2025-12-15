@@ -161,7 +161,6 @@ const CreateFlashcard = () => {
       const setId = setRes.id || setRes['id'];
       setCreateProgress({ total: toCreate.length, done: 0 });
 
-      // create cards in parallel
       await Promise.all(
         toCreate.map(async (c) => {
           await flashcardsService.createCard(setId, c.term, c.definition || '');
@@ -186,7 +185,6 @@ const CreateFlashcard = () => {
       setMessage('');
       const res = await flashcardsService.enrichWords(sel);
       const list = res.flashcards || res.entries || res;
-      // map definitions back to cards
       const updated = cards.map((c) => {
         const found = list && list.find((x) => (x.word || x.term || '').toLowerCase() === (c.term || '').toLowerCase());
         if (found) return { ...c, definition: c.definition || found.definition || (found.examples && found.examples[0]) || '' };
@@ -214,7 +212,7 @@ const CreateFlashcard = () => {
           <div className="modal-overlay">
             <div className="modal-box">
               <h3>Chọn cấp độ để hiển thị từ</h3>
-              {/* Small summary: total tokens and breakdown by easy/medium/hard */}
+              {}
               {classifyResults && Array.isArray(classifyResults.classify) && (() => {
                 const arr = classifyResults.classify;
                 const total = arr.length;
@@ -284,9 +282,6 @@ const CreateFlashcard = () => {
             onResult={(data) => {
               console.debug('UploadPDF onResult data:', data);
               if (!data) return;
-
-              // Normalize/classify detection: backend might return { classify: { words: [...] } }
-              // or sometimes { classify: [...] } depending on proxying. Handle both.
               let classify = null;
               if (data.classify) {
                 if (Array.isArray(data.classify)) {
@@ -294,7 +289,6 @@ const CreateFlashcard = () => {
                 } else if (Array.isArray(data.classify.words)) {
                   classify = data.classify.words;
                 } else if (Array.isArray(data.classify.words?.words)) {
-                  // defensive: nested shape
                   classify = data.classify.words.words;
                 }
               }
@@ -303,9 +297,7 @@ const CreateFlashcard = () => {
 
               if (classify && classify.length) {
                 console.debug('Detected classify words from PDF upload:', classify.length);
-                // store classify results and require user to choose level(s) first
                 setClassifyResults({ classify, flash });
-                // reset previous selection
                 setSelectedLevels([]);
                 setShowLevelDialog(true);
                 return;
@@ -313,7 +305,6 @@ const CreateFlashcard = () => {
                 console.debug('No classify words found in upload result');
               }
 
-              // fallback: if flashcards entries present, use them
               if (flash && flash.length) {
                 const imported = flash.map((f) => ({ term: f.word || f.term || '', definition: f.definition || '', image: '', selected: true }));
                 setCards(imported);
@@ -321,7 +312,6 @@ const CreateFlashcard = () => {
                 return;
               }
 
-              // final fallback: parse raw text into tokens
               if (data.rawText) {
                 const words = parseWordsFromText(data.rawText, 200);
                 if (words.length) {

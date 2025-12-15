@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import '../styles/pages/SetList.css';
 import { listSets, deleteSet, updateSet } from '../services/flashcards';
 
-// Removed static sample data - now only using real data from API
 
 const ShareDialog = ({ open, onClose, shareUrl }) => {
   const [copied, setCopied] = useState(false);
@@ -61,19 +60,13 @@ const DeleteDialog = ({ open, setName, onConfirm, onCancel }) => {
 
 const SetList = ({ folder, onBack }) => {
   const navigate = useNavigate();
-
-  // State cho sets từ API
   const [sets, setSets] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-
-  // State cho privacy từng set
-  const defaultPrivacy = 'private'; // 'private' | 'public' 
+  const defaultPrivacy = 'private';
   const [privacyStates, setPrivacyStates] = useState([]);
 
   const [privacyMenuIdx, setPrivacyMenuIdx] = useState(null);
-
-  // Load sets từ API khi component mount
   useEffect(() => {
     const loadSets = async () => {
       try {
@@ -82,21 +75,19 @@ const SetList = ({ folder, onBack }) => {
         
         console.log('Loading sets for folder:', folder);
         
-        // Sử dụng folder.id để lấy sets từ API
         const folderId = folder?.id ? parseInt(folder.id) : null;
         console.log('Folder ID for filtering:', folderId);
         
         const setsData = await listSets(folderId);
         console.log('Sets data received:', setsData);
         
-        // Convert backend data to frontend format
         const formattedSets = setsData.map(set => ({
           id: set.id,
           name: set.title || 'Untitled',
           desc: set.description || 'Không có mô tả',
-          lang: 'Tiếng Việt → Tiếng Việt', // Default language
+          lang: 'Tiếng Việt → Tiếng Việt', 
           used: false,
-          count: set.cardCount || 0, // Backend should provide this
+          count: set.cardCount || 0, 
           access: set.access === 'public' ? 'public' : 'private',
           folderId: set.folderId
         }));
@@ -106,7 +97,6 @@ const SetList = ({ folder, onBack }) => {
       } catch (err) {
         console.error('Error loading sets:', err);
         setError('Không thể tải danh sách sets');
-        // Không fallback to sample data nữa - chỉ hiển thị error
         setSets([]);
         setPrivacyStates([]);
       } finally {
@@ -138,7 +128,6 @@ const SetList = ({ folder, onBack }) => {
       await deleteSet(deleteSetId);
       console.log('Set deleted successfully');
       
-      // Cập nhật UI bằng cách loại bỏ set đã xóa
       const setIndex = sets.findIndex(set => set.id === deleteSetId);
       setSets(sets.filter(set => set.id !== deleteSetId));
       if (setIndex !== -1) {
@@ -207,13 +196,11 @@ const SetList = ({ folder, onBack }) => {
         folderId: setItem.folderId || folder?.id,
       });
     } catch (err) {
-      // rollback on failure
       setPrivacyStates((states) => states.map((v, i) => (i === idx ? prev : v)));
       alert('Không thể cập nhật quyền truy cập: ' + (err?.message || err));
     }
   };
 
-  // Đóng menu khi click ngoài
   useEffect(() => {
     if (privacyMenuIdx === null) return;
     const handle = (e) => {
@@ -272,7 +259,7 @@ const SetList = ({ folder, onBack }) => {
                 <i className="bx bx-book-open"></i>
               </span>
               <div className="set-card-option" style={{ gap: 0, position: 'relative' }}>
-                {/* Nút privacy */}
+                {}
                 <button
                   className={['set-card-privacy-btn', privacyStates[idx] === 'private' ? 'private' : 'public'].join(
                     ' ',
@@ -289,7 +276,7 @@ const SetList = ({ folder, onBack }) => {
                     }
                   ></i>
                 </button>
-                {/* Menu chọn privacy */}
+                {}
                 {privacyMenuIdx === idx && (
                   <div className="set-card-privacy-menu" style={{ left: 0, top: 40 }}>
                     <button className="set-card-privacy-menu-item" onClick={() => handlePrivacyChange(idx, 'private')}>

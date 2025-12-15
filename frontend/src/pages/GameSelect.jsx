@@ -77,7 +77,6 @@ const GameSelect = () => {
                 if (setId) qs.set('setId', setId);
                 navigate(`/games/match?${qs.toString()}`);
               } else if (g.key === 'multiple') {
-                // Nếu có setId, đi thẳng vào Multiple Choice với setId
                 if (setId) {
                   navigate(`/games/multiple/${setId}`);
                 } else {

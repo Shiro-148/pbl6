@@ -39,7 +39,7 @@ const Register = () => {
   return (
     <div className="login-bg login-bg-img">
       <div className="login-layout">
-        <div className="login-illustration">{/* illustration ẩn */}</div>
+        <div className="login-illustration">{}</div>
         <div className="login-form-glass">
           <h2>Đăng ký</h2>
           <p className="login-welcome">Tạo tài khoản để bắt đầu học!</p>

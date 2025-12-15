@@ -47,7 +47,6 @@ public class SetController {
 
     @GetMapping
     public List<SetDto> list(@RequestParam(required = false) Long folderId) {
-        // Lấy user hiện tại từ JWT
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         String username = auth.getName();
         User currentUser = userRepository.findByUsername(username)
@@ -55,18 +54,15 @@ public class SetController {
 
         List<FlashcardSet> sets;
         if (folderId != null) {
-            // Kiểm tra folder có thuộc về user hiện tại không
             Folder folder = folderService.findById(folderId);
             if (folder == null || !folder.getUser().getId().equals(currentUser.getId())) {
                 throw new ResourceNotFoundException("Folder not found or access denied: " + folderId);
             }
             sets = service.findByFolderId(folderId);
         } else {
-            // Lấy tất cả folders của user
             List<Folder> userFolders = folderService.findByUser(currentUser);
             List<Long> folderIds = userFolders.stream().map(Folder::getId).collect(Collectors.toList());
 
-            // Lấy tất cả sets thuộc các folders của user
             sets = service.findAll().stream()
                     .filter(set -> set.getFolder() != null && folderIds.contains(set.getFolder().getId()))
                     .collect(Collectors.toList());
@@ -81,7 +77,6 @@ public class SetController {
             @RequestParam(defaultValue = "createdAt") String sortBy,
             @RequestParam(defaultValue = "desc") String order) {
         Sort sort = Sort.unsorted();
-        // Try to sort by createdAt or id if available; fallback to id
         if ("desc".equalsIgnoreCase(order)) {
             sort = Sort.by(sortBy != null && !sortBy.isBlank() ? sortBy : "id").descending();
         } else {
@@ -108,7 +103,6 @@ public class SetController {
             set.setAccess(req.getAccess());
         }
         if (req.getFolderId() != null) {
-            // avoid direct repo access here; lazy assign a Folder with id to reference
             Folder folder = new Folder();
             folder.setId(req.getFolderId());
             set.setFolder(folder);
@@ -159,7 +153,6 @@ public class SetController {
         if (s.getFolder() != null)
             d.setFolderId(s.getFolder().getId());
 
-        // Owner info: resolve from folder's user and user profile
         if (s.getFolder() != null && s.getFolder().getUser() != null) {
             var owner = s.getFolder().getUser();
             d.setOwnerUsername(owner.getUsername());
@@ -170,11 +163,9 @@ public class SetController {
             }
         }
 
-        // Count cards using repository to avoid lazy loading issues
         long cardCount = flashcardRepository.countBySetId(s.getId());
         d.setCardCount((int) cardCount);
 
-        // Always load cards via repository to ensure data is returned
         List<Flashcard> cards = flashcardRepository.findBySetId(s.getId());
         if (cards != null && !cards.isEmpty()) {
             d.setCards(cards.stream().map(this::cardToDto).toList());

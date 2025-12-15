@@ -29,10 +29,8 @@ const CommunitySet = () => {
   const [addError, setAddError] = useState('');
   const [newFolderName, setNewFolderName] = useState('');
   const NEW_FOLDER_VALUE = '__create_new__';
-  // removed unused setKey
 
   useEffect(() => {
-    // fetch set details from backend by id
     const API = import.meta.env.VITE_API_BASE || 'http://localhost:8080';
     if (!id) {
       setSetData({ title: 'Không có tiêu đề', author: 'Cộng đồng' });
@@ -60,7 +58,6 @@ const CommunitySet = () => {
         setTerms(mapped);
       } catch (e) {
         setError(e.message || String(e));
-        // keep empty data on error
         setSetData((prev) => prev || { title: 'Không có tiêu đề', author: 'Cộng đồng' });
         setTerms([]);
       } finally {
@@ -68,7 +65,6 @@ const CommunitySet = () => {
       }
     })();
   }, [id]);
-  // Load starred card IDs from backend
   useEffect(() => {
     const API = import.meta.env.VITE_API_BASE || 'http://localhost:8080';
     if (!id) { setStarredForSet([]); return; }
@@ -103,7 +99,6 @@ const CommunitySet = () => {
     })();
   }, []);
 
-  // keep fullscreen state in sync when user presses ESC or exits externally
   useEffect(() => {
     const handler = () => setIsFullscreen(!!document.fullscreenElement);
     document.addEventListener('fullscreenchange', handler);
@@ -148,7 +143,6 @@ const CommunitySet = () => {
       .sort((a, b) => a.r - b.r)
       .map(({ t }) => t);
     if (showOnlyStarred) {
-      // keep full list; only reshuffle view ordering by resetting index
       setCurrentIndex(0);
     } else {
       setTerms(shuffled);
@@ -165,8 +159,8 @@ const CommunitySet = () => {
         await cardRef.current.requestFullscreen();
       }
     } catch {
-      // ignore fullscreen errors (blocked by browser/user gesture)
-    }
+      // ignore
+      }
   };
 
   const toggleStarCurrent = async () => {
@@ -233,7 +227,6 @@ const CommunitySet = () => {
           onClick={() => {
             const title = (setData?.title || 'Flashcard');
             const params = new URLSearchParams({ set: title, setId: String(id || '') });
-            // Vào thẳng Match Game với setId hiện tại
             navigate(`/games/match?${params.toString()}`);
           }}
         >
@@ -453,7 +446,6 @@ const CommunitySet = () => {
                       }
                       const createdFolder = await createFolder(name);
                       folderId = createdFolder?.id;
-                      // refresh folder list to include the new one
                       try {
                         const fs = await listFolders();
                         setFolders(fs || []);
@@ -471,7 +463,6 @@ const CommunitySet = () => {
                           await createCard(newSetId, { word: t.term || '', definition: t.def || '' });
                           copied++;
                         } catch (cardErr) {
-                          // continue copying even if some cards fail
                           console.warn('copy card failed', cardErr);
                         }
                       }
