@@ -121,12 +121,69 @@ def predict_words(words: Iterable[str]):
     return results
 
 
+def is_valid_word(token: str) -> bool:
+    """Check if token is a valid English word."""
+    # Valid short words (common English words with 1-2 letters)
+    valid_short_words = {
+        'a', 'i', 'am', 'an', 'as', 'at', 'be', 'by', 'do', 'go',
+        'he', 'if', 'in', 'is', 'it', 'me', 'my', 'no', 'of', 'on',
+        'or', 'so', 'to', 'up', 'us', 'we'
+    }
+    
+    # Roman numerals and meaningless patterns to exclude
+    invalid_patterns = {
+        'ii', 'iii', 'iv', 'vi', 'vii', 'viii', 'ix', 'xi', 'xii',
+        'xiii', 'xiv', 'xv', 'aa', 'bb', 'cc', 'dd', 'ee', 'ff', 'gg',
+        'hh', 'jj', 'kk', 'll', 'mm', 'nn', 'oo', 'pp', 'qq', 'rr',
+        'ss', 'tt', 'uu', 'vv', 'ww', 'xx', 'yy', 'zz'
+    }
+    
+    # Must be at least 1 character
+    if len(token) < 1:
+        return False
+    
+    # Numbers only - exclude
+    if token.isdigit():
+        return False
+    
+    # Single letter - only allow if in valid list
+    if len(token) == 1:
+        return token in valid_short_words
+    
+    # Two letters - check against invalid patterns and valid short words
+    if len(token) == 2:
+        if token in invalid_patterns:
+            return False
+        # Allow if it's a known valid short word or has vowels
+        if token in valid_short_words:
+            return True
+        # Exclude if it's just repeated consonants or has no vowels
+        if token[0] == token[1]:  # Repeated letter like "aa", "bb"
+            return False
+        vowels = set('aeiouy')
+        if not any(c in vowels for c in token):  # No vowels like "bc", "df"
+            return False
+    
+    # Three+ letters - check against invalid patterns
+    if token in invalid_patterns:
+        return False
+    
+    # Must contain at least one vowel for words 3+ chars
+    if len(token) >= 3:
+        vowels = set('aeiou')
+        if not any(c in vowels for c in token):
+            return False
+    
+    return True
+
+
 def extract_tokens(text: str, limit: int = 200) -> List[str]:
     raw = (text or "").lower()
     tokens = re.sub(r"[^a-zÀ-ỹ0-9\s]", " ", raw).split()
     uniq, seen = [], set()
     for token in tokens:
-        if len(token) < 2 or token in seen:
+        # Skip if already seen or invalid
+        if token in seen or not is_valid_word(token):
             continue
         seen.add(token)
         uniq.append(token)
