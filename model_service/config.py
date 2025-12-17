@@ -8,9 +8,13 @@ from dotenv import load_dotenv
 load_dotenv()
 
 APP_DIR = os.path.dirname(__file__)
-MODEL_FILE = os.path.join(APP_DIR, "word_difficulty_hybrid_fasttext.h5")
+# New BiLSTM model files
+MODEL_FILE = os.path.join(APP_DIR, "word_difficulty_bilstm.h5")
 VOCAB_FILE = os.path.join(APP_DIR, "char_vocab.pkl")
-FASTTEXT_FILE = os.path.join(APP_DIR, "cc.en.300.bin")
+WORD_TOKENIZER_FILE = os.path.join(APP_DIR, "word_tokenizer.pkl")
+SCALER_FILE = os.path.join(APP_DIR, "scaler.pkl")
+THRESHOLDS_FILE = os.path.join(APP_DIR, "thresholds.pkl")
+WORD_DIFFICULTY_CSV = os.path.join(APP_DIR, "WordDifficulty.csv")
 CLASS_MAP = {0: "easy", 1: "medium", 2: "hard"}
 MAXLEN = 21
 
