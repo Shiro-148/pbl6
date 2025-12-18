@@ -129,7 +129,7 @@ export default function UploadModal({
         <div
           aria-labelledby="modal-title"
           aria-modal="true"
-          className="w-full max-w-lg mx-auto flex flex-col bg-white rounded-xl shadow-2xl"
+          className="w-full max-w-7xl mx-auto max-h-[95vh] overflow-hidden flex flex-col bg-white rounded-xl shadow-2xl"
           role="dialog"
           onClick={(e) => e.stopPropagation()}
         >
@@ -149,14 +149,14 @@ export default function UploadModal({
             </button>
           </div>
 
-          <div className="flex-1 px-4 md:px-6 py-6">
+          <div className="flex-1 px-4 md:px-6 py-4 overflow-auto">
             <div className="flex flex-col gap-4">
               {uploadEntries && uploadEntries.length > 0 && (
                 <div className="mt-4 border rounded p-3 bg-white">
                   <h4 className="font-medium mb-2">Từ được nhận dạng (chỉnh sửa trước khi lưu)</h4>
-                  <div className="space-y-3 max-h-60 overflow-auto">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3 max-h-[45vh] overflow-auto">
                     {uploadEntries.map((entry, idx) => (
-                      <div key={idx} className="grid grid-cols-1 sm:grid-cols-2 gap-3 items-start">
+                      <div key={idx} className="rounded-lg border p-3 bg-white flex flex-col gap-2">
                         <div>
                           <label className="text-sm text-gray-600 pb-1">Mặt trước</label>
                           <input
@@ -181,23 +181,20 @@ export default function UploadModal({
                             placeholder="Mặt sau"
                           />
                         </div>
-
-                        <div className="col-span-1 sm:col-span-2">
+                        <div>
                           <label className="text-sm text-gray-600 pb-1">Ví dụ (tùy chọn)</label>
-                          <div className="flex items-start gap-2">
-                            <textarea
-                              value={entry.example || ''}
-                              onChange={(e) => {
-                                const v = e.target.value;
-                                setUploadEntries((prev) => prev.map((it, i) => (i === idx ? { ...it, example: v } : it)));
-                              }}
-                              className="form-input rounded-lg p-2 border w-full min-h-[80px]"
-                              placeholder="Thêm câu ví dụ..."
-                            />
-                          </div>
-                          <div className="flex flex-col justify-start">
+                          <textarea
+                            value={entry.example || ''}
+                            onChange={(e) => {
+                              const v = e.target.value;
+                              setUploadEntries((prev) => prev.map((it, i) => (i === idx ? { ...it, example: v } : it)));
+                            }}
+                            className="form-input rounded-lg p-2 border w-full min-h-[56px]"
+                            placeholder="Thêm câu ví dụ..."
+                          />
+                          <div className="flex justify-end">
                             <button
-                              className="text-sm text-red-600 mt-1 text-right"
+                              className="text-sm text-red-600 mt-1"
                               onClick={() => setUploadEntries((prev) => prev.filter((_, i) => i !== idx))}
                             >
                               Xóa

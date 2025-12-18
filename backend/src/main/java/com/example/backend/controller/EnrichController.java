@@ -1,5 +1,6 @@
 package com.example.backend.controller;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -17,6 +18,11 @@ import java.util.Map;
 @RequestMapping("/api/flashcards")
 public class EnrichController {
 
+    private final RestTemplate rest = new RestTemplate();
+
+    @Value("${model.service.base-url:http://localhost:5000}")
+    private String modelServiceBaseUrl;
+
     @PostMapping("/enrich")
     public ResponseEntity<?> enrich(@RequestBody Map<String, Object> body) {
         try {
@@ -25,7 +31,6 @@ public class EnrichController {
                 text = (String) body.get("text");
             else if (body.containsKey("words")) {
                 Object w = body.get("words");
-                // naive join if array of strings
                 if (w instanceof java.util.List) {
                     StringBuilder sb = new StringBuilder();
                     for (Object o : (java.util.List<?>) w) {
@@ -38,8 +43,7 @@ public class EnrichController {
             if (text == null)
                 return ResponseEntity.badRequest().body(Map.of("error", "Provide 'text' or 'words'"));
 
-            RestTemplate rest = new RestTemplate();
-            String url = "http://localhost:5000/flashcards";
+            String url = modelServiceBaseUrl + "/flashcards";
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
             Map<String, String> req = new HashMap<>();
