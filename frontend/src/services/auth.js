@@ -1,5 +1,4 @@
-// Use VITE_API_BASE if provided, otherwise default to localhost backend for dev
-const API = import.meta.env.VITE_API_BASE || 'http://localhost:8080';
+const API = import.meta.env.VITE_API_BASE || 'https://pbl6-k1wm.onrender.com';
 
 export async function login(username, password) {
   const res = await fetch(`${API}/api/auth/login`, {
@@ -35,7 +34,6 @@ export async function register(username, password, email, displayName) {
     body: JSON.stringify(body),
   });
   if (!res.ok) {
-    // try to read response body for a useful error message
     let text = 'Registration failed';
     try {
       text = await res.text();
@@ -43,9 +41,7 @@ export async function register(username, password, email, displayName) {
     } catch {
       // ignore
     }
-    // include HTTP status for debugging
     const message = `${res.status} ${text}`;
-    // log to console for dev
     console.error('Registration error:', res.status, text);
     throw new Error(message);
   }
@@ -66,7 +62,7 @@ export function saveToken(token) {
   try {
     window.dispatchEvent(new Event('auth-token-change'));
   } catch {
-    // ignore dispatch errors in non-browser contexts
+    // ignore
   }
 }
 
@@ -91,7 +87,7 @@ export function isTokenExpired() {
   const token = getToken();
   if (!token) return true;
   const payload = parseJwt(token);
-  if (!payload || typeof payload.exp !== 'number') return false; // không có exp thì tạm coi là chưa hết hạn
+  if (!payload || typeof payload.exp !== 'number') return false; 
   const nowSec = Math.floor(Date.now() / 1000);
   return payload.exp <= nowSec;
 }
@@ -100,20 +96,23 @@ export function logout() {
   localStorage.removeItem('jwt');
   try {
     window.dispatchEvent(new Event('auth-token-change'));
-  } catch {}
+  } catch {
+    // ignore
+  }
 }
 
 export function authFetch(url, opts = {}) {
-  // Nếu token hết hạn, đăng xuất trước khi gọi
   if (isTokenExpired()) {
     logout();
   }
   const token = getToken();
   const headers = opts.headers || {};
   if (token) headers['Authorization'] = `Bearer ${token}`;
-  return fetch(url, { ...opts, headers }).then(async (res) => {
+
+  const fullUrl = url.startsWith('http') ? url : `${API}${url.startsWith('/') ? '' : '/'}${url}`;
+
+  return fetch(fullUrl, { ...opts, headers }).then(async (res) => {
     if (res.status === 401 || res.status === 403) {
-      // Nếu server báo không hợp lệ/quyền hạn, đăng xuất để buộc phiên mới
       logout();
     }
     return res;
