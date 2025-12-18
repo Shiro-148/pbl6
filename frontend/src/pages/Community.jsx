@@ -11,7 +11,6 @@ export default function Community() {
   const [totalPages, setTotalPages] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [searchTerm, setSearchTerm] = useState('');
   const [isSearching, setIsSearching] = useState(false);
 
   const searchParam = new URLSearchParams(location.search).get('search') || '';
@@ -60,7 +59,6 @@ export default function Community() {
   const runSearch = async (term) => {
     const API = import.meta.env.VITE_API_BASE || 'http://localhost:8080';
     const normalizedTerm = term.trim().toLowerCase();
-    setSearchTerm(term);
     if (!normalizedTerm) {
       setIsSearching(false);
       setPage(0);
@@ -109,11 +107,9 @@ export default function Community() {
     const paramTerm = searchParam || '';
     if (!paramTerm) {
       setIsSearching(false);
-      setSearchTerm('');
       return;
     }
     runSearch(paramTerm);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParam]);
   return (
     <div className="community-page">

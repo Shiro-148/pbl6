@@ -1,0 +1,52 @@
+services:
+  backend:
+    build:
+      context: ./backend
+    container_name: pbl6-backend
+    ports:
+      - "8080:8080"
+    environment:
+      # Configure your database connection (use external DB or add a db service)
+      - SPRING_DATASOURCE_URL=${SPRING_DATASOURCE_URL:-jdbc:mysql://host.docker.internal:3306/pbl6?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC}
+      - SPRING_DATASOURCE_USERNAME=${SPRING_DATASOURCE_USERNAME:-root}
+      - SPRING_DATASOURCE_PASSWORD=${SPRING_DATASOURCE_PASSWORD:-password}
+      - JAVA_OPTS=${JAVA_OPTS:--Xms256m -Xmx512m}
+    # depends_on:
+    #   - db
+
+  model_service:
+    build:
+      context: ./model_service
+    container_name: pbl6-model-service
+    ports:
+      - "5000:5000"
+    environment:
+      - GEMINI_API_KEY=${GEMINI_API_KEY:-}
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        # This is the API base that Vite will bake into the built app
+        VITE_API_BASE: ${VITE_API_BASE:-http://backend:8080}
+    container_name: pbl6-frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+
+# Optional MySQL example (disabled). Uncomment and adjust to use
+#  db:
+#    image: mysql:8
+#    container_name: pbl6-mysql
+#    restart: unless-stopped
+#    environment:
+#      MYSQL_ROOT_PASSWORD: password
+#      MYSQL_DATABASE: pbl6
+#    ports:
+#      - "3306:3306"
+#    volumes:
+#      - db_data:/var/lib/mysql
+
+#volumes:
+#  db_data:

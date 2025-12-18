@@ -1,0 +1,6 @@
+.git
+.vscode
+.gradle
+build
+**/*.iml
+src/test
