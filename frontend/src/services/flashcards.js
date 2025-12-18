@@ -1,16 +1,13 @@
 import { authFetch } from './auth';
 import { joinExamples } from '../utils/examples';
 
-// Use VITE_API_BASE if provided, otherwise default to localhost backend for dev
-const API = import.meta.env.VITE_API_BASE || 'http://localhost:8080';
+const API = import.meta.env.VITE_API_BASE || 'https://pbl6-k1wm.onrender.com';
 
 export async function listSets(folderId = null) {
   const url = folderId ? `${API}/api/sets?folderId=${folderId}` : `${API}/api/sets`;
-  console.log('Fetching sets from URL:', url);
   const res = await authFetch(url);
   if (!res.ok) throw new Error(`Failed to list sets: ${res.status}`);
   const data = await res.json();
-  console.log('Raw sets data from API:', data);
   return data;
 }
 
@@ -64,7 +61,6 @@ export async function enrichWords(textOrWords) {
   const body = typeof textOrWords === 'string' ? { text: textOrWords } : { words: textOrWords };
   const backendUrl = `${API}/api/flashcards/enrich`;
 
-  // Try backend first (with auth) so deployments that enforce security keep working
   try {
     const res = await authFetch(backendUrl, {
       method: 'POST',
@@ -75,20 +71,17 @@ export async function enrichWords(textOrWords) {
 
     const txt = await res.text().catch(() => res.statusText);
     const status = res.status;
-    // For auth errors fall back to model_service, else throw immediately
-    if (status !== 401 && status !== 403) {
-      throw new Error(`${status} ${txt}`);
+    if (status === 401 || status === 403) {
+       throw new Error(`${status} ${txt}`);
     }
-    console.warn(`enrichWords: backend responded ${status}, trying model_service fallback`);
+    console.warn(`enrichWords: Backend Render lỗi ${status}, thử fallback...`);
   } catch (err) {
-    // Only log here; we'll attempt fallback below
-    console.warn('enrichWords: backend call failed, trying model_service fallback', err);
+    console.warn('enrichWords: Backend Render thất bại, thử fallback model local', err);
   }
 
-  // Fallback: call model_service directly (dev helper)
   const MODEL_BASE = import.meta.env.VITE_MODEL_SERVICE_BASE || 'http://localhost:5000';
   const modelUrl = `${MODEL_BASE}/flashcards`;
-  // model_service expects raw text, so collapse words list into a string if needed
+  
   const fallbackPayload = (() => {
     if (body.text) return { text: body.text };
     if (Array.isArray(body.words)) return { text: body.words.filter(Boolean).join(' ') };
@@ -102,7 +95,7 @@ export async function enrichWords(textOrWords) {
   });
   if (!resp.ok) {
     const txt = await resp.text().catch(() => resp.statusText);
-    throw new Error(`Model service failed (${resp.status} ${txt}) after backend fallback`);
+    throw new Error(`Model service failed (${resp.status} ${txt})`);
   }
   return resp.json();
 }
@@ -191,12 +184,12 @@ export async function generateWordInfo(word) {
 
     const txt = await res.text().catch(() => res.statusText);
     const { status } = res;
-    if (status !== 401 && status !== 403) {
+    if (status === 401 || status === 403) {
       throw new Error(txt || `Backend trả về ${status}`);
     }
-    console.warn('generateWordInfo: backend auth error, thử gọi trực tiếp model_service');
+    console.warn('generateWordInfo: Backend Render lỗi, thử fallback...');
   } catch (err) {
-    console.warn('generateWordInfo: backend call failed, fallback model_service', err);
+    console.warn('generateWordInfo: Backend call failed, fallback model_service', err);
   }
 
   const MODEL_BASE = import.meta.env.VITE_MODEL_SERVICE_BASE || 'http://localhost:5000';

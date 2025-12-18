@@ -1,7 +1,5 @@
 import { authFetch } from './auth';
-
-// Use VITE_API_BASE if provided, otherwise default to localhost backend for dev
-const API = import.meta.env.VITE_API_BASE || 'http://localhost:8080';
+const API = import.meta.env.VITE_API_BASE || 'https://pbl6-k1wm.onrender.com';
 
 export async function listFolders() {
   const res = await authFetch(`${API}/api/folders`);
