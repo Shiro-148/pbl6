@@ -79,7 +79,7 @@ export default function FlashcardSetDetail() {
       const text = String(data.rawText || '');
 
       try {
-        const MODEL_BASE = import.meta.env.VITE_MODEL_SERVICE_BASE || 'http://localhost:5000';
+        const MODEL_BASE = import.meta.env.VITE_MODEL_SERVICE_BASE || (import.meta.env.DEV ? 'http://localhost:5000' : 'https://shiro1148-pbl6.hf.space');
         const resp = await fetch(`${MODEL_BASE}/classify`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },

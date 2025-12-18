@@ -6,7 +6,7 @@ import GameResult from '../components/GameResult';
 import '../styles/pages/MatchGame.css';
 import '../styles/pages/MultipleChoice.css';
 
-const API = import.meta.env.VITE_API_BASE || 'http://localhost:8080';
+import { authFetch } from '../services/auth';
 
 const initialWords = ['run', 'eat', 'read'];
 
@@ -34,7 +34,7 @@ const SentenceChoiceGame = () => {
         let data;
         if (setId) {
           const params = new URLSearchParams({ setId: String(setId), optionsCount: '4' });
-          const res = await fetch(`${API}/api/games/sentence-choice?${params.toString()}`, { signal: controller.signal });
+          const res = await authFetch(`/api/games/sentence-choice?${params.toString()}`, { signal: controller.signal });
           if (!mounted) return;
           if (!res.ok) {
             const t = await res.text().catch(() => res.statusText || 'Error');
@@ -42,7 +42,7 @@ const SentenceChoiceGame = () => {
           }
           data = await res.json();
         } else {
-          const MODEL_SERVICE = import.meta.env.VITE_MODEL_SERVICE_BASE || 'http://localhost:5000';
+          const MODEL_SERVICE = import.meta.env.VITE_MODEL_SERVICE_BASE || (import.meta.env.DEV ? 'http://localhost:5000' : 'https://shiro1148-pbl6.hf.space');
           const res = await fetch(`${MODEL_SERVICE}/generate-sentences`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -116,14 +116,14 @@ const SentenceChoiceGame = () => {
       let data;
       if (setId) {
         const params = new URLSearchParams({ setId: String(setId), optionsCount: '4' });
-        const res = await fetch(`${API}/api/games/sentence-choice?${params.toString()}`);
+        const res = await authFetch(`/api/games/sentence-choice?${params.toString()}`);
         if (!res.ok) {
           const t = await res.text().catch(() => res.statusText || 'Error');
           throw new Error(`${res.status} ${t}`);
         }
         data = await res.json();
       } else {
-        const MODEL_SERVICE = import.meta.env.VITE_MODEL_SERVICE_BASE || 'http://localhost:5000';
+        const MODEL_SERVICE = import.meta.env.VITE_MODEL_SERVICE_BASE || (import.meta.env.DEV ? 'http://localhost:5000' : 'https://shiro1148-pbl6.hf.space');
         const res = await fetch(`${MODEL_SERVICE}/generate-sentences`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },

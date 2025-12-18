@@ -7,8 +7,9 @@ import '../styles/pages/MatchGame.css';
 import '../styles/pages/MultipleChoice.css';
 import { useParams } from 'react-router-dom';
 import { listSets } from '../services/flashcards';
+import { authFetch } from '../services/auth';
 
-const API = import.meta.env.VITE_API_BASE || 'http://localhost:8080';
+// Use relative '/api' paths so dev proxy works locally; authFetch prefixes appropriately.
 
 const MultipleChoice = () => {
   const navigate = useNavigate();
@@ -58,7 +59,7 @@ const MultipleChoice = () => {
       if (!setId) { setAiLoading(false); return; }
       try {
         const params = new URLSearchParams({ setId: String(setId || ''), optionsCount: '4' });
-        const res = await fetch(`${API}/api/games/multiple-choice?${params.toString()}`, { signal: controller.signal });
+        const res = await authFetch(`/api/games/multiple-choice?${params.toString()}`, { signal: controller.signal });
         if (!mounted) return;
         if (!res.ok) {
           const t = await res.text().catch(() => res.statusText || 'Error');
@@ -122,7 +123,7 @@ const MultipleChoice = () => {
       if (!setId) { setAiLoading(false); return; }
       try {
         const params = new URLSearchParams({ setId: String(setId || ''), optionsCount: '4' });
-        const res = await fetch(`${API}/api/games/multiple-choice?${params.toString()}`);
+        const res = await authFetch(`/api/games/multiple-choice?${params.toString()}`);
         if (!res.ok) {
           const t = await res.text().catch(() => res.statusText || 'Error');
           throw new Error(`${res.status} ${t}`);

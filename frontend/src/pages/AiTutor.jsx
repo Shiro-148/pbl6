@@ -30,7 +30,8 @@ const AiTutor = () => {
     setInput('');
     setSending(true);
     try {
-      const res = await fetch('http://localhost:5000/chat', {
+      const MODEL_BASE = import.meta.env.VITE_MODEL_SERVICE_BASE || (import.meta.env.DEV ? 'http://localhost:5000' : 'https://shiro1148-pbl6.hf.space');
+      const res = await fetch(`${MODEL_BASE}/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ message: text }),

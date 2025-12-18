@@ -1,7 +1,7 @@
-const API = import.meta.env.VITE_API_BASE || 'https://pbl6-k1wm.onrender.com';
+const API = import.meta.env.VITE_API_BASE || (import.meta.env.DEV ? '/api' : 'https://pbl6-k1wm.onrender.com');
 
 export async function login(username, password) {
-  const res = await fetch(`${API}/api/auth/login`, {
+  const res = await authFetch(`/api/auth/login`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ username, password }),
@@ -28,7 +28,7 @@ export async function register(username, password, email, displayName) {
   const body = { username, password };
   if (email) body.email = email;
   if (displayName) body.displayName = displayName;
-  const res = await fetch(`${API}/api/auth/register`, {
+  const res = await authFetch(`/api/auth/register`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
@@ -109,7 +109,16 @@ export function authFetch(url, opts = {}) {
   const headers = opts.headers || {};
   if (token) headers['Authorization'] = `Bearer ${token}`;
 
-  const fullUrl = url.startsWith('http') ? url : `${API}${url.startsWith('/') ? '' : '/'}${url}`;
+  // Build URL safely for both dev (API='/api') and production
+  let fullUrl;
+  if (url.startsWith('http')) {
+    fullUrl = url;
+  } else if (API === '/api') {
+    // When using Vite proxy in dev, ensure we don't duplicate '/api'
+    fullUrl = url.startsWith('/api') ? url : `/api${url.startsWith('/') ? '' : '/'}${url}`;
+  } else {
+    fullUrl = `${API}${url.startsWith('/') ? '' : '/'}${url}`;
+  }
 
   return fetch(fullUrl, { ...opts, headers }).then(async (res) => {
     if (res.status === 401 || res.status === 403) {

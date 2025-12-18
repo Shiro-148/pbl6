@@ -27,7 +27,6 @@ services:
     build:
       context: ./frontend
       args:
-        # This is the API base that Vite will bake into the built app
         VITE_API_BASE: ${VITE_API_BASE:-http://backend:8080}
     container_name: pbl6-frontend
     ports:

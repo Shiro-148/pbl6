@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import '../styles/pages/Community.css';
+import { listPublicSets } from '../services/community';
 
 export default function Community() {
   const navigate = useNavigate();
@@ -16,36 +17,28 @@ export default function Community() {
   const searchParam = new URLSearchParams(location.search).get('search') || '';
 
   useEffect(() => {
-    const API = import.meta.env.VITE_API_BASE || 'http://localhost:8080';
     if (isSearching) return;
     (async () => {
       setLoading(true);
       setError(null);
       try {
-        const params = new URLSearchParams({ page: String(page), size: String(size), sortBy: 'id', order: 'desc' });
-        const res = await fetch(`${API}/api/sets/public?${params.toString()}`);
-        if (res.ok) {
-          const json = await res.json();
-          const content = Array.isArray(json) ? json : (json?.content || []);
-          const normalized = (content || []).map((s) => ({
-            id: s?.id,
-            title: s?.name || s?.title || 'Không có tiêu đề',
-            description: s?.description || s?.communityTrend || 'Không có mô tả',
-            authorName:
-              s?.ownerDisplayName ||
-              s?.ownerUsername ||
-              s?.owner?.profile?.displayName ||
-              s?.owner?.username ||
-              'Cộng đồng',
-            coverUrl: s?.coverUrl || '/assets/images/flashcard.png',
-            cardCount: typeof s?.cardCount === 'number' ? s.cardCount : (Array.isArray(s?.cards) ? s.cards.length : undefined),
-          }));
-          setSets(normalized);
-          setTotalPages(Number(json?.totalPages || 0));
-        } else {
-          setSets([]);
-          setError(`HTTP ${res.status}`);
-        }
+        const json = await listPublicSets({ page, size, sortBy: 'id', order: 'desc' });
+        const content = Array.isArray(json) ? json : (json?.content || []);
+        const normalized = (content || []).map((s) => ({
+          id: s?.id,
+          title: s?.name || s?.title || 'Không có tiêu đề',
+          description: s?.description || s?.communityTrend || 'Không có mô tả',
+          authorName:
+            s?.ownerDisplayName ||
+            s?.ownerUsername ||
+            s?.owner?.profile?.displayName ||
+            s?.owner?.username ||
+            'Cộng đồng',
+          coverUrl: s?.coverUrl || '/assets/images/flashcard.png',
+          cardCount: typeof s?.cardCount === 'number' ? s.cardCount : (Array.isArray(s?.cards) ? s.cards.length : undefined),
+        }));
+        setSets(normalized);
+        setTotalPages(Number(json?.totalPages || 0));
       } catch (err) {
         console.error('Failed to load public sets', err);
         setSets([]);
@@ -57,7 +50,6 @@ export default function Community() {
   }, [page, size, isSearching]);
 
   const runSearch = async (term) => {
-    const API = import.meta.env.VITE_API_BASE || 'http://localhost:8080';
     const normalizedTerm = term.trim().toLowerCase();
     if (!normalizedTerm) {
       setIsSearching(false);
@@ -68,10 +60,7 @@ export default function Community() {
     setLoading(true);
     setError(null);
     try {
-      const params = new URLSearchParams({ page: '0', size: '50', sortBy: 'id', order: 'desc' });
-      const res = await fetch(`${API}/api/sets/public?${params.toString()}`);
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const json = await res.json();
+      const json = await listPublicSets({ page: 0, size: 50, sortBy: 'id', order: 'desc' });
       const content = Array.isArray(json) ? json : (json?.content || []);
       const normalized = (content || []).map((s) => ({
         id: s?.id,

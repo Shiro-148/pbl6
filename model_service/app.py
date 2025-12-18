@@ -2,10 +2,9 @@
 import warnings
 import os
 
-# Suppress warnings for cleaner output
 warnings.filterwarnings("ignore", category=FutureWarning)
 warnings.filterwarnings("ignore", category=UserWarning)
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'  # Suppress TensorFlow INFO and WARNING logs
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'  
 
 from flask import Flask
 from flask_cors import CORS
@@ -50,5 +49,8 @@ if __name__ == "__main__":
         print("🚀 Gemini API key detected (using model):", config.DEFAULT_GEMINI_MODEL)
     else:
         print("⚠️ GEMINI_API_KEY not set. /generate-distractors will return 500.")
-
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    try:
+        port = int(os.environ.get("PORT", 5000))
+    except ValueError:
+        port = 5000
+    app.run(host="0.0.0.0", port=port, debug=False)

@@ -1,14 +1,13 @@
 import { authFetch } from './auth';
-const API = import.meta.env.VITE_API_BASE || 'https://pbl6-k1wm.onrender.com';
 
 export async function listFolders() {
-  const res = await authFetch(`${API}/api/folders`);
+  const res = await authFetch(`/api/folders`);
   if (!res.ok) throw new Error(`List folders failed: ${res.status}`);
   return res.json();
 }
 
 export async function createFolder(name) {
-  const res = await authFetch(`${API}/api/folders`, {
+  const res = await authFetch(`/api/folders`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ name }),
@@ -21,7 +20,7 @@ export async function createFolder(name) {
 }
 
 export async function deleteFolder(id) {
-  const res = await authFetch(`${API}/api/folders/${id}`, {
+  const res = await authFetch(`/api/folders/${id}`, {
     method: 'DELETE',
   });
   if (!res.ok) {
