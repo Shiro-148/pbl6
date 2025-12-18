@@ -139,10 +139,9 @@ export default function FlashcardSetDetail() {
     let mounted = true;
 
     const load = async () => {
-      const API = import.meta.env.VITE_API_BASE || 'http://localhost:8080';
       setLoading(true);
       try {
-        const res = await authFetch(`${API}/api/sets/${id}`);
+        const res = await authFetch(`/api/sets/${id}`);
         let meta = null;
         if (res.ok) meta = await res.json();
 
@@ -914,8 +913,7 @@ export default function FlashcardSetDetail() {
               const folderId = data.folder && data.folder !== 'new' ? data.folder : null;
               const access = data.access || undefined;
               await updateSetApi(id, { title, description, folderId, access });
-              const API = import.meta.env.VITE_API_BASE || 'http://localhost:8080';
-              const res = await authFetch(`${API}/api/sets/${id}`);
+              const res = await authFetch(`/api/sets/${id}`);
               const meta = res.ok ? await res.json() : null;
               setSetMeta(meta || { id, title });
               setShowEditSetDialog(false);

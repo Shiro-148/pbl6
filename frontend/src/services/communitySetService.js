@@ -1,14 +1,11 @@
-// services/communitySetService.js
 import { listFolders, createFolder } from './folders';
 import { createSet, createCard } from './flashcards';
-import { getToken } from './auth';
-
-const API = import.meta.env.VITE_API_BASE || 'http://localhost:8080';
+import { authFetch } from './auth';
 
 export const fetchSetDetails = async (id) => {
   if (!id) return { title: 'Không có tiêu đề', author: 'Cộng đồng', terms: [] };
 
-  const res = await fetch(`${API}/api/sets/${id}`);
+  const res = await authFetch(`/api/sets/${id}`);
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   const json = await res.json();
 
@@ -30,10 +27,7 @@ export const fetchSetDetails = async (id) => {
 export const fetchSetStars = async (id) => {
   if (!id) return [];
   try {
-    const token = getToken();
-    const res = await fetch(`${API}/api/sets/${id}/stars`, {
-      headers: token ? { 'Authorization': `Bearer ${token}` } : {}
-    });
+    const res = await authFetch(`/api/sets/${id}/stars`);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const json = await res.json();
     return Array.isArray(json?.cardIds) ? json.cardIds : [];
@@ -43,21 +37,17 @@ export const fetchSetStars = async (id) => {
 };
 
 export const toggleStarApi = async (setId, cardId, isStarred) => {
-  const token = getToken();
-  const url = `${API}/api/sets/${setId}/cards/${cardId}/star`;
-  const res = await fetch(url, {
+  const url = `/api/sets/${setId}/cards/${cardId}/star`;
+  const res = await authFetch(url, {
     method: isStarred ? 'DELETE' : 'POST',
-    headers: token ? { 'Authorization': `Bearer ${token}` } : {}
   });
   if (!res.ok) throw new Error('Star toggle failed');
   return true;
 };
 
 export const clearAllStarsApi = async (setId, starredIds) => {
-  const token = getToken();
-  await Promise.all(starredIds.map((cid) => fetch(`${API}/api/sets/${setId}/cards/${cid}/star`, {
-    method: 'DELETE',
-    headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+  await Promise.all(starredIds.map((cid) => authFetch(`/api/sets/${setId}/cards/${cid}/star`, {
+    method: 'DELETE'
   })));
   return true;
 };
@@ -70,8 +60,7 @@ export const copySetToAccount = async ({
   terms, 
   NEW_FOLDER_VALUE 
 }) => {
-  const token = getToken();
-  if (!token) throw new Error('Vui lòng đăng nhập để thêm vào Thư viện.');
+  // Ensure user is authenticated via authFetch logic
 
   const title = setData?.title || 'Không có tiêu đề';
   const description = `Nguồn tác giả: ${setData?.author || 'Cộng đồng'}`;
@@ -113,8 +102,6 @@ export const copySetToAccount = async ({
 };
 
 export const fetchUserFolders = async () => {
-  const token = getToken();
-  if (!token) return [];
   try {
     const fs = await listFolders();
     return fs || [];

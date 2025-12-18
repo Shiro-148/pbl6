@@ -2,8 +2,6 @@
 import { authFetch } from './auth';
 import { listCards, deleteCard, updateCard, deleteSet, updateSet } from './flashcards';
 import { listFolders } from './folders';
-
-const API = import.meta.env.VITE_API_BASE || 'http://localhost:8080';
 const MODEL_BASE = import.meta.env.VITE_MODEL_SERVICE_BASE || (import.meta.env.DEV ? 'http://localhost:5000' : 'https://shiro1148-pbl6.hf.space');
 
 // --- Helper: Chuẩn hóa Level ---
@@ -24,7 +22,7 @@ export const normalizeLevel = (lvl) => {
 
 export const fetchSetData = async (id) => {
   // 1. Fetch Meta
-  const res = await authFetch(`${API}/api/sets/${id}`);
+  const res = await authFetch(`/api/sets/${id}`);
   let meta = null;
   if (res.ok) meta = await res.json();
 
