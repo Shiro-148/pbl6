@@ -1,161 +1,23 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import GameHeader from '../components/GameHeader';
 import GameBackButton from '../components/GameBackButton';
 import GameResult from '../components/GameResult';
 import '../styles/pages/MatchGame.css';
 import '../styles/pages/MultipleChoice.css';
-
-import { authFetch } from '../services/auth';
+import { useSentenceChoice } from '../hooks/useSentenceChoice';
 
 const initialWords = ['run', 'eat', 'read'];
 
 const SentenceChoiceGame = () => {
   const navigate = useNavigate();
   const { setId } = useParams();
-  const [questions, setQuestions] = useState([]);
-  const [current, setCurrent] = useState(0);
-  const [score, setScore] = useState(0);
-  const [selected, setSelected] = useState(null);
-  const [showResult, setShowResult] = useState(false);
-  const [aiLoading, setAiLoading] = useState(false);
-  const [aiError, setAiError] = useState(null);
-  const [startTime, setStartTime] = useState(null);
-  const [timer, setTimer] = useState(0);
+  const {
+    questions, current, score, selected, showResult,
+    aiLoading, aiError, timer, formatTime, handleOptionClick, reload
+  } = useSentenceChoice({ setId, initialWords });
 
-  useEffect(() => {
-    let mounted = true;
-    const controller = new AbortController();
-
-    const generate = async () => {
-      setAiLoading(true);
-      setAiError(null);
-      try {
-        let data;
-        if (setId) {
-          const params = new URLSearchParams({ setId: String(setId), optionsCount: '4' });
-          const res = await authFetch(`/api/games/sentence-choice?${params.toString()}`, { signal: controller.signal });
-          if (!mounted) return;
-          if (!res.ok) {
-            const t = await res.text().catch(() => res.statusText || 'Error');
-            throw new Error(`${res.status} ${t}`);
-          }
-          data = await res.json();
-        } else {
-          const MODEL_SERVICE = import.meta.env.VITE_MODEL_SERVICE_BASE || (import.meta.env.DEV ? 'http://localhost:5000' : 'https://shiro1148-pbl6.hf.space');
-          const res = await fetch(`${MODEL_SERVICE}/generate-sentences`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ words: initialWords, options_count: 4 }),
-            signal: controller.signal,
-          });
-          if (!mounted) return;
-          if (!res.ok) {
-            const t = await res.text().catch(() => res.statusText || 'Error');
-            throw new Error(`${res.status} ${t}`);
-          }
-          data = await res.json();
-        }
-        if (!mounted) return;
-        const qs = data && Array.isArray(data.questions) ? data.questions : [];
-        if (qs.length) {
-          setQuestions(qs);
-        } else {
-          setAiError('No questions returned');
-        }
-      } catch (e) {
-        if (!mounted) return;
-        console.error('generate-sentences error', e);
-        setAiError(String(e.message || e));
-      } finally {
-        if (mounted) setAiLoading(false);
-      }
-    };
-
-    generate();
-    return () => { mounted = false; controller.abort(); };
-  }, []);
-
-  useEffect(() => {
-    if (!startTime || showResult) return;
-    const id = setInterval(() => setTimer(Math.floor((Date.now() - startTime) / 1000)), 1000);
-    return () => clearInterval(id);
-  }, [startTime, showResult]);
-
-  const formatTime = (sec) => {
-    const m = Math.floor(sec / 60);
-    const s = sec % 60;
-    return `${m}:${s.toString().padStart(2, '0')}`;
-  };
-
-  const handleOptionClick = (index) => {
-    if (selected !== null) return;
-    setSelected(index);
-    if (!startTime) setStartTime(Date.now());
-
-    const q = questions[current];
-    const correctIndex = q && typeof q.correct_index === 'number' ? q.correct_index : 0;
-    if (index === correctIndex) {
-      setScore((s) => s + 1);
-    }
-
-    setTimeout(() => {
-      if (current + 1 < questions.length) {
-        setCurrent((c) => c + 1);
-        setSelected(null);
-      } else {
-        setShowResult(true);
-      }
-    }, 700);
-  };
-
-  const handleNewGame = async () => {
-    setAiLoading(true);
-    setAiError(null);
-    try {
-      let data;
-      if (setId) {
-        const params = new URLSearchParams({ setId: String(setId), optionsCount: '4' });
-        const res = await authFetch(`/api/games/sentence-choice?${params.toString()}`);
-        if (!res.ok) {
-          const t = await res.text().catch(() => res.statusText || 'Error');
-          throw new Error(`${res.status} ${t}`);
-        }
-        data = await res.json();
-      } else {
-        const MODEL_SERVICE = import.meta.env.VITE_MODEL_SERVICE_BASE || (import.meta.env.DEV ? 'http://localhost:5000' : 'https://shiro1148-pbl6.hf.space');
-        const res = await fetch(`${MODEL_SERVICE}/generate-sentences`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ words: initialWords, options_count: 4 }),
-        });
-        if (!res.ok) {
-          const t = await res.text().catch(() => res.statusText || 'Error');
-          throw new Error(`${res.status} ${t}`);
-        }
-        data = await res.json();
-      }
-      const qs = data && Array.isArray(data.questions) ? data.questions : [];
-      if (qs.length) {
-        setQuestions(qs);
-      } else {
-        setAiError('No questions returned');
-        setQuestions([]);
-      }
-    } catch (e) {
-      console.error('generate-sentences error', e);
-      setAiError(String(e.message || e));
-      setQuestions([]);
-    } finally {
-      setAiLoading(false);
-      setCurrent(0);
-      setScore(0);
-      setSelected(null);
-      setShowResult(false);
-      setStartTime(null);
-      setTimer(0);
-    }
-  };
+  const handleNewGame = async () => reload();
 
   if (aiLoading) {
     return (
