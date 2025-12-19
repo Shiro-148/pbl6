@@ -12,4 +12,11 @@ public interface FlashcardStarRepository extends JpaRepository<FlashcardStar, Lo
     Optional<FlashcardStar> findBySetIdAndCardId(Long setId, Long cardId);
 
     void deleteBySetIdAndCardId(Long setId, Long cardId);
+
+    // Per-user operations
+    List<FlashcardStar> findBySetIdAndUserId(Long setId, Long userId);
+
+    Optional<FlashcardStar> findByCardIdAndUserId(Long cardId, Long userId);
+
+    void deleteByCardIdAndUserId(Long cardId, Long userId);
 }

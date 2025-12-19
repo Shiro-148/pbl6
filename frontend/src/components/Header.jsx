@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
-import { getToken, authFetch } from '../services/auth';
+import { getToken, authFetch, logout } from '../services/auth';
 import PersonalInfoModal from './PersonalInfoModal';
 import InitialAvatar from './InitialAvatar';
 
@@ -46,15 +46,10 @@ const Header = () => {
   }, [tokenPresent]);
 
   const handleLogout = () => {
-    localStorage.removeItem('jwt');
-    setTokenPresent(false);
+    logout(); // multi-account: logs out current account
+    setTokenPresent(!!getToken());
     setProfileName('');
     setProfileAvatar('');
-    try {
-      window.dispatchEvent(new Event('auth-token-change'));
-    } catch {
-      // ignore
-    }
     navigate('/');
   };
 

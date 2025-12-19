@@ -20,7 +20,8 @@ const Login = () => {
     setError(null);
     try {
       const data = await apiLogin(username, password);
-      saveToken(data.token);
+      // Save token keyed by the entered username for multi-account support
+      saveToken(data.token, username);
       navigate('/');
     } catch (error) {
       console.error(error);

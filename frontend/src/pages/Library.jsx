@@ -153,7 +153,7 @@ export default function Library() {
               })().map((folder) => (
                 <div
                   key={folder.id ?? folder.name}
-                  className="flex flex-col gap-4 rounded-xl border border-slate-200 bg-white p-4 cursor-pointer"
+                  className="flex flex-col gap-4 rounded-xl border border-slate-200 bg-white p-4 cursor-pointer hover:shadow-md transition-shadow"
                   onClick={() => setSelectedFolder(folder)}
                   role="button"
                   tabIndex={0}

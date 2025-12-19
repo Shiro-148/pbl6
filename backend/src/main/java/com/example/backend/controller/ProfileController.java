@@ -36,11 +36,17 @@ public class ProfileController {
                 p.setDisplayName(u.getUsername());
                 p = profileRepo.save(p);
             }
-            return ResponseEntity.ok(Map.of(
-                    "displayName", p.getDisplayName(),
-                    "email", u.getEmail(),
-                    "avatarUrl", p.getAvatarUrl(),
-                    "bio", p.getBio()));
+            // Map.of() không chấp nhận giá trị null -> chuẩn hoá tránh NPE
+            String displayName = p.getDisplayName() != null ? p.getDisplayName() : u.getUsername();
+            String email = u.getEmail() != null ? u.getEmail() : "";
+            String avatarUrl = p.getAvatarUrl() != null ? p.getAvatarUrl() : "";
+            String bio = p.getBio() != null ? p.getBio() : "";
+            java.util.Map<String, Object> resp = new java.util.HashMap<>();
+            resp.put("displayName", displayName);
+            resp.put("email", email);
+            resp.put("avatarUrl", avatarUrl);
+            resp.put("bio", bio);
+            return ResponseEntity.ok(resp);
         }).orElse(ResponseEntity.status(404).body(Map.of("message", "User not found")));
     }
 

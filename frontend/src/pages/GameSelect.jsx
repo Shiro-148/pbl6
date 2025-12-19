@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import '../styles/pages/GameSelect.css';
+import { listCards } from '../services/flashcards';
 
 const gameSentences = [
   {
@@ -12,14 +13,14 @@ const gameSentences = [
   },
   {
     key: 'multiple',
-    title: 'Multiple Choice',
+    title: 'Multiple Choices',
     desc: 'Choose the correct definition from multiple options',
     color: 'game-card-multi',
     icon: <span className="game-icon">⚡</span>,
   },
   {
     key: 'Sentence',
-    title: 'Sentence Answer',
+    title: 'Sentence Choices',
     desc: 'Sentence the definition for each term',
     color: 'game-card-Sentence',
     icon: <span className="game-icon">T</span>,
@@ -53,7 +54,22 @@ const GameSelect = () => {
   const params = new URLSearchParams(location.search);
   const setName = params.get('set') || 'Flashcard Set';
   const setId = params.get('setId') || '';
-  const cardCount = 3;
+  const [cardCount, setCardCount] = useState(null);
+
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      if (!setId) { setCardCount(null); return; }
+      try {
+        const data = await listCards(setId);
+        const arr = Array.isArray(data) ? data : data?.cards || [];
+        if (mounted) setCardCount(arr.length);
+      } catch {
+        if (mounted) setCardCount(null);
+      }
+    })();
+    return () => { mounted = false; };
+  }, [setId]);
 
   return (
     <div className="game-select-page">
@@ -63,8 +79,12 @@ const GameSelect = () => {
       <h1 className="game-title">Choose a Game</h1>
       <div className="game-set-info">
         Playing: <span className="game-set-name">{setName}</span>
-        <br />
-        <span className="game-card-count">{cardCount} cards available</span>
+        {typeof cardCount === 'number' && (
+          <>
+            <br />
+            <span className="game-card-count">{cardCount} cards available</span>
+          </>
+        )}
       </div>
       <div className="game-card-list">
         {gameSentences.map((g) => (

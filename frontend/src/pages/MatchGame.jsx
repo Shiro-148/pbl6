@@ -3,8 +3,6 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import '../styles/pages/MatchGame.css';
 import { listCards } from '../services/flashcards';
 
-const MAX_PAIRS = 12;
-
 function shuffle(array) {
   const arr = [...array];
   for (let i = arr.length - 1; i > 0; i--) {
@@ -18,7 +16,6 @@ const MatchGame = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const params = new URLSearchParams(location.search);
-  const setName = params.get('set') || 'Match Game';
   const setId = params.get('setId') || '';
 
   const [pairs, setPairs] = useState([]);
@@ -88,9 +85,9 @@ const MatchGame = () => {
           throw new Error('Bộ thẻ chưa có dữ liệu để chơi. Vui lòng thêm từ vựng rồi thử lại.');
         }
 
-        const limited = shuffle(normalized).slice(0, Math.min(MAX_PAIRS, normalized.length));
+        const allPairs = shuffle(normalized);
         if (!cancelled) {
-          resetRound(limited);
+          resetRound(allPairs);
         }
       } catch (err) {
         console.error('Không thể tải dữ liệu game:', err);
@@ -171,7 +168,6 @@ const MatchGame = () => {
       <div className="match-game-header">
         <div className="match-game-header-left">
           <div className="match-game-title">Match Game</div>
-          <div className="match-game-desc">{setName}</div>
         </div>
         <div className="match-game-header-center">
           <div className="match-game-desc">Match terms with their definitions</div>

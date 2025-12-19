@@ -74,10 +74,10 @@ const CommunitySet = () => {
           <i className="bx bx-link-alt"></i> Match Game
         </button>
         <button className='btn-multiple-choice' onClick={() => navigateToGame('multiple')}>
-          <i className="bx bx-grid-alt"></i> Multiple Choice
+          <i className="bx bx-grid-alt"></i> Multiple Choices
         </button>
         <button className="btn-type-answer" onClick={() => navigateToGame('sentence')}>
-          <i className="bx bx-rocket"></i> Sentence Choice
+          <i className="bx bx-rocket"></i> Sentence Choices
         </button>
       </div>
 

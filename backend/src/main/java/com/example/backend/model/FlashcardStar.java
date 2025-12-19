@@ -4,7 +4,7 @@ import jakarta.persistence.*;
 
 @Entity
 @Table(name = "flashcard_stars", uniqueConstraints = {
-        @UniqueConstraint(columnNames = { "set_id", "card_id" })
+        @UniqueConstraint(columnNames = { "user_id", "card_id" })
 })
 public class FlashcardStar {
 
@@ -18,8 +18,7 @@ public class FlashcardStar {
     @Column(name = "card_id", nullable = false)
     private Long cardId;
 
-    // Optional: future association to user
-    @Column(name = "user_id")
+    @Column(name = "user_id", nullable = false)
     private Long userId;
 
     public FlashcardStar() {
