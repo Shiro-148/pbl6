@@ -40,15 +40,15 @@ if __name__ == "__main__":
         missing.append("freq_dict")
     
     if missing:
-        print("⚠️ Thiếu:", ", ".join(missing))
+        print(" Thiếu:", ", ".join(missing))
         print("→ Fallback rule-based vẫn hoạt động cho phân loại từ.")
     else:
-        print("✅ Tất cả resources đã load thành công!")
+        print(" Tất cả resources đã load thành công!")
 
     if config.GEMINI_KEY:
-        print("🚀 Gemini API key detected (using model):", config.DEFAULT_GEMINI_MODEL)
+        print(" Gemini API key detected (using model):", config.DEFAULT_GEMINI_MODEL)
     else:
-        print("⚠️ GEMINI_API_KEY not set. /generate-distractors will return 500.")
+        print(" GEMINI_API_KEY not set. /generate-distractors will return 500.")
     try:
         port = int(os.environ.get("PORT", 5000))
     except ValueError:

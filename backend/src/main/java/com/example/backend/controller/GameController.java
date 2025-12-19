@@ -2,6 +2,9 @@ package com.example.backend.controller;
 
 import com.example.backend.model.Flashcard;
 import com.example.backend.repository.FlashcardRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -14,9 +17,13 @@ import java.util.stream.Collectors;
 public class GameController {
 
     private final FlashcardRepository flashcardRepository;
+    private final String modelServiceBaseUrl;
+    private static final Logger log = LoggerFactory.getLogger(GameController.class);
 
-    public GameController(FlashcardRepository flashcardRepository) {
+    public GameController(FlashcardRepository flashcardRepository,
+            @Value("${model.service.base-url:http://localhost:5000}") String modelServiceBaseUrl) {
         this.flashcardRepository = flashcardRepository;
+        this.modelServiceBaseUrl = modelServiceBaseUrl;
     }
 
     @GetMapping("/multiple-choice")
@@ -106,7 +113,7 @@ public class GameController {
                 List<String> sentences = parseOptionsJson(cached);
                 if (sentences.size() > nOptions)
                     sentences = sentences.subList(0, nOptions);
-                int correctIdx = 0; 
+                int correctIdx = 0;
                 questions.add(Map.of("word", word, "sentences", sentences, "correct_index", correctIdx));
             } else {
                 toGenerate.add(Map.of("word", word));
@@ -141,7 +148,7 @@ public class GameController {
         try {
             if (json.trim().startsWith("[")) {
                 String s = json.trim();
-                s = s.substring(1, s.length() - 1); 
+                s = s.substring(1, s.length() - 1);
                 String[] parts = s.split(",");
                 List<String> list = new ArrayList<>();
                 for (String p : parts) {
@@ -199,7 +206,7 @@ public class GameController {
 
     @SuppressWarnings("unchecked")
     private List<Map<String, Object>> callModelServiceGenerate(List<Map<String, String>> pairs, int optionsCount) {
-        String base = Optional.ofNullable(System.getenv("MODEL_SERVICE_BASE")).orElse("http://localhost:5000");
+        String base = modelServiceBaseUrl;
         try {
             var url = new java.net.URL(base + "/generate-distractors");
             var conn = (java.net.HttpURLConnection) url.openConnection();
@@ -221,6 +228,7 @@ public class GameController {
                 }
             }
         } catch (Exception e) {
+            log.warn("Failed to call model service for multiple-choice: {}", e.toString());
         }
         return List.of();
     }
@@ -246,7 +254,7 @@ public class GameController {
     @SuppressWarnings("unchecked")
     private List<Map<String, Object>> callModelServiceGenerateSentences(List<Map<String, String>> words,
             int optionsCount) {
-        String base = Optional.ofNullable(System.getenv("MODEL_SERVICE_BASE")).orElse("http://localhost:5000");
+        String base = modelServiceBaseUrl;
         try {
             var url = new java.net.URL(base + "/generate-sentences");
             var conn = (java.net.HttpURLConnection) url.openConnection();
@@ -268,7 +276,7 @@ public class GameController {
                 }
             }
         } catch (Exception e) {
-            // ignored
+            log.warn("Failed to call model service for sentence-choice: {}", e.toString());
         }
         return List.of();
     }

@@ -109,12 +109,10 @@ export function authFetch(url, opts = {}) {
   const headers = opts.headers || {};
   if (token) headers['Authorization'] = `Bearer ${token}`;
 
-  // Build URL safely for both dev (API='/api') and production
   let fullUrl;
   if (url.startsWith('http')) {
     fullUrl = url;
   } else if (API === '/api') {
-    // When using Vite proxy in dev, ensure we don't duplicate '/api'
     fullUrl = url.startsWith('/api') ? url : `/api${url.startsWith('/') ? '' : '/'}${url}`;
   } else {
     fullUrl = `${API}${url.startsWith('/') ? '' : '/'}${url}`;

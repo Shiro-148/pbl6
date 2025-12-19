@@ -1,6 +1,3 @@
-// services/aiTutor.js
-
-// MODEL base: env override, dev localhost, prod HF Space
 const MODEL_BASE = import.meta.env.VITE_MODEL_SERVICE_BASE || (
   import.meta.env.DEV ? 'http://localhost:5000' : 'https://shiro1148-pbl6.hf.space'
 );

@@ -6,6 +6,7 @@ import java.util.Map;
 
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.text.PDFTextStripper;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -21,6 +22,9 @@ import org.springframework.web.multipart.MultipartFile;
 @RequestMapping("/api/pdf")
 public class PdfController {
 
+    @Value("${model.service.base-url:http://localhost:5000}")
+    private String modelServiceBaseUrl;
+
     @PostMapping("/upload")
     public ResponseEntity<?> uploadPdf(@RequestParam("file") MultipartFile file) {
         try (InputStream is = file.getInputStream(); PDDocument doc = PDDocument.load(is)) {
@@ -32,18 +36,21 @@ public class PdfController {
             resp.put("wordCountEstimate", text == null ? 0 : text.split("\\s+").length);
 
             try {
-        org.apache.hc.client5.http.config.RequestConfig requestConfig = org.apache.hc.client5.http.config.RequestConfig.custom()
-            .setConnectTimeout(2000, java.util.concurrent.TimeUnit.MILLISECONDS)
-            .setResponseTimeout(5000, java.util.concurrent.TimeUnit.MILLISECONDS)
-            .build();
-        org.apache.hc.client5.http.impl.classic.CloseableHttpClient httpClient = org.apache.hc.client5.http.impl.classic.HttpClients.custom()
-            .setDefaultRequestConfig(requestConfig)
-            .build();
-        org.springframework.http.client.HttpComponentsClientHttpRequestFactory requestFactory = new org.springframework.http.client.HttpComponentsClientHttpRequestFactory(httpClient);
-        RestTemplate rest = new RestTemplate(requestFactory);
+                org.apache.hc.client5.http.config.RequestConfig requestConfig = org.apache.hc.client5.http.config.RequestConfig
+                        .custom()
+                        .setConnectTimeout(2000, java.util.concurrent.TimeUnit.MILLISECONDS)
+                        .setResponseTimeout(5000, java.util.concurrent.TimeUnit.MILLISECONDS)
+                        .build();
+                org.apache.hc.client5.http.impl.classic.CloseableHttpClient httpClient = org.apache.hc.client5.http.impl.classic.HttpClients
+                        .custom()
+                        .setDefaultRequestConfig(requestConfig)
+                        .build();
+                org.springframework.http.client.HttpComponentsClientHttpRequestFactory requestFactory = new org.springframework.http.client.HttpComponentsClientHttpRequestFactory(
+                        httpClient);
+                RestTemplate rest = new RestTemplate(requestFactory);
 
                 String safeText = text == null ? "" : text;
-                final int MAX_CHARS = 10000; 
+                final int MAX_CHARS = 10000;
                 final int MAX_WORDS = 1000;
                 if (safeText.length() > MAX_CHARS) {
                     safeText = safeText.substring(0, MAX_CHARS);
@@ -60,13 +67,14 @@ public class PdfController {
 
                 final String finalSafeText = safeText;
 
-                String classifyUrl = "http://localhost:5000/classify";
-                String flashUrl = "http://localhost:5000/flashcards";
+                String classifyUrl = modelServiceBaseUrl + "/classify";
+                String flashUrl = modelServiceBaseUrl + "/flashcards";
                 org.springframework.util.MultiValueMap<String, String> form = new org.springframework.util.LinkedMultiValueMap<>();
                 form.add("text", finalSafeText != null ? finalSafeText : "");
                 HttpHeaders headers = new HttpHeaders();
                 headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
-                HttpEntity<org.springframework.util.MultiValueMap<String, String>> entity = new HttpEntity<>(form, headers);
+                HttpEntity<org.springframework.util.MultiValueMap<String, String>> entity = new HttpEntity<>(form,
+                        headers);
 
                 java.util.concurrent.ExecutorService ex = java.util.concurrent.Executors.newFixedThreadPool(2);
                 java.util.concurrent.Future<?> f1 = ex.submit(() -> {
