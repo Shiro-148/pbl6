@@ -42,6 +42,12 @@ export const useCommunitySet = () => {
   const [copyLoading, setCopyLoading] = useState(false);
   const [addError, setAddError] = useState('');
 
+  // Result notification (modal) state
+  const [showResult, setShowResult] = useState(false);
+  const [resultTitle, setResultTitle] = useState('');
+  const [resultMessage, setResultMessage] = useState('');
+  const [resultIsError, setResultIsError] = useState(false);
+
   // --- Effects ---
 
   // 1. Load Set Data
@@ -186,10 +192,19 @@ export const useCommunitySet = () => {
         setFolders(fs);
       }
 
-      alert(`Đã sao chép bộ: ${result.createdSet?.title || setData.title}${result.copiedCount ? ` cùng ${result.copiedCount} thẻ` : ''}.`);
+      // Show success via in-app result modal
+      setResultTitle('Đã sao chép bộ');
+      setResultMessage(`Đã sao chép "${result.createdSet?.title || setData.title}"${result.copiedCount ? ` cùng ${result.copiedCount} thẻ` : ''}.`);
+      setResultIsError(false);
+      setShowResult(true);
       closeAddToLibrary();
     } catch (err) {
       setAddError(err?.message || 'Không thể sao chép bộ hiện tại.');
+      // Also surface failure via result modal for consistency
+      setResultTitle('Sao chép thất bại');
+      setResultMessage(err?.message || 'Không thể sao chép bộ hiện tại.');
+      setResultIsError(true);
+      setShowResult(true);
     } finally {
       setCopyLoading(false);
     }
@@ -245,6 +260,13 @@ export const useCommunitySet = () => {
     copyLoading,
     addError,
     NEW_FOLDER_VALUE,
+
+    // Result modal state
+    showResult,
+    resultTitle,
+    resultMessage,
+    resultIsError,
+    setShowResult,
 
     // Refs
     cardRef,

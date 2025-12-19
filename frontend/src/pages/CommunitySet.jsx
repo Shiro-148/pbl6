@@ -38,6 +38,12 @@ const CommunitySet = () => {
     addError,
     copyLoading,
     NEW_FOLDER_VALUE,
+    // Result modal state
+    showResult,
+    resultTitle,
+    resultMessage,
+    resultIsError,
+    setShowResult,
 
     flipCard,
     nextCard,
@@ -260,6 +266,23 @@ const CommunitySet = () => {
                 {copyLoading ? 'Đang sao chép...' : 'Xác nhận'}
               </button>
               <button className="community-set-modal-close" onClick={closeAddToLibrary}></button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showResult && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setShowResult(false)}>
+          <div className="bg-white p-5 rounded-lg max-w-md w-[90%]" onClick={(e) => e.stopPropagation()}>
+            <h3 className={`text-lg font-semibold ${resultIsError ? 'text-red-600' : 'text-slate-900'}`}>{resultTitle}</h3>
+            <p className="mt-2">{resultMessage}</p>
+            <div className="mt-4 flex justify-end">
+              <button
+                onClick={() => setShowResult(false)}
+                className="px-4 py-2 rounded bg-primary text-white"
+              >
+                Đóng
+              </button>
             </div>
           </div>
         </div>
