@@ -25,6 +25,13 @@
 .main-content {
   padding-top: 0;
 }
+.flashcard-home-img {
+  width: 100%;
+  height: auto;
+  border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(19, 127, 236, 0.12); 
+  object-fit: contain;
+}
 .create-box {
   display: flex;
   align-items: center;
