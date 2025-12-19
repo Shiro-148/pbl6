@@ -1,13 +1,16 @@
 import React, { useEffect, useState } from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
-import { getToken } from '../services/auth';
+import { getToken, authFetch } from '../services/auth';
 import PersonalInfoModal from './PersonalInfoModal';
+import InitialAvatar from './InitialAvatar';
 
 const Header = () => {
   const navigate = useNavigate();
   const [tokenPresent, setTokenPresent] = useState(!!getToken());
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [searchValue, setSearchValue] = useState('');
+  const [profileName, setProfileName] = useState('');
+  const [profileAvatar, setProfileAvatar] = useState('');
 
   useEffect(() => {
     const onTokenChange = () => setTokenPresent(!!getToken());
@@ -19,9 +22,34 @@ const Header = () => {
     };
   }, []);
 
+  useEffect(() => {
+    let canceled = false;
+    async function loadProfile() {
+      if (!tokenPresent) {
+        setProfileName('');
+        setProfileAvatar('');
+        return;
+      }
+      try {
+        const res = await authFetch('/api/profile');
+        if (!res.ok) return;
+        const data = await res.json().catch(() => null);
+        if (canceled || !data) return;
+        setProfileName(data.displayName || data.username || '');
+        setProfileAvatar(data.avatarUrl || '');
+      } catch {
+        // ignore
+      }
+    }
+    loadProfile();
+    return () => { canceled = true; };
+  }, [tokenPresent]);
+
   const handleLogout = () => {
     localStorage.removeItem('jwt');
     setTokenPresent(false);
+    setProfileName('');
+    setProfileAvatar('');
     try {
       window.dispatchEvent(new Event('auth-token-change'));
     } catch {
@@ -98,7 +126,7 @@ const Header = () => {
             title="Trang cá nhân"
             onClick={() => setShowProfileModal(true)}
           >
-            <span className="material-symbols-outlined text-gray-700">account_circle</span>
+            <InitialAvatar name={profileName || 'Bạn'} imgUrl={profileAvatar} size={36} />
           </button>
         </div>
       </div>

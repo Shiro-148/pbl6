@@ -176,13 +176,29 @@ export default function Community() {
         <div style={{ display: 'inline-flex', gap: 8, alignItems: 'center' }}>
           <button
             className=""
-            style={{ padding: 8, borderRadius: 8, background: '#fff' }}
+            style={{ padding: 8,paddingTop: 13, borderRadius: 8, background: '#fff' }}
             onClick={() => page > 0 && setPage((p) => p - 1)}
             disabled={page <= 0}
           >
             <span className="material-symbols-outlined">chevron_left</span>
           </button>
-          <span>Quay về</span>
+          {(() => {
+            const canPrev = page > 0;
+            const handlePrev = () => { if (canPrev) setPage((p) => p - 1); };
+            return (
+              <span
+                role="button"
+                tabIndex={0}
+                onClick={handlePrev}
+                onKeyDown={(e) => { if ((e.key === 'Enter' || e.key === ' ') && canPrev) handlePrev(); }}
+                style={{ cursor: canPrev ? 'pointer' : 'default', color: canPrev ? '#1f2937' : '#90a4ae' }}
+                aria-disabled={!canPrev}
+                title={canPrev ? 'Quay về trang trước' : 'Không thể quay về'}
+              >
+                Quay về
+              </span>
+            );
+          })()}
           {}
           {(() => {
             const buttons = [];
@@ -213,10 +229,26 @@ export default function Community() {
             }
             return buttons;
           })()}
-          <span>Tiến tới</span>
+          {(() => {
+            const canNext = page + 1 < (totalPages || 1);
+            const handleNext = () => { if (canNext) setPage((p) => p + 1); };
+            return (
+              <span
+                role="button"
+                tabIndex={0}
+                onClick={handleNext}
+                onKeyDown={(e) => { if ((e.key === 'Enter' || e.key === ' ') && canNext) handleNext(); }}
+                style={{ cursor: canNext ? 'pointer' : 'default', color: canNext ? '#1f2937' : '#90a4ae' }}
+                aria-disabled={!canNext}
+                title={canNext ? 'Tiến tới trang sau' : 'Không thể tiến tới'}
+              >
+                Tiến tới
+              </span>
+            );
+          })()}
           <button
             className=""
-            style={{ padding: 8, borderRadius: 8, background: '#fff' }}
+            style={{ padding: 8,paddingTop: 13, borderRadius: 8, background: '#fff' }}
             onClick={() => page + 1 < (totalPages || 1) && setPage((p) => p + 1)}
             disabled={page + 1 >= (totalPages || 1)}
           >

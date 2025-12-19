@@ -7,6 +7,7 @@ import { listFolders } from '../services/folders';
 import CreateSetDialog from '../components/CreateSetDialog';
 import { splitExamples } from '../utils/examples';
 import UploadPDFButton from '../components/UploadPDFButton';
+import ErrorModal from '../components/ErrorModal';
 import UploadModal from '../components/UploadModal';
 import AddWordModal from '../components/AddWordModal';
 import '../styles/pages/FlashcardSetDetail.css';
@@ -45,6 +46,9 @@ export default function FlashcardSetDetail() {
   const [deleteSetError, setDeleteSetError] = useState('');
   const [showEditSetDialog, setShowEditSetDialog] = useState(false);
   const [folders, setFolders] = useState([]);
+  const [errorOpen, setErrorOpen] = useState(false);
+  const [errorTitle, setErrorTitle] = useState('Lỗi');
+  const [errorMsg, setErrorMsg] = useState(null);
   const uploadRef = useRef(null);
 
   const handleUploadResult = async (data) => {
@@ -399,7 +403,11 @@ export default function FlashcardSetDetail() {
       setShowUploadResult(true);
     } catch (err) {
       console.error('Xoá thẻ thất bại:', err);
-      setDeleteError(err?.message || 'Không thể xoá thẻ hiện tại');
+      // Đóng dialog xác nhận xoá và hiển thị ErrorModal tuỳ chỉnh
+      cancelDelete();
+      setErrorTitle('Lỗi xoá thẻ');
+      setErrorMsg('Xoá thẻ thất bại: ' + (err?.message || err));
+      setErrorOpen(true);
     } finally {
       setDeleteLoading(false);
     }
@@ -446,7 +454,11 @@ export default function FlashcardSetDetail() {
       setTimeout(() => navigate(-1), 200);
     } catch (err) {
       console.error('Xoá bộ flashcard thất bại:', err);
-      setDeleteSetError(err?.message || 'Không thể xoá bộ hiện tại');
+      // Đóng dialog xác nhận xoá bộ và hiển thị ErrorModal tùy chỉnh
+      cancelDeleteSet();
+      setErrorTitle('Lỗi xoá bộ');
+      setErrorMsg('Xoá bộ thất bại: ' + (err?.message || err));
+      setErrorOpen(true);
     } finally {
       setDeleteSetLoading(false);
     }
@@ -853,6 +865,15 @@ export default function FlashcardSetDetail() {
           </div>
         </div>
       )}
+      <ErrorModal
+        open={errorOpen}
+        title={errorTitle}
+        message={errorMsg}
+        onClose={() => {
+          setErrorOpen(false);
+          setErrorMsg(null);
+        }}
+      />
       {showDeleteSetDialog && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center px-4" onClick={cancelDeleteSet}>
           <div

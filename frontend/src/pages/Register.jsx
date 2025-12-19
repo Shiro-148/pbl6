@@ -61,7 +61,7 @@ const Register = () => {
               <input value={confirm} onChange={(e) => setConfirm(e.target.value)} type="password" placeholder="Xác nhận mật khẩu" />
             </label>
             <button type="submit" className="login-btn-main">ĐĂNG KÝ</button>
-            {error && <div className="login-error">{error}</div>}
+            {error && <div className="login-error" style={{ color: 'red' }}>{error}</div>}
           </form>
           <div className="login-register">
             Đã có tài khoản? <a href="/login">Đăng nhập</a>

@@ -1,6 +1,7 @@
 import React from 'react';
 import '../styles/pages/CommunitySet.css';
 import { useCommunitySet } from '../hooks/useCommunitySet';
+import InitialAvatar from '../components/InitialAvatar';
 
 const CommunitySet = () => {
   const {
@@ -56,7 +57,7 @@ const CommunitySet = () => {
         <div style={{ display: 'flex', alignItems: 'center', gap: 18 }}>
           <h1>{setData?.title || 'Không có tiêu đề'}</h1>
           <div className="community-set-author">
-            <span className="community-set-avatar">z</span>
+            <InitialAvatar name={setData?.author || 'Cộng đồng'} size={32} />
             <span>{setData?.author || 'Cộng đồng'}</span>
           </div>
         </div>

@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../styles/pages/SetList.css';
 import { listSets, deleteSet, updateSet } from '../services/flashcards';
+import ErrorModal from '../components/ErrorModal';
+import InitialAvatar from '../components/InitialAvatar';
 
 
 const ShareDialog = ({ open, onClose, shareUrl }) => {
@@ -63,6 +65,8 @@ const SetList = ({ folder, onBack }) => {
   const [sets, setSets] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [actionError, setActionError] = useState(null);
+  const [errorOpen, setErrorOpen] = useState(false);
   const defaultPrivacy = 'private';
   const [privacyStates, setPrivacyStates] = useState([]);
 
@@ -139,7 +143,9 @@ const SetList = ({ folder, onBack }) => {
       setDeleteSetId(null);
     } catch (error) {
       console.error('Error deleting set:', error);
-      alert('Lỗi khi xóa set: ' + error.message);
+      cancelDelete();
+      setActionError('Lỗi khi xóa set: ' + (error?.message || error));
+      setErrorOpen(true);
     }
   };
   
@@ -151,7 +157,8 @@ const SetList = ({ folder, onBack }) => {
 
   const handleStudy = (setItem) => {
     if (!setItem?.id) {
-      alert('Không tìm thấy ID của bộ thẻ.');
+      setActionError('Không tìm thấy ID của bộ thẻ.');
+      setErrorOpen(true);
       return;
     }
     const params = new URLSearchParams();
@@ -197,7 +204,8 @@ const SetList = ({ folder, onBack }) => {
       });
     } catch (err) {
       setPrivacyStates((states) => states.map((v, i) => (i === idx ? prev : v)));
-      alert('Không thể cập nhật quyền truy cập: ' + (err?.message || err));
+      setActionError('Không thể cập nhật quyền truy cập: ' + (err?.message || err));
+      setErrorOpen(true);
     }
   };
 
@@ -246,6 +254,7 @@ const SetList = ({ folder, onBack }) => {
         <i className="bx bx-arrow-back"></i> Back
       </button>
       <h1 className="set-list-title">{folder?.name || 'Sets'}</h1>
+      <ErrorModal open={!!actionError && errorOpen} message={actionError} onClose={() => { setErrorOpen(false); setActionError(null); cancelDelete(); }} />
       {sets.length === 0 ? (
         <div style={{ padding: '20px', textAlign: 'center' }}>
           <div>Chưa có flashcard sets nào trong folder này.</div>
@@ -296,6 +305,10 @@ const SetList = ({ folder, onBack }) => {
             <div className="set-desc">{set.desc}</div>
             <div className="set-meta">
               <span className="set-count">{set.count} cards</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 6 }}>
+              <InitialAvatar name={"Bạn"} size={24} />
+              <span style={{ fontSize: '0.95rem', color: '#334155' }}>Bạn</span>
             </div>
             <div className="set-card-actions">
               <button className="set-btn set-btn-study" onClick={() => handleStudy(set)}>

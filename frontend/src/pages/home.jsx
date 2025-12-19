@@ -8,6 +8,7 @@ function Home() {
   const navigate = useNavigate();
   const [showDialog, setShowDialog] = useState(false);
   const [folderName, setFolderName] = useState('');
+  const [errorMsg, setErrorMsg] = useState(null);
 
   const handleOpenDialog = (e) => {
     e && e.preventDefault();
@@ -16,6 +17,7 @@ function Home() {
   const handleCloseDialog = () => {
     setShowDialog(false);
     setFolderName('');
+    setErrorMsg(null);
   };
 
   const handleCreateFolder = () => {
@@ -44,7 +46,7 @@ function Home() {
         navigate('/library');
       } catch (err) {
         console.error('Create folder failed', err);
-        alert('Tạo folder thất bại: ' + (err.message || err));
+        setErrorMsg('Tạo folder thất bại: ' + (err.message || err));
       }
     })();
   };
@@ -221,6 +223,9 @@ function Home() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
           <div className="bg-white dark:bg-slate-900 rounded-lg p-6 w-full max-w-md">
             <h3 className="text-lg font-bold mb-3">Tạo thư mục mới</h3>
+            {errorMsg && (
+              <div className="mb-2" style={{ color: 'red' }}>{errorMsg}</div>
+            )}
             <input
               type="text"
               placeholder="Tên thư mục"

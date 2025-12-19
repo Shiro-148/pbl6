@@ -213,7 +213,11 @@ export default function AddWordModal({
                     onClick={handleGenerateByAi}
                     disabled={aiLoading}
                   >
-                    <span className="material-symbols-outlined">{aiLoading ? 'progress_activity' : 'auto_awesome'}</span>
+                    {aiLoading ? (
+                      <span className="inline-block h-5 w-5 border-2 border-white/50 border-t-white rounded-full animate-spin" aria-hidden="true" />
+                    ) : (
+                      <span className="material-symbols-outlined">auto_awesome</span>
+                    )}
                     <span>{aiLoading ? 'Đang tạo...' : 'Tạo bằng AI'}</span>
                   </button>
                 </div>

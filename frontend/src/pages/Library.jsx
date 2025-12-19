@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import '../styles/pages/Library.css';
 import SetList from './SetList';
 import CreateSetDialog from '../components/CreateSetDialog';
+import ErrorModal from '../components/ErrorModal';
 import { listFolders, deleteFolder, createFolder } from '../services/folders';
 import { getToken } from '../services/auth';
 import { createSet, listSets } from '../services/flashcards';
@@ -11,6 +12,7 @@ export default function Library() {
   const [selectedFolder, setSelectedFolder] = useState(null);
   const [folders, setFolders] = useState([]);
   const [sets, setSets] = useState([]);
+  const [searchQuery, setSearchQuery] = useState('');
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [folderToDelete, setFolderToDelete] = useState(null);
   const [showCreateSet, setShowCreateSet] = useState(false);
@@ -20,6 +22,9 @@ export default function Library() {
   const [setResultTitle, setSetResultTitle] = useState('');
   const [setResultMessage, setSetResultMessage] = useState('');
   const [setResultIsError, setSetResultIsError] = useState(false);
+  const [errorOpen, setErrorOpen] = useState(false);
+  const [errorMsg, setErrorMsg] = useState(null);
+  const [errorTitle, setErrorTitle] = useState('Lỗi');
 
   const loadFolders = async () => {
     localStorage.removeItem('localFolders');
@@ -92,7 +97,11 @@ export default function Library() {
       setFolderToDelete(null);
     } catch (error) {
       console.error('Error deleting folder:', error);
-      alert('Lỗi khi xóa folder: ' + (error?.message || ''));
+      setShowDeleteDialog(false);
+      setFolderToDelete(null);
+      setErrorTitle('Lỗi xóa folder');
+      setErrorMsg('Lỗi khi xóa folder: ' + (error?.message || ''));
+      setErrorOpen(true);
     }
   };
 
@@ -116,6 +125,8 @@ export default function Library() {
             className="w-full h-12 rounded-lg border border-slate-200 bg-white pl-10 pr-4 text-slate-900 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-primary/50"
             placeholder="Tìm kiếm thư mục, bộ thẻ..."
             type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
           />
         </div>
 
@@ -133,7 +144,13 @@ export default function Library() {
             </div>
 
             <div className="library-grid">
-              {folders.map((folder) => (
+              {(() => {
+                const q = searchQuery.trim().toLowerCase();
+                const visibleFolders = q
+                  ? folders.filter((f) => (f.name || '').toLowerCase().includes(q))
+                  : folders;
+                return visibleFolders;
+              })().map((folder) => (
                 <div
                   key={folder.id ?? folder.name}
                   className="flex flex-col gap-4 rounded-xl border border-slate-200 bg-white p-4 cursor-pointer"
@@ -184,12 +201,24 @@ export default function Library() {
             </div>
 
             <div className="library-grid">
-              {sets
-                .filter((set) => {
-                  if (!set.folderId) return false;
-                  return folders.some((folder) => folder.id === set.folderId);
-                })
-                .map((set) => (
+              {(() => {
+                const q = searchQuery.trim().toLowerCase();
+                const folderNameById = new Map(folders.map((f) => [f.id, f.name || '']));
+                const base = sets.filter((set) => set.folderId && folders.some((f) => f.id === set.folderId));
+                const visibleSets = q
+                  ? base.filter((set) => {
+                      const title = (set.title || '').toLowerCase();
+                      const desc = (set.description || '').toLowerCase();
+                      const folderName = (folderNameById.get(set.folderId) || '').toLowerCase();
+                      return (
+                        title.includes(q) ||
+                        desc.includes(q) ||
+                        folderName.includes(q)
+                      );
+                    })
+                  : base;
+                return visibleSets;
+              })().map((set) => (
                   <div
                     key={set.id}
                     role="button"
@@ -207,18 +236,40 @@ export default function Library() {
                       </p>
                     </div>
                     <div className="flex items-center gap-2">
-                      <img
-                        alt="Creator avatar"
-                        className="h-6 w-6 rounded-full object-cover bg-slate-200"
-                        src="https://ui-avatars.com/api/?name=User&background=3b82f6&color=fff&size=24"
-                      />
+                      {(() => {
+                        const creatorName = 'Bạn';
+                        const initial = (creatorName || 'U').trim()[0]?.toUpperCase() || 'U';
+                        return (
+                          <div
+                            aria-label="Creator avatar"
+                            className="h-6 w-6 rounded-full bg-blue-600 text-white flex items-center justify-center text-xs font-bold"
+                          >
+                            {initial}
+                          </div>
+                        );
+                      })()}
                       <span className="text-sm text-slate-600">Bạn</span>
                     </div>
                   </div>
                 ))}
-              {sets.filter((set) => set.folderId && folders.some((f) => f.id === set.folderId)).length === 0 && (
+                {(() => {
+                  const q = searchQuery.trim().toLowerCase();
+                  const baseCount = sets.filter((set) => set.folderId && folders.some((f) => f.id === set.folderId));
+                  const folderNameById = new Map(folders.map((f) => [f.id, f.name || '']));
+                  const visibleCount = q
+                    ? baseCount.filter((set) => {
+                        const title = (set.title || '').toLowerCase();
+                        const desc = (set.description || '').toLowerCase();
+                        const folderName = (folderNameById.get(set.folderId) || '').toLowerCase();
+                        return title.includes(q) || desc.includes(q) || folderName.includes(q);
+                      }).length
+                    : baseCount.length;
+                  return visibleCount === 0;
+                })() && (
                 <div className="col-span-full text-center py-8 text-slate-500">
-                  Chưa có bộ thẻ nào trong các thư mục của bạn.
+                    {searchQuery.trim()
+                      ? 'Không tìm thấy kết quả phù hợp.'
+                      : 'Chưa có bộ thẻ nào trong các thư mục của bạn.'}
                 </div>
               )}
             </div>
@@ -278,7 +329,9 @@ export default function Library() {
                         setFolderName('');
                       } catch (err) {
                         console.warn('localStorage write failed', err);
-                        alert('Tạo folder thất bại: ' + (err?.message || err));
+                        setErrorTitle('Tạo folder thất bại');
+                        setErrorMsg('Tạo folder thất bại: ' + (err?.message || err));
+                        setErrorOpen(true);
                       }
                       return;
                     }
@@ -290,7 +343,9 @@ export default function Library() {
                       await loadFolders();
                     } catch (err) {
                       console.error('Create folder failed', err);
-                      alert('Tạo folder thất bại: ' + (err?.message || err));
+                      setErrorTitle('Tạo folder thất bại');
+                      setErrorMsg('Tạo folder thất bại: ' + (err?.message || err));
+                      setErrorOpen(true);
                     }
                   }}
                 >
@@ -300,6 +355,15 @@ export default function Library() {
             </div>
           </div>
         )}
+        <ErrorModal
+          open={errorOpen}
+          title={errorTitle}
+          message={errorMsg}
+          onClose={() => {
+            setErrorOpen(false);
+            setErrorMsg(null);
+          }}
+        />
         <CreateSetDialog
           open={showCreateSet}
           onClose={() => setShowCreateSet(false)}

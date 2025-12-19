@@ -50,7 +50,7 @@ const Login = () => {
             <button type="submit" className="login-btn-main">
               LOGIN
             </button>
-            {error && <div className="login-error">{error}</div>}
+            {error && <div className="login-error" style={{ color: 'red' }}>{error}</div>}
           </form>
           <div className="login-register">
             New to Logo? <a href="/register">Register Here</a>

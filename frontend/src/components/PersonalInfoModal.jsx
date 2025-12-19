@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { authFetch } from '../services/auth';
+import InitialAvatar from './InitialAvatar';
 
 export default function PersonalInfoModal({ open, onClose }) {
   const [loading, setLoading] = useState(false);
@@ -7,6 +8,8 @@ export default function PersonalInfoModal({ open, onClose }) {
   const [pwSaving, setPwSaving] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [pwError, setPwError] = useState('');
+  const [pwSuccess, setPwSuccess] = useState('');
 
   const [displayName, setDisplayName] = useState('');
   const [email, setEmail] = useState('');
@@ -22,6 +25,8 @@ export default function PersonalInfoModal({ open, onClose }) {
     setLoading(true);
     setError('');
     setSuccess('');
+    setPwError('');
+    setPwSuccess('');
     authFetch('/api/profile')
       .then(async (res) => {
         if (!res.ok) {
@@ -63,27 +68,37 @@ export default function PersonalInfoModal({ open, onClose }) {
   };
 
   const handleChangePassword = async () => {
+    if (pwSaving) return;
     setPwSaving(true);
-    setError('');
-    setSuccess('');
+    setPwError('');
+    setPwSuccess('');
     try {
-      if (!newPassword || newPassword.length < 6) throw new Error('Mật khẩu mới tối thiểu 6 ký tự');
-      if (newPassword !== confirmPassword) throw new Error('Xác nhận mật khẩu không khớp');
+      const oldPw = (oldPassword || '').trim();
+      const newPw = (newPassword || '').trim();
+      const confirmPw = (confirmPassword || '').trim();
+      if (!oldPw) throw new Error('Vui lòng nhập mật khẩu hiện tại');
+      if (!newPw || newPw.length < 6) throw new Error('Mật khẩu mới tối thiểu 6 ký tự');
+      if (newPw !== confirmPw) throw new Error('Xác nhận mật khẩu không khớp');
       const res = await authFetch('/api/auth/change-password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ oldPassword, newPassword }),
+        body: JSON.stringify({ oldPassword: oldPw, newPassword: newPw }),
       });
       if (!res.ok) {
-        const txt = await res.text();
-        throw new Error(txt || 'Đổi mật khẩu thất bại');
+        let txt = '';
+        try { txt = await res.text(); } catch { /* ignore */ }
+        const message = (txt || res.statusText || 'Đổi mật khẩu thất bại').trim();
+        throw new Error(message);
       }
-      setSuccess('Đã đổi mật khẩu');
+      let data = null;
+      try { data = await res.json(); } catch { /* ignore */ }
+      const serverMsg = (data && (data.message || data.msg)) ? (data.message || data.msg) : 'Đã đổi mật khẩu thành công';
+      setPwSuccess(serverMsg);
       setOldPassword('');
       setNewPassword('');
       setConfirmPassword('');
     } catch (e) {
-      setError(e.message);
+      setPwError(e.message || 'Đổi mật khẩu thất bại');
     } finally {
       setPwSaving(false);
     }
@@ -103,11 +118,15 @@ export default function PersonalInfoModal({ open, onClose }) {
 
         <div className="flex flex-col px-6 py-6 overflow-y-auto max-h-[75vh]">
           {loading && <p className="text-sm text-[#617589]">Đang tải…</p>}
-          {error && <p className="text-sm text-red-600">{error}</p>}
-          {success && <p className="text-sm text-green-600">{success}</p>}
+          {error && (
+            <div className="rounded-md bg-red-50 border border-red-200 text-red-700 text-sm px-3 py-2 mb-2">{error}</div>
+          )}
+          {success && (
+            <div className="rounded-md bg-green-50 border border-green-200 text-green-700 text-sm px-3 py-2 mb-2">{success}</div>
+          )}
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6 mb-8">
             <div className="relative group cursor-pointer">
-              <div className="bg-center bg-no-repeat aspect-square bg-cover rounded-full w-24 h-24 ring-4 ring-gray-50 dark:ring-gray-800" style={{ backgroundImage: avatarUrl ? `url(${avatarUrl})` : 'url(https://via.placeholder.com/150)' }} />
+              <InitialAvatar name={displayName || email || 'Bạn'} imgUrl={avatarUrl} size={96} />
               <div className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                 <span className="material-symbols-outlined text-white">photo_camera</span>
               </div>
@@ -168,22 +187,31 @@ export default function PersonalInfoModal({ open, onClose }) {
                 <span className="material-symbols-outlined text-[#617589] group-open:rotate-180 transition-transform duration-200">expand_more</span>
               </summary>
               <div className="px-4 pb-4 pt-2 flex flex-col gap-4">
+                {pwError && (
+                  <div className="rounded-md bg-red-50 border border-red-200 text-red-700 text-xs px-3 py-2">{pwError}</div>
+                )}
+                {pwSuccess && (
+                  <div className="rounded-md bg-green-50 border border-green-200 text-green-700 text-xs px-3 py-2">{pwSuccess}</div>
+                )}
                 <div className="flex flex-col gap-2">
                   <label className="text-[#111418] dark:text-gray-300 text-xs font-medium">Mật khẩu hiện tại</label>
-                  <input className="w-full rounded-lg border border-[#dbe0e6] dark:border-gray-600 dark:bg-[#101922] dark:text-white h-10 px-3 text-sm focus:border-primary focus:ring-1 focus:ring-primary" placeholder="••••••••" type="password" value={oldPassword} onChange={(e) => setOldPassword(e.target.value)} />
+                  <input disabled={pwSaving} className="w-full rounded-lg border border-[#dbe0e6] dark:border-gray-600 dark:bg-[#101922] dark:text-white h-10 px-3 text-sm focus:border-primary focus:ring-1 focus:ring-primary disabled:bg-gray-100 disabled:cursor-not-allowed" placeholder="••••••••" type="password" value={oldPassword} onChange={(e) => { setOldPassword(e.target.value); setPwError(''); }} />
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="flex flex-col gap-2">
                     <label className="text-[#111418] dark:text-gray-300 text-xs font-medium">Mật khẩu mới</label>
-                    <input className="w-full rounded-lg border border-[#dbe0e6] dark:border-gray-600 dark:bg-[#101922] dark:text-white h-10 px-3 text-sm focus:border-primary focus:ring-1 focus:ring-primary" placeholder="••••••••" type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
+                    <input disabled={pwSaving} className="w-full rounded-lg border border-[#dbe0e6] dark:border-gray-600 dark:bg-[#101922] dark:text-white h-10 px-3 text-sm focus:border-primary focus:ring-1 focus:ring-primary disabled:bg-gray-100 disabled:cursor-not-allowed" placeholder="••••••••" type="password" value={newPassword} onChange={(e) => { setNewPassword(e.target.value); setPwError(''); }} />
                   </div>
                   <div className="flex flex-col gap-2">
                     <label className="text-[#111418] dark:text-gray-300 text-xs font-medium">Xác nhận mật khẩu</label>
-                    <input className="w-full rounded-lg border border-[#dbe0e6] dark:border-gray-600 dark:bg-[#101922] dark:text-white h-10 px-3 text-sm focus:border-primary focus:ring-1 focus:ring-primary" placeholder="••••••••" type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
+                    <input disabled={pwSaving} className="w-full rounded-lg border border-[#dbe0e6] dark:border-gray-600 dark:bg-[#101922] dark:text-white h-10 px-3 text-sm focus:border-primary focus:ring-1 focus:ring-primary disabled:bg-gray-100 disabled:cursor-not-allowed" placeholder="••••••••" type="password" value={confirmPassword} onChange={(e) => { setConfirmPassword(e.target.value); setPwError(''); }} />
                   </div>
                 </div>
                 <div className="flex justify-end pt-2">
-                  <button disabled={pwSaving} onClick={handleChangePassword} className="text-xs text-primary font-medium hover:underline">Đổi mật khẩu</button>
+                  <button disabled={pwSaving} onClick={handleChangePassword} className="flex items-center gap-1.5 text-xs text-primary font-medium hover:underline disabled:opacity-60 disabled:cursor-not-allowed">
+                    {pwSaving && <span className="material-symbols-outlined text-[16px]">progress_activity</span>}
+                    {pwSaving ? 'Đang đổi…' : 'Đổi mật khẩu'}
+                  </button>
                 </div>
               </div>
             </details>
